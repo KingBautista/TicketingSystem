@@ -1,0 +1,181 @@
+// Import Bootstrap
+@import "bootstrap/scss/bootstrap";
+
+// Import CoreUI
+@import "@coreui/coreui/scss/coreui";
+
+// Custom variables
+$primary: #321fdb;
+$secondary: #ced2d8;
+$success: #2eb85c;
+$info: #39f;
+$warning: #f9b115;
+$danger: #e55353;
+$light: #ebedef;
+$dark: #4f5d73;
+
+// Pagination styles
+.pagination-container {
+  margin-top: 1rem;
+  padding: 0.5rem 0;
+
+  .pagination-info {
+    color: $gray-600;
+    font-size: 0.875rem;
+  }
+
+  .pagination {
+    display: flex;
+    padding-left: 0;
+    list-style: none;
+    border-radius: $border-radius;
+    margin: 0;
+
+    .page-item {
+      margin: 0 0.25rem;
+
+      &:first-child .page-link {
+        margin-left: 0;
+        border-top-left-radius: $border-radius;
+        border-bottom-left-radius: $border-radius;
+      }
+
+      &:last-child .page-link {
+        border-top-right-radius: $border-radius;
+        border-bottom-right-radius: $border-radius;
+      }
+
+      .page-link {
+        position: relative;
+        display: block;
+        padding: 0.375rem 0.75rem;
+        margin-left: -1px;
+        line-height: 1.25;
+        color: $primary;
+        background-color: $white;
+        border: 1px solid $border-color;
+        text-decoration: none;
+        @include transition($transition-base);
+
+        &:hover {
+          z-index: 2;
+          color: darken($primary, 10%);
+          background-color: $gray-200;
+          border-color: $border-color;
+        }
+      }
+
+      &.active .page-link {
+        z-index: 3;
+        color: $white;
+        background-color: $primary;
+        border-color: $primary;
+      }
+
+      &.disabled .page-link {
+        color: $gray-600;
+        pointer-events: none;
+        background-color: $white;
+        border-color: $border-color;
+      }
+    }
+  }
+}
+
+// Custom styles
+.sidebar {
+  .nav-link {
+    &.active {
+      color: $primary;
+    }
+  }
+}
+
+.card {
+  .card-header {
+    background-color: $light;
+  }
+}
+
+.table {
+  th {
+    background-color: $light;
+  }
+}
+
+// Form styles
+.form-control {
+  &:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+  }
+}
+
+// Button styles
+.btn-primary {
+  background-color: $primary;
+  border-color: $primary;
+
+  &:hover {
+    background-color: darken($primary, 10%);
+    border-color: darken($primary, 10%);
+  }
+}
+
+// Alert styles
+.alert {
+  border: none;
+  border-radius: $border-radius;
+}
+
+// Modal styles
+.modal-content {
+  border: none;
+  border-radius: $border-radius;
+}
+
+// Custom utilities
+.text-primary {
+  color: $primary !important;
+}
+
+.bg-primary {
+  background-color: $primary !important;
+}
+
+// Responsive adjustments
+@include media-breakpoint-down(md) {
+  .pagination-container {
+    flex-direction: column;
+    align-items: center;
+
+    .pagination-info {
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .pagination {
+      flex-wrap: wrap;
+      justify-content: center;
+
+      .page-item {
+        margin: 0.25rem;
+      }
+    }
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    height: 100vh;
+    width: 250px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+
+    &.show {
+      transform: translateX(0);
+    }
+  }
+} 

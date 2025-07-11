@@ -1,0 +1,377 @@
+.tinymce-container {
+  width: 100%;
+  border: 1px solid var(--cui-border-color-translucent);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.tinymce-container .tox-tinymce {
+  border: none !important;
+}
+
+/* Theme-aware styles */
+.tinymce-container .tox-toolbar,
+.tinymce-container .tox-toolbar__primary,
+.tinymce-container .tox-toolbar__overflow,
+.tinymce-container .tox-toolbar__group {
+  background-color: var(--cui-body-bg) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+.tinymce-container .tox-tbtn {
+  color: var(--cui-body-color) !important;
+}
+
+.tinymce-container .tox-tbtn:hover {
+  background-color: var(--cui-sidebar-nav-link-hover-bg) !important;
+}
+
+.tinymce-container .tox-tbtn--enabled {
+  background-color: var(--cui-sidebar-nav-link-hover-bg) !important;
+}
+
+.tinymce-container .tox-tbtn--enabled:hover {
+  background-color: var(--cui-sidebar-nav-link-hover-bg) !important;
+}
+
+/* Status bar */
+.tinymce-container .tox-statusbar {
+  background-color: var(--cui-body-bg) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+  color: var(--cui-body-color) !important;
+}
+
+/* Dialog styles */
+.tox-dialog {
+  background-color: var(--cui-body-bg) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+.tox-dialog__header {
+  background-color: var(--cui-body-bg) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+.tox-dialog__title {
+  color: var(--cui-body-color) !important;
+}
+
+.tox-dialog__body {
+  background-color: var(--cui-body-bg) !important;
+  color: var(--cui-body-color) !important;
+}
+
+.tox-dialog__footer {
+  background-color: var(--cui-body-bg) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+/* Form elements in dialogs */
+.tox-dialog input,
+.tox-dialog select,
+.tox-dialog textarea {
+  background-color: var(--cui-body-bg) !important;
+  color: var(--cui-body-color) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+/* Menu styles */
+.tox-menu {
+  background-color: var(--cui-body-bg) !important;
+  border: 1px solid var(--cui-border-color-translucent) !important;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.tox-collection__item {
+  color: var(--cui-body-color) !important;
+}
+
+.tox-collection__item:hover {
+  background-color: var(--cui-sidebar-nav-link-hover-bg) !important;
+}
+
+.tox-collection__item--active {
+  background-color: var(--cui-sidebar-nav-link-hover-bg) !important;
+}
+
+/* Editor content area */
+.tox-edit-area {
+  background-color: var(--cui-body-bg) !important;
+}
+
+.tox-edit-area__iframe {
+  background-color: var(--cui-body-bg) !important;
+}
+
+/* Editor content text color */
+.tox-edit-area__iframe body {
+  color: var(--cui-body-color) !important;
+  background-color: var(--cui-body-bg) !important;
+}
+
+/* Dark theme specific overrides */
+[data-coreui-theme="dark"] .tinymce-container {
+  --editor-bg: var(--cui-dark-bg);
+  --editor-color: var(--cui-dark-color);
+  --editor-border: var(--cui-dark-border-color);
+  --editor-hover: var(--cui-dark-sidebar-nav-link-hover-bg);
+  --editor-active: var(--cui-dark-sidebar-nav-link-hover-bg);
+}
+
+[data-coreui-theme="dark"] .tox-toolbar,
+[data-coreui-theme="dark"] .tox-toolbar__primary,
+[data-coreui-theme="dark"] .tox-toolbar__overflow,
+[data-coreui-theme="dark"] .tox-toolbar__group {
+  background-color: var(--cui-dark-bg) !important;
+  border-color: var(--cui-dark-border-color) !important;
+}
+
+[data-coreui-theme="dark"] .tox-tbtn {
+  color: #fff !important;
+}
+
+[data-coreui-theme="dark"] .tox-tbtn:hover {
+  background-color: var(--cui-dark-sidebar-nav-link-hover-bg) !important;
+}
+
+[data-coreui-theme="dark"] .tox-tbtn--enabled {
+  background-color: var(--cui-dark-sidebar-nav-link-hover-bg) !important;
+}
+
+[data-coreui-theme="dark"] .tox-tbtn--enabled:hover {
+  background-color: var(--cui-dark-sidebar-nav-link-hover-bg) !important;
+}
+
+[data-coreui-theme="dark"] .tox-dialog,
+[data-coreui-theme="dark"] .tox-dialog__header,
+[data-coreui-theme="dark"] .tox-dialog__body,
+[data-coreui-theme="dark"] .tox-dialog__footer {
+  background-color: var(--cui-dark-bg) !important;
+  border-color: var(--cui-dark-border-color) !important;
+  color: #fff !important;
+}
+
+[data-coreui-theme="dark"] .tox-dialog input,
+[data-coreui-theme="dark"] .tox-dialog select,
+[data-coreui-theme="dark"] .tox-dialog textarea {
+  background-color: var(--cui-dark-bg) !important;
+  color: #fff !important;
+  border-color: var(--cui-dark-border-color) !important;
+}
+
+[data-coreui-theme="dark"] .tox-menu,
+[data-coreui-theme="dark"] .tox-collection__item,
+[data-coreui-theme="dark"] .tox-selected-menu {
+  background-color: var(--cui-dark-bg) !important;
+  border-color: var(--cui-dark-border-color) !important;
+  color: #fff !important;
+}
+
+[data-coreui-theme="dark"] .tox-collection__item:hover,
+[data-coreui-theme="dark"] .tox-collection__item--active {
+  background-color: var(--cui-dark-sidebar-nav-link-hover-bg) !important;
+}
+
+[data-coreui-theme="dark"] .tox-edit-area {
+  background-color: #1e1e2d !important;
+}
+
+[data-coreui-theme="dark"] .tox-edit-area__iframe {
+  background-color: #1e1e2d !important;
+}
+
+[data-coreui-theme="dark"] .tox-edit-area__iframe body {
+  background-color: #1e1e2d !important;
+  color: #fff !important;
+}
+
+[data-coreui-theme="dark"] .tox-edit-area__iframe html {
+  background-color: #1e1e2d !important;
+}
+
+[data-coreui-theme="dark"] .tox-edit-area__iframe #tinymce {
+  background-color: #1e1e2d !important;
+  color: #fff !important;
+}
+
+[data-coreui-theme="dark"] .tox-edit-area__iframe p,
+[data-coreui-theme="dark"] .tox-edit-area__iframe div,
+[data-coreui-theme="dark"] .tox-edit-area__iframe span {
+  color: #fff !important;
+  background-color: var(--cui-dark-bg) !important;
+}
+
+[data-coreui-theme="dark"] .tox-fullscreen,
+[data-coreui-theme="dark"] .tox-preview {
+  background-color: var(--cui-dark-bg) !important;
+  color: #fff !important;
+}
+
+/* Editor icons */
+.tox-tbtn svg {
+  fill: var(--cui-body-color) !important;
+}
+
+[data-coreui-theme="dark"] .tox-tbtn svg {
+  fill: #fff !important;
+}
+
+/* Editor toolbar icons */
+.tox-tbtn__icon {
+  color: var(--cui-body-color) !important;
+}
+
+[data-coreui-theme="dark"] .tox-tbtn__icon {
+  color: #fff !important;
+}
+
+/* Override any inline styles that might be causing the white background */
+[data-coreui-theme="dark"] .tox-edit-area__iframe [style*="background-color: white"],
+[data-coreui-theme="dark"] .tox-edit-area__iframe [style*="background-color: #fff"],
+[data-coreui-theme="dark"] .tox-edit-area__iframe [style*="background-color: #ffffff"] {
+  background-color: #1e1e2d !important;
+}
+
+/* Ensure all editor content has the correct background */
+[data-coreui-theme="dark"] .tox-edit-area__iframe * {
+  background-color: var(--cui-dark-bg) !important;
+}
+
+/* Dropdown menus */
+.tox-menu {
+  background-color: var(--cui-body-bg) !important;
+  border: 1px solid var(--cui-border-color-translucent) !important;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.tox-menu__item {
+  color: var(--cui-body-color) !important;
+  background-color: var(--cui-body-bg) !important;
+}
+
+.tox-menu__item:hover {
+  background-color: var(--cui-sidebar-nav-link-hover-bg) !important;
+}
+
+.tox-menu__item--active {
+  background-color: var(--cui-sidebar-nav-link-hover-bg) !important;
+}
+
+/* Context menu */
+.tox-selected-menu {
+  background-color: var(--cui-body-bg) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+/* Color picker */
+.tox-color-picker {
+  background-color: var(--cui-body-bg) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+/* Link dialog */
+.tox-dialog__body-content {
+  background-color: var(--cui-body-bg) !important;
+  color: var(--cui-body-color) !important;
+}
+
+/* Help dialog */
+.tox-dialog__body-content .tox-help__header {
+  color: var(--cui-body-color) !important;
+}
+
+/* Table dialog */
+.tox-dialog__body-content .tox-table-dialog__grid {
+  background-color: var(--cui-body-bg) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+/* Image dialog */
+.tox-dialog__body-content .tox-image-tools {
+  background-color: var(--cui-body-bg) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+/* Code editor */
+.tox-dialog__body-content .tox-codeeditor {
+  background-color: var(--cui-body-bg) !important;
+  color: var(--cui-body-color) !important;
+  border-color: var(--cui-border-color-translucent) !important;
+}
+
+/* Fullscreen mode */
+.tox-fullscreen {
+  background-color: var(--cui-body-bg) !important;
+}
+
+/* Preview mode */
+.tox-preview {
+  background-color: var(--cui-body-bg) !important;
+  color: var(--cui-body-color) !important;
+}
+
+/* Force iframe background */
+[data-coreui-theme="dark"] .tox-edit-area iframe {
+  background-color: #1e1e2d !important;
+}
+
+/* Force iframe content background */
+[data-coreui-theme="dark"] .tox-edit-area__iframe body {
+  background-color: #1e1e2d !important;
+  color: #fff !important;
+}
+
+[data-coreui-theme="dark"] .tox-edit-area__iframe html {
+  background-color: #1e1e2d !important;
+}
+
+[data-coreui-theme="dark"] .tox-edit-area__iframe #tinymce {
+  background-color: #1e1e2d !important;
+  color: #fff !important;
+}
+
+/* Override any inline styles on the iframe */
+[data-coreui-theme="dark"] .tox-edit-area__iframe [style*="background"] {
+  background-color: #1e1e2d !important;
+}
+
+/* Ensure the iframe container has the correct background */
+[data-coreui-theme="dark"] .tox-edit-area__iframe {
+  background-color: #1e1e2d !important;
+}
+
+/* Force dark background on the iframe element itself */
+[data-coreui-theme="dark"] .tox-edit-area iframe {
+  background-color: #1e1e2d !important;
+}
+
+/* Override any inline styles that might be causing the white background */
+[data-coreui-theme="dark"] .tox-edit-area__iframe [style*="background-color: white"],
+[data-coreui-theme="dark"] .tox-edit-area__iframe [style*="background-color: #fff"],
+[data-coreui-theme="dark"] .tox-edit-area__iframe [style*="background-color: #ffffff"] {
+  background-color: #1e1e2d !important;
+}
+
+/* Dark theme menu styles */
+[data-coreui-theme="dark"] .tox-menu {
+  background-color: #1e1e2d !important;
+  border-color: var(--cui-dark-border-color) !important;
+}
+
+[data-coreui-theme="dark"] .tox-menu__item {
+  background-color: #1e1e2d !important;
+  color: #fff !important;
+}
+
+[data-coreui-theme="dark"] .tox-menu__item:hover {
+  background-color: #2b2b40 !important;
+}
+
+[data-coreui-theme="dark"] .tox-menu__item--active {
+  background-color: #2b2b40 !important;
+}
+
+[data-coreui-theme="dark"] .tox-selected-menu {
+  background-color: #1e1e2d !important;
+  border-color: var(--cui-dark-border-color) !important;
+} 

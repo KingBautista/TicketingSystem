@@ -1,0 +1,140 @@
+import { Link, useParams } from "react-router-dom";
+import { useStateContext } from "../../contexts/AuthProvider";
+import { useRef, useState, useEffect } from "react";
+import axiosClient from "../../axios-client";
+import DOMPurify from 'dompurify';
+
+export default function Login() {
+	const { vcode } = useParams();
+	const emailRef = useRef();
+	const passwordRef = useRef();
+
+	const [isValidated, setValidated] = useState();
+	const [message, setMessage] = useState();
+	const [errors, setErrors] = useState();
+	const [isLoading, setIsLoading] = useState();
+
+	const { setToken, setUserRoutes } = useStateContext();
+
+  useEffect(() => {
+    localStorage.setItem('isReloaded', 'false');
+  }, []);
+
+	const validateUser = (code) => {
+		const payload = {
+			activation_key: code
+		};
+
+		axiosClient.post('/validate', payload)
+		.then(({data}) => {
+			if(data.message) {
+				setMessage(data.message);
+			}
+		});
+	};
+
+	if(vcode) {
+		validateUser(vcode);
+	}
+
+	const onSubmit = (ev) => {
+		ev.preventDefault();
+		setIsLoading(true);
+
+		const payload = {
+			email: emailRef.current.value,
+			password: passwordRef.current.value,
+		};
+
+		axiosClient.post('/login', payload)
+		.then(({data}) => {
+      setToken(data.token);
+      setUserRoutes(data.user.user_routes || []);
+      localStorage.setItem('theme', data.user?.theme || 'light');
+      navigate('/dashboard'); // This will now render properly after state update
+		})
+		.catch((errors) => {
+			const response = errors.response;
+			if(response && response.status === 422) {
+				emailRef.current.value = null;
+				passwordRef.current.value = null;
+				setErrors(response.data.errors);
+				setValidated('needs-validation was-validated');
+				setIsLoading(false);
+			}
+		});
+	};
+
+	// Sanitize the message and errors
+	const sanitizedMessage = message ? DOMPurify.sanitize(message) : '';
+	const sanitizedErrors = errors ? Object.keys(errors).reduce((acc, key) => {
+		acc[key] = DOMPurify.sanitize(errors[key]);
+		return acc;
+	}, {}) : {};
+
+	useEffect(() => {
+    localStorage.clear();
+  }, []);
+
+	return (
+		<div className="col-lg-8">
+			<div className="card-group d-block d-md-flex row">
+				<div className="card col-md-7 p-4 mb-0">
+					<div className="card-body">
+						<form onSubmit={onSubmit} className={isValidated}>
+							<h1>Login</h1>
+							<p className="text-body-secondary">Sign In to your account</p>
+							{sanitizedMessage && 
+								<div className="alert alert-success" role="alert">
+										<p>{sanitizedMessage}</p>
+								</div>
+							}
+							{Object.keys(sanitizedErrors).length > 0 && 
+								<div className="alert alert-danger" role="alert">
+									{Object.keys(sanitizedErrors).map(key => (
+										<div key={key}>{sanitizedErrors[key]}</div>
+									))}
+								</div>
+							}
+							<div className="input-group mb-3">
+								<span className="input-group-text">
+									<svg className="icon">
+											<use xlinkHref="assets/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
+									</svg>
+								</span>
+								<input ref={emailRef} className="form-control" type="text" placeholder="Email" required/>
+							</div>
+							<div className="input-group mb-4">
+								<span className="input-group-text">
+										<svg className="icon">
+												<use xlinkHref="assets/vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
+										</svg>
+								</span>
+								<input ref={passwordRef} className="form-control" type="password" placeholder="Password" required/>
+							</div>
+							<div className="row">
+								<div className="col-6">
+									<button className="btn btn-block btn-primary" type="submit">Login &nbsp;
+										{isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
+									</button>
+								</div>
+								<div className="col-6 text-end">
+									<Link to="/forgot-password" className="btn btn-link px-0" type="button">Forgot password?</Link>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+				<div className="card col-md-5 text-white bg-primary py-5">
+					<div className="card-body text-center">
+						<div>
+							<h2>Sign up</h2>
+							<p>Create your account for multiple platform in <br/><strong>ONE</strong> Content Management System (CMS).</p>
+							<Link to="/sign-up" className="btn btn-lg btn-outline-light mt-3" type="button">Register Now!</Link>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
