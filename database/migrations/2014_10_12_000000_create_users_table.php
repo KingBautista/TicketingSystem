@@ -21,9 +21,12 @@ return new class extends Migration
             $table->string('user_salt')->index();
             $table->boolean('user_status')->default(false);
             $table->string('user_activation_key')->nullable();
+            $table->bigInteger('user_role_id')->unsigned()->nullable()->index();
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('user_role_id')->references('id')->on('roles')->onDelete('set null');
         });
 
         Schema::create('user_meta', function (Blueprint $table) {

@@ -25,17 +25,14 @@ class UserService extends BaseService
     $trashedUsers = $this->getTrashedCount();
 
     return UserResource::collection(User::query()
-    ->join('user_meta as um', 'users.id', '=', 'um.user_id')
-    ->where('um.meta_key', 'user_role')
-    ->whereRaw("JSON_VALID(um.meta_value)")
-    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(um.meta_value, '$.id')) != ?", [1])
+    ->with('userRole') // Load the role relationship
+    ->where('user_role_id', '!=', 1) // Exclude Developer Account
     ->when($trash, function ($query) {
       return $query->onlyTrashed();
     })
     ->when(request('search'), function ($query) {
-      return $query->where('name', 'LIKE', '%' . request('search') . '%')
-                   ->orWhere('slug', 'LIKE', '%' . request('search') . '%')
-                   ->orWhere('descriptions', 'LIKE', '%' . request('search') . '%');
+      return $query->where('user_login', 'LIKE', '%' . request('search') . '%')
+                   ->orWhere('user_email', 'LIKE', '%' . request('search') . '%');
     })
     ->when(request('order'), function ($query) {
         return $query->orderBy(request('order'), request('sort'));
@@ -43,7 +40,6 @@ class UserService extends BaseService
     ->when(!request('order'), function ($query) {
       return $query->orderBy('id', 'desc');
     })
-    ->select('users.*') // Important to avoid column conflicts
     ->paginate($perPage)->withQueryString()
     )->additional(['meta' => ['all' => $allUsers, 'trashed' => $trashedUsers]]);
   }
@@ -104,26 +100,16 @@ class UserService extends BaseService
 	}
 
   /**
-  * Bulk change user password.
+  * Bulk change user role.
   */
-  public function bulkChangeRole($ids, $role) 
+  public function bulkChangeRole($ids, $user_role_id) 
   {
     if(count($ids) > 0) {
       foreach ($ids as $id) {
         $user = User::findOrFail($id);
-        $this->changeRoleMeta($user, $role);
+        $user->update(['user_role_id' => $user_role_id]);
       }
     }
-  }
-
-  public function changeRoleMeta(User $user, $role) 
-  {
-    $meta_details = [];
-    if(isset($role))
-      $meta_details['user_role'] = $role;
-
-    if(count($meta_details))
-      $user->saveUserMeta($meta_details);
   }
 
   /**

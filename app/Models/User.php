@@ -27,6 +27,7 @@ class User extends Authenticatable
 		'user_status',
 		'user_activation_key',
 		'remember_token',
+		'user_role_id',
 	];
 
 	/**
@@ -93,6 +94,14 @@ class User extends Authenticatable
 		return Role::find($role_id);
 	}
 
+	/**
+	 * Get the user's role relationship
+	 */
+	public function userRole()
+	{
+		return $this->belongsTo(Role::class, 'user_role_id');
+	}
+
 	/****************************************
 	*           ATTRIBUTES PARTS            *
 	****************************************/
@@ -103,6 +112,12 @@ class User extends Authenticatable
 
 	public function getUserRoleAttribute()
 	{
+		// First try to get role from direct relationship
+		if ($this->user_role_id && $role = $this->getUserRole($this->user_role_id)) {
+			return $role;
+		}
+		
+		// Fallback to user meta if direct relationship is not set
 		$user_role = json_decode($this->user_details['user_role'] ?? 'null');
 		return $user_role && ($role = $this->getUserRole($user_role->id)) ? $role : null;
 	}

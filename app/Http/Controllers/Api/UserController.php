@@ -30,7 +30,7 @@ class UserController extends BaseController
       $password = PasswordHelper::generatePassword($salt, $data['user_pass']);
       $activation_key = PasswordHelper::generateSalt();
 
-      $data = [
+      $userData = [
         'user_login' => $data['user_login'],
         'user_email' => $data['user_email'],
         'user_salt' => $salt,
@@ -39,17 +39,19 @@ class UserController extends BaseController
         'user_activation_key' => $activation_key,
       ];
 
+      // Handle user_role_id if provided
+      if (isset($data['user_role_id'])) {
+        $userData['user_role_id'] = $data['user_role_id'];
+      }
+
       $meta_details = [];
       if(isset($request->first_name))
         $meta_details['first_name'] = $request->first_name;
         
       if(isset($request->last_name))
         $meta_details['last_name'] = $request->last_name;
-    
-      if(isset($request->user_role))
-        $meta_details['user_role'] = $request->user_role;
 
-      $user = $this->service->storeWithMeta($data, $meta_details);
+      $user = $this->service->storeWithMeta($userData, $meta_details);
       
       return response($user, 201);
     } catch (\Exception $e) {
@@ -69,6 +71,11 @@ class UserController extends BaseController
         'user_status' => $request->user_status,
       ];
 
+      // Handle user_role_id if provided
+      if (isset($data['user_role_id'])) {
+        $upData['user_role_id'] = $data['user_role_id'];
+      }
+
       if (isset($data['user_pass'])) {
         $salt = $user->user_salt;
         $upData['user_pass'] = PasswordHelper::generatePassword($salt, request('user_pass'));
@@ -80,9 +87,6 @@ class UserController extends BaseController
         
       if(isset($request->last_name))
         $meta_details['last_name'] = $request->last_name;
-    
-      if(isset($request->user_role))
-        $meta_details['user_role'] = $request->user_role;
 
       $user = $this->service->updateWithMeta($upData, $meta_details, $user);
 
@@ -106,8 +110,8 @@ class UserController extends BaseController
   public function bulkChangeRole(Request $request) 
   {
     try {
-      $this->service->bulkChangeRole($request->ids, $request->role);
-      $message = 'User/s role has been change.';
+      $this->service->bulkChangeRole($request->ids, $request->user_role_id);
+      $message = 'User/s role has been changed.';
       return response(compact('message'));
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -124,6 +128,11 @@ class UserController extends BaseController
         'user_login' => $data['user_login'],
         'user_email' => $data['user_email'],
       ];
+
+      // Handle user_role_id if provided
+      if (isset($data['user_role_id'])) {
+        $upData['user_role_id'] = $data['user_role_id'];
+      }
 
       if (isset($data['user_pass'])) {
         $salt = $user->user_salt;
@@ -151,11 +160,6 @@ class UserController extends BaseController
 
         $meta_details['attachment_metadata'] = json_encode($attachment_file);
         $meta_details['attachment_file'] = $attachment_file->file_url;  
-      }
-
-      if(isset($data['user_role'])) {
-        $user_role = json_decode($data['user_role']);
-        $meta_details['user_role'] = json_encode($user_role);
       }
 
       $user = $this->service->updateWithMeta($upData, $meta_details, $user);

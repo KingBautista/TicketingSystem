@@ -1,0 +1,33 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Role;
+
+class RoleSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // Truncate the table before seeding
+        Role::truncate();
+
+        // Data from user and roles.sql (id, name, active, is_super_admin)
+        $roles = [
+            [1, 'Developer Account', 1, 1],
+            [2, 'Administrator', 1, 0],
+            [3, 'Author', 1, 0],
+            [4, 'Editor', 1, 0],
+            [5, 'Guest', 1, 0],
+        ];
+
+        foreach ($roles as $role) {
+            [$id, $name, $active, $isSuperAdmin] = $role;
+            Role::create([
+                'name' => $name,
+                'active' => $active,
+                'is_super_admin' => $isSuperAdmin,
+            ]);
+        }
+    }
+} 

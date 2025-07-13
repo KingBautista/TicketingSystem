@@ -24,32 +24,16 @@ class StoreUserRequest extends FormRequest
 		return [
 			"user_login" => "required|string|unique:users,user_login",
 			"user_email" => "required|email|unique:users,user_email",
-			'user_role' => [
-					'required',
-					'json',
-					function ($attribute, $value, $fail) {
-							$decoded = json_decode($value, true);
-
-							// Check if decoding failed or result is not an object
-							if (!is_array($decoded)) {
-									return $fail("The $attribute must be a valid JSON object.");
-							}
-
-							// If it's an empty array, reject
-							if (empty($decoded)) {
-									return $fail("The $attribute cannot be an empty array.");
-							}
-
-							// Must contain 'id'
-							if (!isset($decoded['id'])) {
-									return $fail("The $attribute must contain an 'id'.");
-							}
-
-							// Optional: reject certain roles by ID
-							if ($decoded['id'] == 1) {
-									return $fail("The selected role is not allowed.");
-							}
+			'user_role_id' => [
+				'required',
+				'integer',
+				'exists:roles,id',
+				function ($attribute, $value, $fail) {
+					// Optional: reject certain roles by ID
+					if ($value == 1) {
+						return $fail("The selected role is not allowed.");
 					}
+				}
 			],
 			"user_pass" => [
 				'required',
@@ -69,7 +53,9 @@ class StoreUserRequest extends FormRequest
 			"user_login.unique" => "The username has already been taken.",
 			"user_email.email" => "The email field must be a valid email address.",
 			"user_email.unique" => "The email has already been taken.",
-			"user_pass.required" => "The password field is required."
+			"user_pass.required" => "The password field is required.",
+			"user_role_id.required" => "The role field is required.",
+			"user_role_id.exists" => "The selected role is invalid.",
 		];
 	}
 }

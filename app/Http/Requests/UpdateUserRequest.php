@@ -24,6 +24,17 @@ class UpdateUserRequest extends FormRequest
 		return [
 			"user_login" => "required|string|unique:users,user_login,".$this->id,
 			"user_email" => "required|email|unique:users,user_email,".$this->id,
+			'user_role_id' => [
+				'nullable',
+				'integer',
+				'exists:roles,id',
+				function ($attribute, $value, $fail) {
+					// Optional: reject certain roles by ID
+					if ($value == 1) {
+						return $fail("The selected role is not allowed.");
+					}
+				}
+			],
 			"user_pass" => [
 				'string',
 				'min:8',              // must be at least 8 characters in length
@@ -41,7 +52,8 @@ class UpdateUserRequest extends FormRequest
 			"user_login.unique" => "The username has already been taken.",
 			"user_email.email" => "The email field must be a valid email address.",
 			"user_email.unique" => "The email has already been taken.",
-			"user_pass.required" => "The password field is required."
+			"user_pass.required" => "The password field is required.",
+			"user_role_id.exists" => "The selected role is invalid.",
 		];
 	}
 }

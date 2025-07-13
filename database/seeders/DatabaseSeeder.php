@@ -12,31 +12,19 @@ class DatabaseSeeder extends Seeder
    */
   public function run(): void
   {
-    // \App\Models\User::factory(50)->create();
+    // Call PermissionSeeder
+    $this->call(PermissionSeeder::class);
 
-    // \App\Models\User::create([
-    //     'name' => 'Test User',
-    //     'email' => 'test@example.com',
-    // ]);
+    // Call RoleSeeder
+    $this->call(RoleSeeder::class);
 
-    \App\Models\Permission::create([
-      'name' => 'can_view',
-      'label' => 'can_view',
-    ]);
+    // Call UserSeeder
+    $this->call(UserSeeder::class);
 
-    \App\Models\Permission::create([
-      'name' => 'can_create',
-      'label' => 'can_create',
-    ]);
+    // Call NavigationSeeder
+    $this->call(NavigationSeeder::class);
 
-    \App\Models\Permission::create([
-      'name' => 'can_edit',
-      'label' => 'can_edit',
-    ]);
-
-    \App\Models\Permission::create([
-      'name' => 'can_delete',
-      'label' => 'can_delete',
-    ]);
+    // Call RolePermissionSeeder
+    $this->call(RolePermissionSeeder::class);
   }
 }
