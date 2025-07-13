@@ -3,6 +3,8 @@ import { useStateContext } from "../../contexts/AuthProvider";
 import { useRef, useState, useEffect } from "react";
 import axiosClient from "../../axios-client";
 import DOMPurify from 'dompurify';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { solidIconMap } from '../../utils/solidIcons';
 
 export default function Login() {
 	const { vcode } = useParams();
@@ -13,6 +15,7 @@ export default function Login() {
 	const [message, setMessage] = useState();
 	const [errors, setErrors] = useState();
 	const [isLoading, setIsLoading] = useState();
+	const [showPassword, setShowPassword] = useState(false);
 
 	const { setToken, setUserRoutes } = useStateContext();
 
@@ -77,16 +80,16 @@ export default function Login() {
   }, []);
 
 	return (
-		<div className="col-lg-8">
+		<div className="col-lg-5">
 			<div className="card-group d-block d-md-flex row">
 				<div className="card col-md-7 p-4 mb-0">
 					<div className="card-body">
 						<form onSubmit={onSubmit} className={isValidated}>
-							<h1>Login</h1>
+							<h1>Sign In</h1>
 							<p className="text-body-secondary">Sign In to your account</p>
 							{sanitizedMessage && 
 								<div className="alert alert-success" role="alert">
-										<p>{sanitizedMessage}</p>
+									<p>{sanitizedMessage}</p>
 								</div>
 							}
 							{Object.keys(sanitizedErrors).length > 0 && 
@@ -98,23 +101,34 @@ export default function Login() {
 							}
 							<div className="input-group mb-3">
 								<span className="input-group-text">
-									<svg className="icon">
-											<use xlinkHref="assets/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
-									</svg>
+									<FontAwesomeIcon icon={solidIconMap.user} />
 								</span>
 								<input ref={emailRef} className="form-control" type="text" placeholder="Email" required/>
 							</div>
-							<div className="input-group mb-4">
+							<div className="input-group mb-2">
 								<span className="input-group-text">
-										<svg className="icon">
-												<use xlinkHref="assets/vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
-										</svg>
+									<FontAwesomeIcon icon={solidIconMap.lock} />
 								</span>
-								<input ref={passwordRef} className="form-control" type="password" placeholder="Password" required/>
+								<input
+									ref={passwordRef}
+									className="form-control"
+									type={showPassword ? "text" : "password"}
+									placeholder="Password"
+									required
+								/>
+							</div>
+							<div className="mb-3">
+								<input
+									type="checkbox"
+									id="showPassword"
+									checked={showPassword}
+									onChange={() => setShowPassword(!showPassword)}
+								/>
+								<label htmlFor="showPassword" className="show-password-label">Show Password</label>
 							</div>
 							<div className="row">
 								<div className="col-6">
-									<button className="btn btn-block btn-primary" type="submit">Login &nbsp;
+									<button className="btn btn-block btn-primary" type="submit">Sign In &nbsp;
 										{isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
 									</button>
 								</div>
@@ -123,15 +137,6 @@ export default function Login() {
 								</div>
 							</div>
 						</form>
-					</div>
-				</div>
-				<div className="card col-md-5 text-white bg-primary py-5">
-					<div className="card-body text-center">
-						<div>
-							<h2>Sign up</h2>
-							<p>Create your account for multiple platform in <br/><strong>ONE</strong> Content Management System (CMS).</p>
-							<Link to="/sign-up" className="btn btn-lg btn-outline-light mt-3" type="button">Register Now!</Link>
-						</div>
 					</div>
 				</div>
 			</div>
