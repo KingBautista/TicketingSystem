@@ -42,28 +42,12 @@ class CreateNavigationsTable extends Migration
    */
   public function down()
   {
-    // Disable foreign key checks temporarily
-    DB::statement('SET foreign_key_checks = 0');
-
-    // Drop the foreign key constraint by name if it exists
+    // Drop the foreign key constraint if it exists
     Schema::table('navigations', function (Blueprint $table) {
-      // Check if foreign key exists before attempting to drop it
-      $foreignKeyExists = DB::select("SELECT CONSTRAINT_NAME
-        FROM information_schema.KEY_COLUMN_USAGE
-        WHERE TABLE_NAME = 'navigations' AND CONSTRAINT_NAME = 'navigations_parent_id_foreign'");
-
-      if ($foreignKeyExists) {
-        $table->dropForeign('navigations_parent_id_foreign');
-      }
+      $table->dropForeign(['parent_id']);
     });
 
-    // Optionally delete all records from the 'navigations' table to avoid foreign key conflicts
-    DB::table('navigations')->delete();
-
-    // Drop the table if it exists
+    // Drop the table
     Schema::dropIfExists('navigations');
-
-    // Re-enable foreign key checks
-    DB::statement('SET foreign_key_checks = 1');
   }
 }
