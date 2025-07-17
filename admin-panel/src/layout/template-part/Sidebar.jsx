@@ -106,13 +106,7 @@ export default function Sidebar() {
     <div className="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
       <div className="sidebar-header border-bottom">
         <div className="sidebar-brand">
-          <img
-            className="sidebar-brand-full"
-            src="/assets/img/logo-here-png.png"
-            alt="PathCast"
-            width="100%"
-            height="32"
-          />
+          TICKETING SYSTEM
         </div>
       </div>
       <ul className="sidebar-nav" data-coreui="navigation">

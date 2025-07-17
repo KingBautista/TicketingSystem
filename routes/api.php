@@ -23,6 +23,21 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::get('/user', [UserController::class, 'getUser']);
 	Route::post('/logout', [AuthController::class, 'logout']);
 
+		/*
+	|--------------------------------------------------------------------------
+	| Options Management Routes
+	|--------------------------------------------------------------------------
+	*/
+	Route::prefix('options')->group(function () {
+		// media date folder
+		Route::get('/dates', [MediaController::class, 'dateFolder']);
+		// navigation-related routes
+		Route::get('/navigations', [NavigationController::class, 'getNavigations']);  // Retrieve all categories for dropdown
+		Route::get('/navigations/{id}', [NavigationController::class, 'getSubNavigations']);  // Retrieve subcategories for a specific category		
+		Route::get('/routes', [NavigationController::class, 'getRoutes']);  // Retrieve all routes
+		Route::get('/roles', [RoleController::class, 'getRoles']);  // Retrieve all routes
+	});
+
 	// User Management Routes
 	Route::prefix('user-management')->group(function () {
 		Route::prefix('users')->group(function () {

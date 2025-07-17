@@ -105,7 +105,7 @@ export default function Login() {
 								</span>
 								<input ref={emailRef} className="form-control" type="text" placeholder="Email" required/>
 							</div>
-							<div className="input-group mb-2">
+							<div className="input-group mb-3">
 								<span className="input-group-text">
 									<FontAwesomeIcon icon={solidIconMap.lock} />
 								</span>
@@ -117,14 +117,15 @@ export default function Login() {
 									required
 								/>
 							</div>
-							<div className="mb-3">
+							<div className="mb-3 d-flex align-items-center" style={{marginTop: '-0.5rem'}}>
 								<input
 									type="checkbox"
 									id="showPassword"
 									checked={showPassword}
 									onChange={() => setShowPassword(!showPassword)}
+									style={{ accentColor: '#321fdb', width: '1.1em', height: '1.1em', verticalAlign: 'middle', marginTop: '-2px' }}
 								/>
-								<label htmlFor="showPassword" className="show-password-label">Show Password</label>
+								<label htmlFor="showPassword" className="show-password-label ms-2 mb-0" style={{ fontSize: '0.97em', color: '#4f5d73', cursor: 'pointer', userSelect: 'none', verticalAlign: 'middle' }}>Show Password</label>
 							</div>
 							<div className="row">
 								<div className="col-6">
