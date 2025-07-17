@@ -21,6 +21,12 @@ const NavigationForm = lazy(() => import('./system-settings/NavigationForm'));
 const VIPs = lazy(() => import('./vip-management/VIPs'));
 const VIPForm = lazy(() => import('./vip-management/VIPForm'));
 
+// Rate Management
+const Rates = lazy(() => import('./rate-management/Rates'));
+const RateForm = lazy(() => import('./rate-management/RateForm'));
+const Discounts = lazy(() => import('./rate-management/Discounts'));
+const DiscountForm = lazy(() => import('./rate-management/DiscountForm'));
+
 // Mapping paths to components
 const routeMap = {
   '/dashboard': Dashboard,
@@ -41,6 +47,13 @@ const routeMap = {
   '/vip-management/vips': VIPs,
   '/vip-management/vips/create': VIPForm,
   '/vip-management/vips/:id': VIPForm,
+  // Rate Management
+  '/rate-management/rates': Rates,
+  '/rate-management/rates/create': RateForm,
+  '/rate-management/rates/:id': RateForm,
+  '/rate-management/discounts': Discounts,
+  '/rate-management/discounts/create': DiscountForm,
+  '/rate-management/discounts/:id': DiscountForm,
 };
 
 const Index = () => {

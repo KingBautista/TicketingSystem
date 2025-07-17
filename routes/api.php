@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\VIPController;
+use App\Http\Controllers\Api\RateController;
+use App\Http\Controllers\Api\DiscountController;
 
 /*
 |--------------------------------------------------------------------------
@@ -121,6 +123,40 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::get('/', [VIPController::class, 'getTrashed']);
 			Route::patch('/restore/{id}', [VIPController::class, 'restore']);
 			Route::delete('/{id}', [VIPController::class, 'forceDelete']);
+		});
+	});
+
+	// Rate Management Routes
+	Route::prefix('rate-management')->group(function () {
+		Route::prefix('rates')->group(function () {
+			Route::get('/', [RateController::class, 'index']);
+			Route::get('/{id}', [RateController::class, 'show'])->where('id', '[0-9]+');
+			Route::post('/', [RateController::class, 'store']);
+			Route::put('/{id}', [RateController::class, 'update'])->where('id', '[0-9]+');
+			Route::delete('/{id}', [RateController::class, 'destroy'])->where('id', '[0-9]+');
+			Route::post('/bulk/delete', [RateController::class, 'bulkDelete']);
+			Route::post('/bulk/restore', [RateController::class, 'bulkRestore']);
+			Route::post('/bulk/force-delete', [RateController::class, 'bulkForceDelete']);
+		});
+		Route::prefix('archived/rates')->group(function () {
+			Route::get('/', [RateController::class, 'getTrashed']);
+			Route::patch('/restore/{id}', [RateController::class, 'restore']);
+			Route::delete('/{id}', [RateController::class, 'forceDelete']);
+		});
+		Route::prefix('discounts')->group(function () {
+			Route::get('/', [DiscountController::class, 'index']);
+			Route::get('/{id}', [DiscountController::class, 'show'])->where('id', '[0-9]+');
+			Route::post('/', [DiscountController::class, 'store']);
+			Route::put('/{id}', [DiscountController::class, 'update'])->where('id', '[0-9]+');
+			Route::delete('/{id}', [DiscountController::class, 'destroy'])->where('id', '[0-9]+');
+			Route::post('/bulk/delete', [DiscountController::class, 'bulkDelete']);
+			Route::post('/bulk/restore', [DiscountController::class, 'bulkRestore']);
+			Route::post('/bulk/force-delete', [DiscountController::class, 'bulkForceDelete']);
+		});
+		Route::prefix('archived/discounts')->group(function () {
+			Route::get('/', [DiscountController::class, 'getTrashed']);
+			Route::patch('/restore/{id}', [DiscountController::class, 'restore']);
+			Route::delete('/{id}', [DiscountController::class, 'forceDelete']);
 		});
 	});
 });
