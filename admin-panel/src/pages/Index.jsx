@@ -17,6 +17,10 @@ const MediaForm = lazy(() => import('./content-management/MediaForm'));
 const Navigations = lazy(() => import('./system-settings/Navigations'));
 const NavigationForm = lazy(() => import('./system-settings/NavigationForm'));
 
+// VIP Management
+const VIPs = lazy(() => import('./vip-management/VIPs'));
+const VIPForm = lazy(() => import('./vip-management/VIPForm'));
+
 // Mapping paths to components
 const routeMap = {
   '/dashboard': Dashboard,
@@ -33,6 +37,10 @@ const routeMap = {
   '/system-settings/navigation/create': NavigationForm,
   '/system-settings/navigation/:id': NavigationForm,
   '/profile': Profile,
+  // VIP Management
+  '/vip-management/vips': VIPs,
+  '/vip-management/vips/create': VIPForm,
+  '/vip-management/vips/:id': VIPForm,
 };
 
 const Index = () => {

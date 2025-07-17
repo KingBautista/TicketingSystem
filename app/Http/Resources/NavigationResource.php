@@ -17,7 +17,6 @@ class NavigationResource extends JsonResource
     return [
       'id' => $this->id,
       'name' => $this->name,
-      'label' => $this->label,
       'slug' => $this->slug,
       'icon' => $this->icon,
       'parent_navigation' => $this->parent,

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\NavigationController;
+use App\Http\Controllers\Api\VIPController;
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +103,26 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	// PROFILE ROUTES
 	Route::post('/profile', [UserController::class, 'updateProfile']);
+
+	// VIP Management Routes
+	Route::prefix('vip-management')->group(function () {
+		Route::prefix('vips')->group(function () {
+			Route::get('/', [VIPController::class, 'index']);
+			Route::get('/expiring', [VIPController::class, 'expiring']);
+			Route::get('/{id}', [VIPController::class, 'show'])->where('id', '[0-9]+');
+			Route::post('/', [VIPController::class, 'store']);
+			Route::put('/{id}', [VIPController::class, 'update'])->where('id', '[0-9]+');
+			Route::delete('/{id}', [VIPController::class, 'destroy'])->where('id', '[0-9]+');
+			Route::post('/bulk/delete', [VIPController::class, 'bulkDelete']);
+			Route::post('/bulk/restore', [VIPController::class, 'bulkRestore']);
+			Route::post('/bulk/force-delete', [VIPController::class, 'bulkForceDelete']);
+		});
+		Route::prefix('archived/vips')->group(function () {
+			Route::get('/', [VIPController::class, 'getTrashed']);
+			Route::patch('/restore/{id}', [VIPController::class, 'restore']);
+			Route::delete('/{id}', [VIPController::class, 'forceDelete']);
+		});
+	});
 });
 
 Route::post('/signup', [AuthController::class, 'signup']);

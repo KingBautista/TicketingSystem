@@ -20,7 +20,7 @@ class CreateNavigationsTable extends Migration
       $table->bigIncrements('id');
       $table->string('name'); // Name of the navigation item
       $table->string('slug'); // Slug for routing or identification
-      $table->string('icon');
+      $table->string('icon')->nullable();
       $table->bigInteger('parent_id')->nullable()->unsigned(); // Parent ID for nesting
       $table->boolean('active')->default(true);
       $table->boolean('show_in_menu')->default(true);
