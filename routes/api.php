@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\VIPController;
 use App\Http\Controllers\Api\RateController;
 use App\Http\Controllers\Api\DiscountController;
+use App\Http\Controllers\Api\PromoterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -157,6 +158,27 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::get('/', [DiscountController::class, 'getTrashed']);
 			Route::patch('/restore/{id}', [DiscountController::class, 'restore']);
 			Route::delete('/{id}', [DiscountController::class, 'forceDelete']);
+		});
+	});
+
+	// Promoter Management Routes
+	Route::prefix('promoter-management')->group(function () {
+		Route::prefix('promoters')->group(function () {
+			Route::get('/', [PromoterController::class, 'index']);
+			Route::get('/{id}', [PromoterController::class, 'show'])->where('id', '[0-9]+');
+			Route::post('/', [PromoterController::class, 'store']);
+			Route::put('/{id}', [PromoterController::class, 'update'])->where('id', '[0-9]+');
+			Route::delete('/{id}', [PromoterController::class, 'destroy'])->where('id', '[0-9]+');
+			Route::post('/schedule', [PromoterController::class, 'schedule']);
+			Route::post('/manual-update', [PromoterController::class, 'manualUpdate']);
+			Route::post('/bulk/delete', [PromoterController::class, 'bulkDelete']);
+			Route::post('/bulk/restore', [PromoterController::class, 'bulkRestore']);
+			Route::post('/bulk/force-delete', [PromoterController::class, 'bulkForceDelete']);
+		});
+		Route::prefix('archived/promoters')->group(function () {
+			Route::get('/', [PromoterController::class, 'getTrashed']);
+			Route::patch('/restore/{id}', [PromoterController::class, 'restore']);
+			Route::delete('/{id}', [PromoterController::class, 'forceDelete']);
 		});
 	});
 });

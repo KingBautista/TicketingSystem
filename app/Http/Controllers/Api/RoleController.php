@@ -19,18 +19,6 @@ class RoleController extends BaseController
   }
 
   /**
-   * Display a listing of the resource.
-   */
-  public function index()
-  {
-    try {
-      return $this->service->list();
-    } catch (\Exception $e) {
-      return $this->messageService->responseError();
-    }
-  }
-
-  /**
    * Store a newly created resource in storage.
    */
   public function store(RoleRequest $request)

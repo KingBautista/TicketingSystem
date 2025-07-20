@@ -15,9 +15,8 @@ class RateResource extends JsonResource
             'description' => $this->description,
             'price' => $this->price,
             'status' => $this->status ? 'Active' : 'Inactive',
-            'created_at' => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
-            'updated_at' => $this->updated_at ? $this->updated_at->format('Y-m-d H:i:s') : null,
-            'deleted_at' => $this->deleted_at ? $this->deleted_at->format('Y-m-d H:i:s') : null,
+            'updated_at' => $this->updated_at->format('Y-m-d H:m:s'),
+            'deleted_at' => ($this->deleted_at) ? $this->deleted_at->format('Y-m-d H:m:s') : null,
         ];
     }
 } 

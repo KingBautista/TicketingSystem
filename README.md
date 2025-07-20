@@ -2,7 +2,7 @@
 
 ## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We’ve already laid the foundation — freeing you to create without sweating the small things.
+Laravel is a web application framework with expressive, elegant syntax. We've already laid the foundation — freeing you to create without sweating the small things.
 
 ## Learning Laravel
 
@@ -100,7 +100,7 @@ PathCast is a smart wayfinding and contextual advertising platform designed to h
 
 Functional Style
 
-"Guiding your way. Powering what’s next."
+"Guiding your way. Powering what's next."
 
 "Navigate smarter. Advertise better."
 
@@ -114,7 +114,7 @@ Catchy & Creative
 
 "Your route. Your relevance."
 
-Let us know if you'd prefer a tone that’s more technical, playful, or elegant!
+Let us know if you'd prefer a tone that's more technical, playful, or elegant!
 
 ## Mission Statement
 
@@ -138,3 +138,49 @@ To become the leading platform for intelligent wayfinding and contextual adverti
 
 Interested in partnership, integration, or early access?
 📧 Email us at: bautistael23@gmail.com
+
+# Promoter Management Module
+
+## Overview
+The Promoter Management module allows administrators to manage promoters, their schedules, and handle exceptions using a manual override system. This module supports full CRUD operations, advanced date-based scheduling, and manual assignment of promoters for specific days.
+
+## Features
+- Create, edit, and delete promoters
+- Schedule promoters for specific dates
+- Manual override to force a promoter assignment for a particular day
+- Bulk actions and soft delete/restore
+- Integrated with the admin panel frontend
+
+## Database Structure
+- **promoters**: Stores promoter information (name, description, status, etc.)
+- **promoter_schedules**: Stores schedule entries for each promoter (promoter_id, date, is_manual, timestamps)
+
+## Manual Override Explained
+Manual Override allows an admin to explicitly assign a promoter for a specific date, regardless of the existing schedule. This is useful for last-minute changes, special events, or exceptions.
+
+- When adding a schedule, check the "Manual Override" box to mark it as a manual assignment.
+- Only one manual override is allowed per date; adding a new manual override for the same date will replace the previous one.
+- Manual overrides take precedence over regular schedules for that date.
+
+## Backend Usage
+- **CRUD Endpoints**: `/promoter-management/promoters` (GET, POST, PUT, DELETE)
+- **Schedule Endpoint**: `/promoter-management/promoters/schedule` (POST)
+- **Manual Override Endpoint**: `/promoter-management/promoters/manual-update` (POST)
+- **Bulk/Archived Routes**: For bulk delete, restore, force delete, and archived listing
+
+## Frontend Usage
+- **Promoters List**: View all promoters, their status, and scheduled dates (manual overrides are labeled)
+- **Promoter Form**: Create/edit promoters, add schedule dates, and set manual overrides
+- **Bulk Actions**: Delete, restore, and force delete multiple promoters
+
+## Example Workflow
+1. Admin creates a promoter and schedules them for several dates.
+2. On a specific day, a different promoter needs to be assigned. Admin uses the form to add a schedule for that date and checks "Manual Override".
+3. The system ensures that the manual override is used for that date, regardless of the regular schedule.
+
+## Notes
+- Manual overrides are highlighted in the UI for clarity.
+- Only one manual override per date is allowed; the latest one replaces any previous override for that date.
+
+---
+For more details, see the code in `app/Models/Promoter.php`, `app/Models/PromoterSchedule.php`, and the corresponding frontend pages in `admin-panel/src/pages/promoter-management/`.

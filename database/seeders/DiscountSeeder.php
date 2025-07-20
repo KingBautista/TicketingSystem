@@ -9,10 +9,13 @@ class DiscountSeeder extends Seeder
 {
     public function run(): void
     {
+        Discount::truncate();
+        
         Discount::insert([
             [
                 'discount_name' => 'Student Discount',
                 'discount_value' => 20.00,
+                'discount_value_type' => 'percentage',
                 'status' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -20,6 +23,7 @@ class DiscountSeeder extends Seeder
             [
                 'discount_name' => 'Senior Discount',
                 'discount_value' => 30.00,
+                'discount_value_type' => 'amount',
                 'status' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -27,6 +31,7 @@ class DiscountSeeder extends Seeder
             [
                 'discount_name' => 'Holiday Promo',
                 'discount_value' => 15.00,
+                'discount_value_type' => 'percentage',
                 'status' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -34,6 +39,7 @@ class DiscountSeeder extends Seeder
             [
                 'discount_name' => 'VIP Discount',
                 'discount_value' => 25.00,
+                'discount_value_type' => 'amount',
                 'status' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -41,6 +47,7 @@ class DiscountSeeder extends Seeder
             [
                 'discount_name' => 'Child Discount',
                 'discount_value' => 10.00,
+                'discount_value_type' => 'percentage',
                 'status' => true,
                 'created_at' => now(),
                 'updated_at' => now(),

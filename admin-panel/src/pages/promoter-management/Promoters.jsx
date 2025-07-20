@@ -5,11 +5,10 @@ import DataTable from "../../components/table/DataTable";
 import NotificationModal from "../../components/NotificationModal";
 import ToastMessage from "../../components/ToastMessage";
 import SearchBox from "../../components/SearchBox";
-import DOMPurify from 'dompurify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { solidIconMap } from '../../utils/solidIcons';
 
-export default function Discounts() {
+export default function Promoters() {
   const [dataStatus, setDataStatus] = useState({
     totalRows: 0,
     totalTrash: 0,
@@ -17,15 +16,10 @@ export default function Discounts() {
     classTrash: null,
   });
   const [options, setOptions] = useState({
-    dataSource: '/rate-management/discounts',
+    dataSource: '/promoter-management/promoters',
     dataFields: {
-      discount_name: { name: "Discount Name", withSort: true },
-      discount_value: {
-        name: "Discount Value",
-        withSort: true,
-        render: (row) => row.discount_value_type === 'percentage' ? `${row.discount_value}%` : `₱${parseFloat(row.discount_value).toFixed(2)}`,
-      },
-      discount_value_type: { name: "Type", withSort: true },
+      name: { name: "Name", withSort: true },
+      description: { name: "Description", withSort: false },
       status: {
         name: "Status",
         withSort: true,
@@ -37,6 +31,14 @@ export default function Discounts() {
           'Active': 'Active',
           'Inactive': 'Inactive'
         }
+      },
+      schedules: {
+        name: "Schedules",
+        withSort: false,
+        render: (row) => {
+          if (!Array.isArray(row.schedules) || row.schedules.length === 0) return '—';
+          return row.schedules.map(s => `${s.date}${s.is_manual ? ' (Manual)' : ''}`).join(', ');
+        },
       },
       updated_at: { name: "Updated At", withSort: true },
     },
@@ -51,7 +53,7 @@ export default function Discounts() {
   const toastAction = useRef();
   const bulkAction = useRef();
   const [modalParams, setModalParams] = useState({
-    id: 'discountModal',
+    id: 'promoterModal',
     title: "Confirmation",
     descriptions: "Are you sure to apply these changes?",
   });
@@ -70,7 +72,7 @@ export default function Discounts() {
     tableRef.current.clearPage();
     setOptions(prevOptions => ({
       ...prevOptions,
-      dataSource: isTrash ? '/rate-management/archived/discounts' : '/rate-management/discounts',
+      dataSource: isTrash ? '/promoter-management/archived/promoters' : '/promoter-management/promoters',
     }));
   };
 
@@ -114,9 +116,9 @@ export default function Discounts() {
     }
     let url = '';
     if (action === 'restore') {
-      url = '/rate-management/discounts/bulk/restore';
+      url = '/promoter-management/promoters/bulk/restore';
     } else if (action === 'delete') {
-      url = dataStatus.classTrash ? '/rate-management/discounts/bulk/force-delete' : '/rate-management/discounts/bulk/delete';
+      url = dataStatus.classTrash ? '/promoter-management/promoters/bulk/force-delete' : '/promoter-management/promoters/bulk/delete';
     }
     axiosClient.post(url, { ids: selectedRows })
       .then(({ data }) => {
@@ -143,10 +145,10 @@ export default function Discounts() {
     <>
       <div className="card mb-2">
         <div className="card-header d-flex justify-content-between align-items-center">
-          <h4>Discounts Management</h4>
-          <Link to="/rate-management/discounts/create" className="btn btn-primary btn-sm" type="button">
+          <h4>Promoters Management</h4>
+          <Link to="/promoter-management/promoters/create" className="btn btn-primary btn-sm" type="button">
             <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
-            Add New Discount
+            Add New Promoter
           </Link>
         </div>
         <div className="card-header">

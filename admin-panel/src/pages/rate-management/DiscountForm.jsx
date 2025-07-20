@@ -15,7 +15,8 @@ export default function DiscountForm() {
   const [discount, setDiscount] = useState({
     id: null,
     discount_name: '',
-    discount_value: ''
+    discount_value: '',
+    discount_value_type: 'percentage',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isActive, setIsActive] = useState(true);
@@ -26,7 +27,10 @@ export default function DiscountForm() {
       setIsLoading(true);
       axiosClient.get(`/rate-management/discounts/${id}`)
         .then(({ data }) => {
-          setDiscount(data);
+          setDiscount({
+            ...data,
+            discount_value_type: data.discount_value_type || 'percentage',
+          });
           setIsLoading(false);
           setIsActive(Boolean(data.status));
         })
@@ -85,7 +89,24 @@ export default function DiscountForm() {
             inputClass="col-sm-12 col-md-9"
           />
           <Field
-            label="Discount Value"
+            label="Discount Value Type"
+            required={true}
+            inputComponent={
+              <select
+                className="form-select"
+                value={discount.discount_value_type}
+                onChange={ev => setDiscount({ ...discount, discount_value_type: ev.target.value })}
+                required
+              >
+                <option value="percentage">Percentage (%)</option>
+                <option value="amount">Exact Amount</option>
+              </select>
+            }
+            labelClass="col-sm-12 col-md-3"
+            inputClass="col-sm-12 col-md-9"
+          />
+          <Field
+            label={discount.discount_value_type === 'percentage' ? 'Discount Value (%)' : 'Discount Value (Amount)'}
             required={true}
             inputComponent={
               <input

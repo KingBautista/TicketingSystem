@@ -27,6 +27,10 @@ const RateForm = lazy(() => import('./rate-management/RateForm'));
 const Discounts = lazy(() => import('./rate-management/Discounts'));
 const DiscountForm = lazy(() => import('./rate-management/DiscountForm'));
 
+// Promoter Management
+const Promoters = lazy(() => import('./promoter-management/Promoters'));
+const PromoterForm = lazy(() => import('./promoter-management/PromoterForm'));
+
 // Mapping paths to components
 const routeMap = {
   '/dashboard': Dashboard,
@@ -54,6 +58,10 @@ const routeMap = {
   '/rate-management/discounts': Discounts,
   '/rate-management/discounts/create': DiscountForm,
   '/rate-management/discounts/:id': DiscountForm,
+  // Promoter Management
+  '/promoter-management/promoters': Promoters,
+  '/promoter-management/promoters/create': PromoterForm,
+  '/promoter-management/promoters/:id': PromoterForm,
 };
 
 const Index = () => {

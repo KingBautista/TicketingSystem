@@ -7,11 +7,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('discounts', function (Blueprint $table) {
+        Schema::create('promoters', function (Blueprint $table) {
             $table->id();
-            $table->string('discount_name');
-            $table->decimal('discount_value', 5, 2);
-            $table->string('discount_value_type')->default('percentage');
+            $table->string('name');
+            $table->text('description')->nullable();
             $table->boolean('status')->default(true);
             $table->timestamps();
             $table->softDeletes();
@@ -20,6 +19,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('discounts');
+        Schema::dropIfExists('promoters');
     }
 }; 

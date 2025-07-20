@@ -34,7 +34,6 @@ export default function Rates() {
           'Inactive': 'Inactive'
         }
       },
-      created_at: { name: "Created At", withSort: true },
       updated_at: { name: "Updated At", withSort: true },
     },
     softDelete: true,

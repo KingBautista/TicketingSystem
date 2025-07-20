@@ -6,14 +6,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Discount extends Model
+class Promoter extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'discount_name',
-        'discount_value',
-        'discount_value_type',
+        'name',
+        'description',
         'status',
     ];
+
+    public function schedules()
+    {
+        return $this->hasMany(PromoterSchedule::class);
+    }
 } 
