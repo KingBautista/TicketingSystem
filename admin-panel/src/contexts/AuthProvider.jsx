@@ -1,9 +1,10 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const StateContext = createContext({
   user: null,
   token: null,
   userRoutes: null,
+  loading: true,
   setUser: () => {},
   setToken: () => {},
   setUserRoutes: () => {}
@@ -21,6 +22,12 @@ export const AuthProvider = ({ children }) => {
       return null;
     }
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate async check (could be replaced with real API call)
+    setLoading(false);
+  }, []);
 
   const setToken = (token) => {
     _setToken(token);
@@ -45,6 +52,7 @@ export const AuthProvider = ({ children }) => {
       user,
       token,
       userRoutes,
+      loading,
       setUser,
       setToken,
       setUserRoutes

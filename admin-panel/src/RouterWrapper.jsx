@@ -1,3 +1,6 @@
+// IMPORTANT: Always call hooks (useState, useEffect, useContext, etc) at the top level of your component.
+// Never call hooks inside conditions, loops, or after returns. This prevents hook order bugs.
+
 import { useRoutes, Navigate } from 'react-router-dom';
 import { useStateContext } from './contexts/AuthProvider.jsx';
 import { useEffect, useState } from 'react';
@@ -26,44 +29,25 @@ const generateUserRoutes = (routes) => {
 };
 
 const LayoutProvider = ({ children }) => {
-  const [layout, setLayout] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const userRoleId = localStorage.getItem('user_role_id');
-    if (userRoleId === '4') {
-      setLayout(<CashierLayout />);
-    } else {
-      setLayout(<DefaultLayout />);
-    }
-    setLoading(false);
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return layout && React.cloneElement(layout, {}, children);
+  const userRoleId = localStorage.getItem('user_role_id');
+  const Layout = userRoleId === '4' ? CashierLayout : DefaultLayout;
+  return <Layout>{children}</Layout>;
 };
 
 const RedirectTo = () => {
-  const [redirectTo, setRedirectTo] = useState(null);
-
-  useEffect(() => {
-    const userRoleId = localStorage.getItem('user_role_id');
-    if (userRoleId === '4') {
-      setRedirectTo(<Navigate to="/cashier" />);
-    } else {
-      setRedirectTo(<Navigate to="/dashboard" />);
-    }
-  }, []);
-
-  return redirectTo;
+  const userRoleId = localStorage.getItem('user_role_id');
+  return userRoleId === '4'
+    ? <Navigate to="/cashier" />
+    : <Navigate to="/dashboard" />;
 };
 
 export default function RouterWrapper() {
-  const { token, userRoutes } = useStateContext();
+  const { token, userRoutes, loading } = useStateContext();
   const dynamicRoutes = generateUserRoutes(userRoutes || []);
+
+  if (loading) {
+    return null; // or a spinner if you want
+  }
 
   const routes = [
     {

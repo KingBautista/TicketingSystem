@@ -53,11 +53,13 @@ export default function Login() {
 		.then(({data}) => {
 			setToken(data.token);
 			setUserRoutes(data.user.user_routes || []);
-			localStorage.setItem('theme', data.user?.theme || 'light');
-			localStorage.setItem('user_role_id', data.user.user_role_id);
 			if (data.user.user_role_id == 4) {
+				localStorage.setItem('theme', 'light');
+				localStorage.setItem('user_role_id', data.user.user_role_id);
 				navigate('/cashier');
 			} else {
+				localStorage.setItem('theme', data.user?.theme || 'light');
+				localStorage.setItem('user_role_id', data.user.user_role_id);
 				navigate('/dashboard');
 			}
 		})
@@ -82,6 +84,7 @@ export default function Login() {
 
 	useEffect(() => {
     localStorage.clear();
+    localStorage.setItem('theme', 'light');
   }, []);
 
 	return (

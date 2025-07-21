@@ -62,4 +62,20 @@ class PromoterController extends BaseController
             return $this->messageService->responseError();
         }
     }
+
+    public function getPromoterOfTheDay(Request $request)
+    {
+        try {
+            $date = $request->input('date', date('Y-m-d'));
+            $schedule = \App\Models\PromoterSchedule::where('date', $date)
+                ->orderByDesc('is_manual') // manual override first
+                ->first();
+            if ($schedule && $schedule->promoter) {
+                return new \App\Http\Resources\PromoterResource($schedule->promoter);
+            }
+            return response()->json(['data' => null]);
+        } catch (\Exception $e) {
+            return $this->messageService->responseError();
+        }
+    }
 } 

@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\RateController;
 use App\Http\Controllers\Api\DiscountController;
 use App\Http\Controllers\Api\PromoterController;
 use App\Http\Controllers\Api\SalesReportController;
+use App\Http\Controllers\Api\CashierTransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -139,6 +140,7 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::post('/bulk/delete', [RateController::class, 'bulkDelete']);
 			Route::post('/bulk/restore', [RateController::class, 'bulkRestore']);
 			Route::post('/bulk/force-delete', [RateController::class, 'bulkForceDelete']);
+			Route::get('/dropdown', [RateController::class, 'dropdown']);
 		});
 		Route::prefix('archived/rates')->group(function () {
 			Route::get('/', [RateController::class, 'getTrashed']);
@@ -175,6 +177,7 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::post('/bulk/delete', [PromoterController::class, 'bulkDelete']);
 			Route::post('/bulk/restore', [PromoterController::class, 'bulkRestore']);
 			Route::post('/bulk/force-delete', [PromoterController::class, 'bulkForceDelete']);
+			Route::get('/of-the-day', [PromoterController::class, 'getPromoterOfTheDay']);
 		});
 		Route::prefix('archived/promoters')->group(function () {
 			Route::get('/', [PromoterController::class, 'getTrashed']);
@@ -187,6 +190,11 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::prefix('reports')->group(function () {
 		Route::get('/sales', [SalesReportController::class, 'index']);
 		Route::post('/sales/export', [SalesReportController::class, 'export']);
+	});
+
+	// Cashier Routes
+	Route::prefix('cashier')->group(function () {
+		Route::post('/transactions', [CashierTransactionController::class, 'store']);
 	});
 });
 

@@ -7,7 +7,9 @@ use App\Http\Requests\RateRequest;
 use App\Services\RateService;
 use App\Services\MessageService;
 use App\Models\Rate;
+use App\Models\Discount;
 use App\Http\Resources\RateResource;
+use App\Http\Resources\DiscountResource;
 
 class RateController extends BaseController
 {
@@ -34,6 +36,21 @@ class RateController extends BaseController
             $rate = Rate::findOrFail($id);
             $rate->update($data);
             return new RateResource($rate);
+        } catch (\Exception $e) {
+            return $this->messageService->responseError();
+        }
+    }
+
+    // Dropdown endpoint for rates and discounts
+    public function dropdown()
+    {
+        try {
+            $rates = Rate::where('status', 1)->get();
+            $discounts = Discount::where('status', 1)->get();
+            return response()->json([
+                'rates' => RateResource::collection($rates),
+                'discounts' => DiscountResource::collection($discounts),
+            ]);
         } catch (\Exception $e) {
             return $this->messageService->responseError();
         }
