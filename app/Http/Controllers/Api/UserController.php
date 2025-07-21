@@ -23,7 +23,7 @@ class UserController extends BaseController
 
   public function store(StoreUserRequest $request)
   {
-    try {
+    // try {
       $data = $request->validated();
 
       $salt = PasswordHelper::generateSalt();
@@ -40,8 +40,8 @@ class UserController extends BaseController
       ];
 
       // Handle user_role_id if provided
-      if (isset($data['user_role_id'])) {
-        $userData['user_role_id'] = $data['user_role_id'];
+      if (isset($data['user_role']['id'])) {
+        $userData['user_role_id'] = $data['user_role']['id'];
       }
 
       $meta_details = [];
@@ -54,9 +54,9 @@ class UserController extends BaseController
       $user = $this->service->storeWithMeta($userData, $meta_details);
       
       return response($user, 201);
-    } catch (\Exception $e) {
-      return $this->messageService->responseError();
-    }
+    // } catch (\Exception $e) {
+    //   return $this->messageService->responseError();
+    // }
   }
 
   public function update(UpdateUserRequest $request, Int $id)
@@ -72,8 +72,8 @@ class UserController extends BaseController
       ];
 
       // Handle user_role_id if provided
-      if (isset($data['user_role_id'])) {
-        $upData['user_role_id'] = $data['user_role_id'];
+      if (isset($data['user_role']['id'])) {
+        $upData['user_role_id'] = $data['user_role']['id'];
       }
 
       if (isset($data['user_pass'])) {
@@ -130,8 +130,8 @@ class UserController extends BaseController
       ];
 
       // Handle user_role_id if provided
-      if (isset($data['user_role_id'])) {
-        $upData['user_role_id'] = $data['user_role_id'];
+      if (isset($data['user_role']['id'])) {
+        $upData['user_role_id'] = $data['user_role']['id'];
       }
 
       if (isset($data['user_pass'])) {

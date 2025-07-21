@@ -31,6 +31,15 @@ const DiscountForm = lazy(() => import('./rate-management/DiscountForm'));
 const Promoters = lazy(() => import('./promoter-management/Promoters'));
 const PromoterForm = lazy(() => import('./promoter-management/PromoterForm'));
 
+// Reports
+const SalesReports = lazy(() => import('./reports/SalesReports'));
+
+// Cashier Portal
+const CashierLayout = lazy(() => import('../layout/CashierLayout'));
+const CashierOpenCash = lazy(() => import('./cashier/OpenCash'));
+const CashierCloseCash = lazy(() => import('./cashier/CloseCash'));
+const CashierTransaction = lazy(() => import('./cashier/Transaction'));
+
 // Mapping paths to components
 const routeMap = {
   '/dashboard': Dashboard,
@@ -62,6 +71,13 @@ const routeMap = {
   '/promoter-management/promoters': Promoters,
   '/promoter-management/promoters/create': PromoterForm,
   '/promoter-management/promoters/:id': PromoterForm,
+  // Reports
+  '/reports/sales': SalesReports,
+  // Cashier Portal (nested layout)
+  '/cashier': CashierLayout,
+  '/cashier/open-cash': CashierOpenCash,
+  '/cashier/close-cash': CashierCloseCash,
+  '/cashier/transaction': CashierTransaction,
 };
 
 const Index = () => {

@@ -24,16 +24,20 @@ class StoreUserRequest extends FormRequest
 		return [
 			"user_login" => "required|string|unique:users,user_login",
 			"user_email" => "required|email|unique:users,user_email",
-			'user_role_id' => [
+			'user_role' => [
+				'required'
+			],
+			'user_role.id' => [
 				'required',
 				'integer',
 				'exists:roles,id',
-				function ($attribute, $value, $fail) {
-					// Optional: reject certain roles by ID
+				function (
+					$attribute, $value, $fail
+				) {
 					if ($value == 1) {
 						return $fail("The selected role is not allowed.");
 					}
-				}
+				},
 			],
 			"user_pass" => [
 				'required',
@@ -54,8 +58,23 @@ class StoreUserRequest extends FormRequest
 			"user_email.email" => "The email field must be a valid email address.",
 			"user_email.unique" => "The email has already been taken.",
 			"user_pass.required" => "The password field is required.",
-			"user_role_id.required" => "The role field is required.",
-			"user_role_id.exists" => "The selected role is invalid.",
+			"user_role.required" => "The role field is required.",
+			"user_role.exists" => "The selected role is invalid.",
 		];
+	}
+
+	/**
+	 * Prepare the data for validation.
+	 */
+	protected function prepareForValidation()
+	{
+		if (is_string($this->user_role)) {
+			$decoded = json_decode($this->user_role, true);
+			if (json_last_error() === JSON_ERROR_NONE) {
+				$this->merge([
+					'user_role' => $decoded
+				]);
+			}
+		}
 	}
 }

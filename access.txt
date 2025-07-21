@@ -89,3 +89,7 @@ port: 5432
 
 pgAgent Service Account
 localhost
+
+
+sale@gmail.com
+@X*5hH!oV207&*0

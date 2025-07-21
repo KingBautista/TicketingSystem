@@ -132,7 +132,7 @@ export default function UserForm() {
               <input
                 className="form-control"
                 type="text"
-                value={user?.user_details?.first_name || ''}
+                value={user.first_name}
                 onChange={ev => setUser({ ...user, first_name: DOMPurify.sanitize(ev.target.value) })}
               />
             }
@@ -146,7 +146,7 @@ export default function UserForm() {
               <input
                 className="form-control"
                 type="text"
-                value={user?.user_details?.last_name || ''}
+                value={user.last_name}
                 onChange={ev => setUser({ ...user, last_name: DOMPurify.sanitize(ev.target.value) })}
               />
             }

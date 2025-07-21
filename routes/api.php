@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\VIPController;
 use App\Http\Controllers\Api\RateController;
 use App\Http\Controllers\Api\DiscountController;
 use App\Http\Controllers\Api\PromoterController;
+use App\Http\Controllers\Api\SalesReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -180,6 +181,12 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::patch('/restore/{id}', [PromoterController::class, 'restore']);
 			Route::delete('/{id}', [PromoterController::class, 'forceDelete']);
 		});
+	});
+
+	// Sales Reports Routes
+	Route::prefix('reports')->group(function () {
+		Route::get('/sales', [SalesReportController::class, 'index']);
+		Route::post('/sales/export', [SalesReportController::class, 'export']);
 	});
 });
 

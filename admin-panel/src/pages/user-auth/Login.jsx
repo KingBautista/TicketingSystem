@@ -51,10 +51,15 @@ export default function Login() {
 
 		axiosClient.post('/login', payload)
 		.then(({data}) => {
-      setToken(data.token);
-      setUserRoutes(data.user.user_routes || []);
-      localStorage.setItem('theme', data.user?.theme || 'light');
-      navigate('/dashboard'); // This will now render properly after state update
+			setToken(data.token);
+			setUserRoutes(data.user.user_routes || []);
+			localStorage.setItem('theme', data.user?.theme || 'light');
+			localStorage.setItem('user_role_id', data.user.user_role_id);
+			if (data.user.user_role_id == 4) {
+				navigate('/cashier');
+			} else {
+				navigate('/dashboard');
+			}
 		})
 		.catch((errors) => {
 			const response = errors.response;

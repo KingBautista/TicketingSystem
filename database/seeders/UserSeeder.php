@@ -12,6 +12,9 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        User::truncate();
+        UserMeta::truncate();
+
         // Get Developer Account role
         $developerRole = Role::where('name', 'Developer Account')->first();
         
@@ -46,5 +49,27 @@ class UserSeeder extends Seeder
 
         // Save user meta data
         $developerUser->saveUserMeta($userMetaData);
+
+        // Add sales user with role id = 4
+        $salesSalt = PasswordHelper::generateSalt();
+        $salesPassword = PasswordHelper::generatePassword($salesSalt, 'password123');
+        $salesUser = User::create([
+            'user_login' => 'sales',
+            'user_email' => 'sales@example.com',
+            'user_pass' => $salesPassword,
+            'user_salt' => $salesSalt,
+            'user_status' => 1,
+            'user_activation_key' => null,
+            'remember_token' => null,
+            'user_role_id' => 4,
+        ]);
+        $salesMetaData = [
+            'first_name' => 'Sales',
+            'last_name' => 'User',
+            'nickname' => 'Sales',
+            'biography' => 'Sales account.',
+            'theme' => 'light',
+        ];
+        $salesUser->saveUserMeta($salesMetaData);
     }
 } 

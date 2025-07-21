@@ -57,7 +57,12 @@ const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-sm-2', inpu
               className="form-control"
               type="text"
               value={newPassword}
-              readOnly
+              onChange={ev => {
+                const val = DOMPurify.sanitize(ev.target.value);
+                setNewPassword(val);
+                setUser({ ...user, user_pass: val });
+              }}
+              autoComplete="new-password"
             />
             <button className="btn btn-primary btn-sm" type="button" onClick={handleRegenPassword}>
               <svg className="icon">

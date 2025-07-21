@@ -54,7 +54,7 @@ class UserService extends BaseService
       $user->saveUserMeta($metaData);
 
     $user_key = $user->user_activation_key;
-    $this->sendVerifyEmail($user, $user_key);
+    // $this->sendVerifyEmail($user, $user_key);
 
     return new UserResource($user);
   }
@@ -68,7 +68,7 @@ class UserService extends BaseService
     if(count($metaData))
       $user->saveUserMeta($metaData);
 
-    $this->sendForgotPasswordEmail($user);
+    // $this->sendForgotPasswordEmail($user);
 
     return new UserResource($user);
   }

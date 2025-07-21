@@ -1,5 +1,7 @@
 import { useRoutes, Navigate } from 'react-router-dom';
 import { useStateContext } from './contexts/AuthProvider.jsx';
+import { useEffect, useState } from 'react';
+import React from 'react';
 
 import DefaultLayout from './layout/DefaultLayout.jsx';
 import GuestLayout from './layout/GuestLayout.jsx';
@@ -7,6 +9,7 @@ import Login from './pages/user-auth/Login.jsx';
 import Register from './pages/user-auth/Register.jsx';
 import ForgotPassword from './pages/user-auth/ForgotPassword.jsx';
 import Index from './pages/Index.jsx';
+import CashierLayout from './layout/CashierLayout.jsx';
 
 const generateUserRoutes = (routes) => {
   if (!Array.isArray(routes)) return [];
@@ -22,6 +25,42 @@ const generateUserRoutes = (routes) => {
   });
 };
 
+const LayoutProvider = ({ children }) => {
+  const [layout, setLayout] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const userRoleId = localStorage.getItem('user_role_id');
+    if (userRoleId === '4') {
+      setLayout(<CashierLayout />);
+    } else {
+      setLayout(<DefaultLayout />);
+    }
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return layout && React.cloneElement(layout, {}, children);
+};
+
+const RedirectTo = () => {
+  const [redirectTo, setRedirectTo] = useState(null);
+
+  useEffect(() => {
+    const userRoleId = localStorage.getItem('user_role_id');
+    if (userRoleId === '4') {
+      setRedirectTo(<Navigate to="/cashier" />);
+    } else {
+      setRedirectTo(<Navigate to="/dashboard" />);
+    }
+  }, []);
+
+  return redirectTo;
+};
+
 export default function RouterWrapper() {
   const { token, userRoutes } = useStateContext();
   const dynamicRoutes = generateUserRoutes(userRoutes || []);
@@ -29,10 +68,11 @@ export default function RouterWrapper() {
   const routes = [
     {
       path: '/',
-      element: token ? <DefaultLayout /> : <Navigate to="/login" />,
+      element: token ? <LayoutProvider /> : <Navigate to="/login" />,
       children: [
-        { path: '/', element: <Navigate to="/dashboard" /> },
+        { path: '/', element: <RedirectTo /> },
         { path: '/dashboard', element: <Index /> },
+        { path: '/cashier', element: <Index /> },
         ...dynamicRoutes,
         { path: '/profile', element: <Index /> },
       ],

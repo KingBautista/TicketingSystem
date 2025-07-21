@@ -17,6 +17,7 @@ class AuthResource extends JsonResource
 		return [
       'id' => $this->id,
       'user_login' => $this->user_login,
+      'user_role_id' => $this->user_role_id,
       'first_name' => (isset($this->user_details['first_name'])) ? $this->user_details['first_name'] : '',
       'last_name' => (isset($this->user_details['last_name'])) ? $this->user_details['last_name'] : '',
       'attachment_file' => (isset($this->user_details['attachment_file'])) ? $this->user_details['attachment_file'] : '',
