@@ -22,6 +22,7 @@
     "html-entities": "^2.5.2",
     "npm": "^10.8.3",
     "prop-types": "^15.8.1",
+    "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-doc-viewer": "^0.1.14",
     "react-dom": "^19.0.0",

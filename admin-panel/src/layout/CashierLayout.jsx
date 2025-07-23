@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ToastMessage from '../components/ToastMessage';
+import ToastMessage from '../components/ToastMessage.jsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { solidIconMap } from '../utils/solidIcons';
+import { solidIconMap } from '../utils/solidIcons.js';
 import { useStateContext } from '../contexts/AuthProvider.jsx';
-import axiosClient from '../axios-client';
+import axiosClient from '../axios-client.js';
+import { QRCodeCanvas } from 'qrcode.react';
 
 // Add brand logo if available
 const BRAND_LOGO = null; // e.g. '/assets/brand/coreui.svg';
@@ -144,6 +145,17 @@ export default function CashierLayout() {
     setToken(null);
     navigate('/login');
   };
+
+  const now = new Date().toISOString();
+  const tickets = Array.from({ length: quantity }).map((_, i) => ({
+    promoter: promoter?.name || 'Default Promoter',
+    date: now,
+    note: 'Single use only',
+    rate: rate.name,
+    ticketNumber: i + 1,
+  }));
+
+  const qrValues = tickets.map(t => JSON.stringify(t));
 
   // Restore modal/card styles
   const modalStyle = {
@@ -408,10 +420,48 @@ export default function CashierLayout() {
             </div>
           </div>
           {/* Receipt Preview: thermal style, matches printout */}
-          <div style={{ width: 300, minWidth: 300, maxWidth: 300, fontFamily: 'Courier New, Courier, monospace', background: '#fff', color: '#000', borderRadius: 8, boxShadow: '0 8px 32px rgba(50,31,219,0.10)', padding: 0, margin: 0, marginTop: 8, marginBottom: 8 }}>
+          <div style={{
+                width: 300,
+                minWidth: 300,
+                maxWidth: 300,
+                fontFamily: 'Courier New, Courier, monospace',
+                background: '#fff',
+                color: '#000',
+                borderRadius: 8,
+                boxShadow: '0 8px 32px rgba(50,31,219,0.10)',
+                padding: 0,
+                margin: 0,
+                marginTop: 8,
+                marginBottom: 8,
+                maxHeight: '98vh', // Match main layout height
+                overflowY: 'auto'   // Enable vertical scrolling
+              }}
+            >
             <style>{thermalPrintStyles}</style>
             <div style={{ padding: '12px 8px', fontSize: 15, lineHeight: 1.5 }}>
               <div style={{ textAlign: 'center', fontWeight: 'bold', letterSpacing: 1, marginBottom: 8 }}>RECEIPT</div>
+                  
+              {/* QR Code Block */}
+              {qrValues.map((val, idx) => (
+                <div key={idx} style={{ marginBottom: '16px' }}>
+                  <div style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 4 }}>
+                    Promoter: {tickets[idx].promoter}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <QRCodeCanvas value={val} size={128} />
+                  </div>
+                  <div style={{ textAlign: 'center', fontSize: 12, marginTop: 4 }}>
+                    {new Date(tickets[idx].date).toLocaleString()}<br />
+                    <em>Single use only</em>
+                  </div>
+                  {idx < qrValues.length - 1 && (
+                    <div style={{ borderTop: '1px dashed #000', margin: '12px 0' }} />
+                  )}
+                </div>
+              ))}
+
+              <div style={{ borderTop: '1px dashed #000', margin: '12px 0' }} />
+                  
               <div><span style={{ fontWeight: 'bold' }}>PROMOTER:</span> {promoter?.name || 'N/A'}</div>
               <div><span style={{ fontWeight: 'bold' }}>DATE:</span> {new Date().toLocaleString()}</div>
               <div><span style={{ fontWeight: 'bold' }}>RATE:</span> {rate.name}</div>
@@ -439,6 +489,7 @@ export default function CashierLayout() {
           </div>
         </div>
       )}
+      
       {/* Close Cash Modal */}
       {showCloseCash && (
         <div className="modal d-block" tabIndex="-1" style={{ background: 'rgba(50,31,219,0.10)' }}>

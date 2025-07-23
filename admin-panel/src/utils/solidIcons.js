@@ -27,10 +27,11 @@ import {
   faArrowRight,
   faArrowLeft,
   faFileAlt,
-  faCashRegister,
-  faMoneyBill,
-  faPercent,
-  faPrint
+  faChartBar,
+  faClock,
+  faFileExport,
+  faRotateLeft,
+  faRotateRight
 } from '@fortawesome/free-solid-svg-icons';
 
 export const solidIconMap = {
@@ -60,8 +61,9 @@ export const solidIconMap = {
   arrowright: faArrowRight,
   arrowleft: faArrowLeft,
   file: faFileAlt,
-  cashRegister: faCashRegister,
-  moneyBill: faMoneyBill,
-  percent: faPercent,
-  print: faPrint
+  chart: faChartBar,
+  clock: faClock,
+  fileexport: faFileExport,
+  rotateLeft: faRotateLeft,
+  rotateRight: faRotateRight
 };
