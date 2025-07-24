@@ -1,18 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ToastMessage from '../components/ToastMessage.jsx';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { solidIconMap } from '../utils/solidIcons.js';
 import { useStateContext } from '../contexts/AuthProvider.jsx';
 import axiosClient from '../axios-client.js';
-import { QRCodeCanvas } from 'qrcode.react';
-
-// Add brand logo if available
-const BRAND_LOGO = null; // e.g. '/assets/brand/coreui.svg';
-const BRAND_NAME = 'PathCast';
-
-// Add promoter of the day (hardcoded for now, e.g., 'Jane Smith')
-const PROMOTER_NAME = 'Jane Smith';
+import OpenCashModal from '../pages/cashier/OpenCashModal.jsx';
+import PrintOpenCashModal from '../pages/cashier/PrintOpenCashModal.jsx';
+import TransactionCard from '../pages/cashier/TransactionCard.jsx';
+import ReceiptPreview from '../pages/cashier/ReceiptPreview.jsx';
+import CloseCashModal from '../pages/cashier/CloseCashModal.jsx';
+import PrintCloseCashModal from '../pages/cashier/PrintCloseCashModal.jsx';
 
 export default function CashierLayout() {
   const [showOpenCash, setShowOpenCash] = useState(true);
@@ -36,6 +32,7 @@ export default function CashierLayout() {
   const [rates, setRates] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [promoter, setPromoter] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
 
   // Fetch rates, discounts, and promoter of the day on mount
   useEffect(() => {
@@ -277,297 +274,89 @@ export default function CashierLayout() {
       <style>{printStyles}</style>
       <ToastMessage ref={toastRef} />
       {/* Open Cash Modal */}
-      {showOpenCash && (
-        <div className="modal d-block" tabIndex="-1" style={{ background: 'rgba(50,31,219,0.10)' }}>
-          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 400 }}>
-            <div className="modal-content" style={modalStyle}>
-              {/* Promoter Row */}
-              <div style={{ background: '#f7f7fa', padding: '0.25rem 1rem', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottom: '1px solid #eee', fontWeight: 600, fontSize: 13, color: '#ffb400', letterSpacing: 0.5, whiteSpace: 'nowrap', minHeight: 28 }}>
-                Promoter of the Day: <span style={{ color: '#321fdb', fontWeight: 700, marginLeft: 8 }}>{PROMOTER_NAME}</span>
-              </div>
-              <div className="modal-header" style={{ ...headerStyle, flexDirection: 'row', justifyContent: 'space-between', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-                <h5 className="modal-title mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16 }}>Open Cash Session</h5>
-              </div>
-              <div className="modal-body p-3">
-                <form onSubmit={handleOpenCash}>
-                  <div className="mb-3">
-                    <label className="form-label">Cash on Hand</label>
-                    <input
-                      type="number"
-                      className="form-control form-control-lg"
-                      value={cashOnHand}
-                      onChange={e => setCashOnHand(e.target.value)}
-                      min="0"
-                      required
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="form-label">Confirm Password</label>
-                    <input
-                      type="password"
-                      className="form-control form-control-lg"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="d-flex justify-content-end">
-                    <button className="btn btn-primary btn-sm px-3" type="submit" style={{ background: '#321fdb', border: 'none', fontSize: 15, height: 32, minHeight: 32 }}>
-                      <FontAwesomeIcon icon={solidIconMap.cashRegister} className="me-2" />
-                      Open Cash
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <OpenCashModal
+        show={showOpenCash}
+        cashOnHand={cashOnHand}
+        password={password}
+        setCashOnHand={setCashOnHand}
+        setPassword={setPassword}
+        handleOpenCash={handleOpenCash}
+        PROMOTER_NAME={promoter?.name || 'N/A'}
+        headerStyle={headerStyle}
+        modalStyle={modalStyle}
+      />
       {/* Print Modal for Open Cash */}
-      {showPrintOpen && (
-        <div className="modal d-block cashier-print-modal" tabIndex="-1" style={{ background: 'rgba(50,31,219,0.10)' }}>
-          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 400 }}>
-            <div className="modal-content" style={modalStyle}>
-              {/* Promoter Row */}
-              <div style={{ background: '#f7f7fa', padding: '0.25rem 1rem', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottom: '1px solid #eee', fontWeight: 600, fontSize: 13, color: '#ffb400', letterSpacing: 0.5, whiteSpace: 'nowrap', minHeight: 28 }}>
-                Promoter of the Day: <span style={{ color: '#321fdb', fontWeight: 700, marginLeft: 8 }}>{PROMOTER_NAME}</span>
-              </div>
-              <div className="modal-header" style={{ ...headerStyle, flexDirection: 'row', justifyContent: 'space-between', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-                <h5 className="modal-title mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16 }}>Open Cash Receipt</h5>
-                <button type="button" className="btn-close" onClick={handlePrintOpenClose}></button>
-              </div>
-              <div className="modal-body text-center p-3">
-                <h6 className="mb-3">Cashier: John Doe</h6>
-                <div>Date: {new Date().toLocaleString()}</div>
-                <div>Cash on Hand: <strong>₱{parseFloat(cashOnHand).toFixed(2)}</strong></div>
-                <div>Session ID: #123456</div>
-                {divider}
-                <div className="text-muted">--- End of Receipt ---</div>
-              </div>
-              <div className="modal-footer d-flex justify-content-between">
-                <button className="btn btn-outline-secondary btn-sm px-3" style={{ height: 32, minHeight: 32, fontSize: 15 }} onClick={handlePrintOpenClose}>Close</button>
-                <button className="btn btn-primary btn-sm px-3" style={{ height: 32, minHeight: 32, fontSize: 15 }} onClick={() => window.print()}><FontAwesomeIcon icon={solidIconMap.print} className="me-2" />Print</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <PrintOpenCashModal
+        show={showPrintOpen}
+        cashOnHand={cashOnHand}
+        onClose={handlePrintOpenClose}
+        promoterName={promoter?.name || 'N/A'}
+        headerStyle={headerStyle}
+        modalStyle={modalStyle}
+        divider={divider}
+        cashierName={'John Doe'}
+        sessionId={sessionId ? String(sessionId) : 'N/A'}
+      />
       {/* Transaction Page */}
       {showTransaction && !showCloseCash && (
         <div className="d-flex flex-row gap-4 w-100 justify-content-center align-items-start" style={{ maxWidth: 900 }}>
-          {/* Transaction Card */}
-          <div className="card shadow-lg" style={{ width: 400, borderRadius: 18, border: 'none', background: '#fff', maxHeight: '98vh', overflow: 'hidden' }}>
-            {/* Promoter Row */}
-            <div style={{ background: '#f7f7fa', padding: '0.25rem 1rem', borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottom: '1px solid #eee', fontWeight: 600, fontSize: 13, color: '#ffb400', letterSpacing: 0.5, whiteSpace: 'nowrap', minHeight: 28 }}>
-              Promoter of the Day: <span style={{ color: '#321fdb', fontWeight: 700, marginLeft: 8 }}>{promoter?.name || 'N/A'}</span>
-            </div>
-            <div className="card-header d-flex align-items-center" style={{ ...headerStyle, flexDirection: 'row', justifyContent: 'space-between', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-              <h4 className="mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16 }}>Ticket Transaction</h4>
-              <button className="btn btn-warning btn-sm px-3" onClick={handleShowCloseCash} style={{ background: '#ffb400', border: 'none', color: '#321fdb', fontWeight: 600, whiteSpace: 'nowrap', height: 32, minHeight: 32, fontSize: 15 }}>
-                <FontAwesomeIcon icon={solidIconMap.moneyBill} className="me-2" />
-                Close Cash
-              </button>
-            </div>
-            <div className="card-body p-3">
-              <form onSubmit={handleSaveTransaction}>
-                <div className="mb-3">
-                  <label className="form-label">Ticket Quantity</label>
-                  <input type="number" className="form-control form-control-lg" min="1" value={quantity} onChange={e => setQuantity(Number(e.target.value))} required />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Select Rate</label>
-                  <select className="form-select form-select-lg" value={rateId} onChange={e => setRateId(Number(e.target.value))}>
-                    {rates.map(r => <option key={r.id} value={r.id}>{r.name} (₱{r.price})</option>)}
-                  </select>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Discounts</label>
-                  <div className="d-flex flex-wrap gap-2 mb-2" style={{ overflowX: 'auto' }}>
-                    {discounts.map(d => (
-                      <button
-                        type="button"
-                        className="btn btn-outline-info btn-sm"
-                        key={d.id}
-                        onClick={() => handleAddDiscount(d)}
-                        disabled={appliedDiscounts.some(ad => ad.id === d.id)}
-                        style={{ fontSize: 13, padding: '0.25em 0.7em', whiteSpace: 'nowrap', minWidth: 0 }}
-                      >
-                        <FontAwesomeIcon icon={solidIconMap.percent} className="me-1" />
-                        {d.discount_name} ({d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `₱${d.discount_value}`})
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Total Amount</label>
-                  <div className="h4">₱{total.toFixed(2)}</div>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Paid Amount</label>
-                  <input type="number" className="form-control form-control-lg" min="0" value={paidAmount} onChange={e => setPaidAmount(Number(e.target.value))} required />
-                </div>
-                <div className="mb-4">
-                  <label className="form-label">Change Due</label>
-                  <div className="h4">₱{changeDue.toFixed(2)}</div>
-                </div>
-                <div className="d-flex justify-content-end">
-                  <button className="btn btn-success btn-sm px-3" type="submit" style={{ background: '#00c292', border: 'none', fontSize: 15, height: 32, minHeight: 32 }}>
-                    <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
-                    Save & Print
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-          {/* Receipt Preview: thermal style, matches printout */}
-          <div style={{
-                width: 300,
-                minWidth: 300,
-                maxWidth: 300,
-                fontFamily: 'Courier New, Courier, monospace',
-                background: '#fff',
-                color: '#000',
-                borderRadius: 8,
-                boxShadow: '0 8px 32px rgba(50,31,219,0.10)',
-                padding: 0,
-                margin: 0,
-                marginTop: 8,
-                marginBottom: 8,
-                maxHeight: '98vh', // Match main layout height
-                overflowY: 'auto'   // Enable vertical scrolling
-              }}
-            >
-            <style>{thermalPrintStyles}</style>
-            <div style={{ padding: '12px 8px', fontSize: 15, lineHeight: 1.5 }}>
-              <div style={{ textAlign: 'center', fontWeight: 'bold', letterSpacing: 1, marginBottom: 8 }}>RECEIPT</div>
-                  
-              {/* QR Code Block */}
-              {qrValues.map((val, idx) => (
-                <div key={idx} style={{ marginBottom: '16px' }}>
-                  <div style={{ textAlign: 'center', fontWeight: 'bold', marginBottom: 4 }}>
-                    Promoter: {tickets[idx].promoter}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <QRCodeCanvas value={val} size={128} />
-                  </div>
-                  <div style={{ textAlign: 'center', fontSize: 12, marginTop: 4 }}>
-                    {new Date(tickets[idx].date).toLocaleString()}<br />
-                    <em>Single use only</em>
-                  </div>
-                  {idx < qrValues.length - 1 && (
-                    <div style={{ borderTop: '1px dashed #000', margin: '12px 0' }} />
-                  )}
-                </div>
-              ))}
-
-              <div style={{ borderTop: '1px dashed #000', margin: '12px 0' }} />
-                  
-              <div><span style={{ fontWeight: 'bold' }}>PROMOTER:</span> {promoter?.name || 'N/A'}</div>
-              <div><span style={{ fontWeight: 'bold' }}>DATE:</span> {new Date().toLocaleString()}</div>
-              <div><span style={{ fontWeight: 'bold' }}>RATE:</span> {rate.name}</div>
-              <div><span style={{ fontWeight: 'bold' }}>QTY:</span> {quantity}</div>
-              <div><span style={{ fontWeight: 'bold' }}>TOTAL:</span> ₱{total.toFixed(2)}</div>
-              <div style={{ fontWeight: 'bold', marginTop: 8 }}>DISCOUNTS:</div>
-              {appliedDiscounts.length === 0 && <div>None</div>}
-              {appliedDiscounts.map(d => (
-                <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{d.discount_name}</span>
-                  <span>{d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `₱${d.discount_value}`}</span>
-                  <button
-                    type="button"
-                    className="btn btn-link text-danger p-0 ms-1"
-                    style={{ fontSize: 15, lineHeight: 1, height: 18 }}
-                    onClick={() => handleRemoveDiscount(d.id)}
-                  >
-                    &times;
-                  </button>
-                </div>
-              ))}
-              <div style={{ borderTop: '1px dashed #000', margin: '8px 0' }}></div>
-              <div style={{ textAlign: 'center', fontSize: 14, marginTop: 8 }}>Thank you!</div>
-            </div>
-          </div>
+          <TransactionCard
+            promoter={promoter}
+            rates={rates}
+            discounts={discounts}
+            appliedDiscounts={appliedDiscounts}
+            handleAddDiscount={handleAddDiscount}
+            handleRemoveDiscount={handleRemoveDiscount}
+            rateId={rateId}
+            setRateId={setRateId}
+            quantity={quantity}
+            setQuantity={setQuantity}
+            total={total}
+            paidAmount={paidAmount}
+            setPaidAmount={setPaidAmount}
+            changeDue={changeDue}
+            handleSaveTransaction={handleSaveTransaction}
+            handleShowCloseCash={handleShowCloseCash}
+            headerStyle={headerStyle}
+          />
+          <ReceiptPreview
+            qrValues={qrValues}
+            tickets={tickets}
+            promoter={promoter}
+            rate={rate}
+            quantity={quantity}
+            total={total}
+            appliedDiscounts={appliedDiscounts}
+            handleRemoveDiscount={handleRemoveDiscount}
+            thermalPrintStyles={thermalPrintStyles}
+          />
         </div>
       )}
       
       {/* Close Cash Modal */}
-      {showCloseCash && (
-        <div className="modal d-block" tabIndex="-1" style={{ background: 'rgba(50,31,219,0.10)' }}>
-          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 400 }}>
-            <div className="modal-content" style={modalStyle}>
-              {/* Promoter Row */}
-              <div style={{ background: '#f7f7fa', padding: '0.25rem 1rem', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottom: '1px solid #eee', fontWeight: 600, fontSize: 13, color: '#ffb400', letterSpacing: 0.5, whiteSpace: 'nowrap', minHeight: 28 }}>
-                Promoter of the Day: <span style={{ color: '#321fdb', fontWeight: 700, marginLeft: 8 }}>{PROMOTER_NAME}</span>
-              </div>
-              <div className="modal-header" style={{ ...headerStyle, flexDirection: 'row', justifyContent: 'space-between', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-                <h5 className="modal-title mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16 }}>Close Cash Session</h5>
-              </div>
-              <div className="modal-body p-3">
-                <form onSubmit={handleCloseCash}>
-                  <div className="mb-3">
-                    <label className="form-label">Cash on Hand</label>
-                    <input
-                      type="number"
-                      className="form-control form-control-lg"
-                      value={cashOnHand}
-                      onChange={e => setCashOnHand(e.target.value)}
-                      min="0"
-                      required
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="form-label">Confirm Password</label>
-                    <input
-                      type="password"
-                      className="form-control form-control-lg"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="d-flex justify-content-end">
-                    <button className="btn btn-primary btn-sm px-3" type="submit" style={{ background: '#321fdb', border: 'none', fontSize: 15, height: 32, minHeight: 32 }}>
-                      <FontAwesomeIcon icon={solidIconMap.moneyBill} className="me-2" />
-                      Close Cash
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <CloseCashModal
+        show={showCloseCash}
+        cashOnHand={cashOnHand}
+        password={password}
+        setCashOnHand={setCashOnHand}
+        setPassword={setPassword}
+        handleCloseCash={handleCloseCash}
+        PROMOTER_NAME={promoter?.name || 'N/A'}
+        headerStyle={headerStyle}
+        modalStyle={modalStyle}
+      />
       {/* Print Modal for Close Cash */}
-      {showPrintClose && (
-        <div className="modal d-block cashier-print-modal" tabIndex="-1" style={{ background: 'rgba(50,31,219,0.10)' }}>
-          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 400 }}>
-            <div className="modal-content" style={modalStyle}>
-              {/* Promoter Row */}
-              <div style={{ background: '#f7f7fa', padding: '0.25rem 1rem', borderTopLeftRadius: 16, borderTopRightRadius: 16, borderBottom: '1px solid #eee', fontWeight: 600, fontSize: 13, color: '#ffb400', letterSpacing: 0.5, whiteSpace: 'nowrap', minHeight: 28 }}>
-                Promoter of the Day: <span style={{ color: '#321fdb', fontWeight: 700, marginLeft: 8 }}>{PROMOTER_NAME}</span>
-              </div>
-              <div className="modal-header" style={{ ...headerStyle, flexDirection: 'row', justifyContent: 'space-between', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-                <h5 className="modal-title mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16 }}>Close Cash Summary</h5>
-                <button type="button" className="btn-close" onClick={handlePrintClose}></button>
-              </div>
-              <div className="modal-body text-center p-3">
-                <h6 className="mb-3">Cashier: John Doe</h6>
-                <div>Date: {new Date().toLocaleString()}</div>
-                <div>Cash on Hand: <strong>₱{parseFloat(cashOnHand).toFixed(2)}</strong></div>
-                <div>Total Transactions: 12</div>
-                <div>Total Sales: ₱2,345.00</div>
-                <div>Session ID: #123456</div>
-                {divider}
-                <div className="text-muted">--- End of Summary ---</div>
-              </div>
-              <div className="modal-footer d-flex justify-content-between">
-                <button className="btn btn-outline-secondary btn-sm px-3" style={{ height: 32, minHeight: 32, fontSize: 15 }} onClick={handlePrintClose}>Close</button>
-                <button className="btn btn-primary btn-sm px-3" style={{ height: 32, minHeight: 32, fontSize: 15 }} onClick={() => window.print()}><FontAwesomeIcon icon={solidIconMap.print} className="me-2" />Print</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <PrintCloseCashModal
+        show={showPrintClose}
+        cashOnHand={cashOnHand}
+        onClose={handlePrintClose}
+        promoterName={promoter?.name || 'N/A'}
+        headerStyle={headerStyle}
+        modalStyle={modalStyle}
+        divider={divider}
+        cashierName={'John Doe'}
+        sessionId={sessionId ? String(sessionId) : 'N/A'}
+      />
     </div>
   );
 } 

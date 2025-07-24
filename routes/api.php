@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DiscountController;
 use App\Http\Controllers\Api\PromoterController;
 use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\CashierTransactionController;
+use App\Http\Controllers\Api\CashierController;
 
 /*
 |--------------------------------------------------------------------------
@@ -194,7 +195,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 	// Cashier Routes
 	Route::prefix('cashier')->group(function () {
-		Route::post('/transactions', [CashierTransactionController::class, 'store']);
+		Route::post('/open-session', [CashierController::class, 'openSession']);
+		Route::post('/close-session', [CashierController::class, 'closeSession']);
+		Route::post('/transactions', [CashierController::class, 'storeTransaction']);
+		Route::get('/tickets/{transactionId}', [CashierController::class, 'tickets']);
 	});
 });
 

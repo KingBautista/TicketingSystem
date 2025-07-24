@@ -11,6 +11,7 @@ class CashierTransactionResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'session_id' => $this->session_id,
             'cashier' => new UserResource($this->whenLoaded('cashier')),
             'promoter' => new PromoterResource($this->whenLoaded('promoter')),
             'rate' => new RateResource($this->whenLoaded('rate')),
@@ -18,8 +19,9 @@ class CashierTransactionResource extends JsonResource
             'total' => $this->total,
             'paid_amount' => $this->paid_amount,
             'change' => $this->change,
+            'note' => $this->note,
             'details' => CashierTransactionDetailResource::collection($this->whenLoaded('details')),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
         ];
     }
-} 
+}
