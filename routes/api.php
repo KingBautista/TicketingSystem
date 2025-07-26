@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\NavigationController;
+use App\Http\Controllers\Api\AuditTrailController;
 use App\Http\Controllers\Api\VIPController;
 use App\Http\Controllers\Api\RateController;
 use App\Http\Controllers\Api\DiscountController;
@@ -106,6 +107,11 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::get('/', [NavigationController::class, 'getTrashed']);
 			Route::patch('/restore/{id}', [NavigationController::class, 'restore']);
 			Route::delete('/{id}', [NavigationController::class, 'forceDelete']);
+		});
+		Route::prefix('audit-trail')->group(function () {
+			Route::get('/', [AuditTrailController::class, 'index']);
+			Route::post('/export', [AuditTrailController::class, 'export']);
+			Route::get('/logs/{date?}', [AuditTrailController::class, 'downloadLogFile']);
 		});
 	});
 

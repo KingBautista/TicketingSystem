@@ -21,6 +21,7 @@ class CashierTransactionRequest extends FormRequest
             'total' => 'required|numeric|min:0',
             'paid_amount' => 'required|numeric|min:0',
             'change' => 'required|numeric|min:0',
+            'session_id' => 'required|integer|exists:cashier_sessions,id',
             'discounts' => 'array',
             'discounts.*.discount_id' => 'nullable|integer|exists:discounts,id',
             'discounts.*.discount_value' => 'nullable|numeric|min:0',

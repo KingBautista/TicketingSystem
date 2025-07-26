@@ -49,16 +49,18 @@ class CashierController extends Controller
     }
 
     /**
-     * Get daily transactions for current cashier
+     * Get daily transactions for current cashier and session
      */
-    public function getDailyTransactions()
+    public function getDailyTransactions(Request $request)
     {
         $cashierId = auth()->id();
-        $transactions = $this->service->getDailyTransactions($cashierId);
+        $sessionId = $request->query('session_id');
+        $transactions = $this->service->getDailyTransactions($cashierId, $sessionId);
         $total = $transactions->sum('total');
         return response()->json([
             'transactions' => $transactions,
-            'total' => $total
+            'total' => $total,
+            'session_id' => $sessionId
         ]);
     }
 

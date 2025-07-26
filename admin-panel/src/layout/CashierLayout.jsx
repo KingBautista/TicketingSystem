@@ -173,6 +173,7 @@ export default function CashierLayout() {
       total,
       paid_amount: paidAmount,
       change: changeDue,
+      session_id: sessionId,
       discounts: appliedDiscounts.map(d => ({
         discount_id: d.id,
         discount_value: d.discount_value,
@@ -221,8 +222,10 @@ export default function CashierLayout() {
     try {
       const sessionToken = localStorage.getItem('cashier_session_token');
       
-      // Get daily transactions
-      const { data: transactionsData } = await axiosClient.get('/cashier/transactions/daily');
+      // Get daily transactions for current session
+      const { data: transactionsData } = await axiosClient.get('/cashier/transactions/daily', {
+        params: { session_id: sessionToken }
+      });
       
       // Close the session and get the session data
       const response = await axiosClient.post('/cashier/close-session', {

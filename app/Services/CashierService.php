@@ -46,7 +46,8 @@ class CashierService
             'quantity' => $data['quantity'],
             'total' => $data['total'],
             'paid_amount' => $data['paid_amount'],
-            'change' => $data['change']
+            'change' => $data['change'],
+            'session_id' => $data['session_id']
         ]);
 
         // Attach discounts if any
@@ -81,12 +82,17 @@ class CashierService
         return strtoupper(Str::random(20));
     }
 
-    public function getDailyTransactions($cashierId)
+    public function getDailyTransactions($cashierId, $sessionId = null)
     {
-        return CashierTransaction::with(['rate:id,name', 'discounts'])
+        $query = CashierTransaction::with(['rate:id,name', 'discounts'])
             ->where('cashier_id', $cashierId)
-            ->whereDate('created_at', Carbon::today())
-            ->orderBy('created_at', 'asc')
+            ->whereDate('created_at', Carbon::today());
+            
+        if ($sessionId) {
+            $query->where('session_id', $sessionId);
+        }
+        
+        return $query->orderBy('created_at', 'asc')
             ->get();
     }
 

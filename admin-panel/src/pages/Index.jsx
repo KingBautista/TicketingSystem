@@ -34,6 +34,9 @@ const PromoterForm = lazy(() => import('./promoter-management/PromoterForm'));
 // Reports
 const SalesReports = lazy(() => import('./reports/SalesReports'));
 
+// System Settings
+const AuditTrail = lazy(() => import('./system-settings/AuditTrail'));
+
 // Cashier Portal
 const CashierLayout = lazy(() => import('../layout/CashierLayout'));
 
@@ -66,6 +69,8 @@ const routeMap = {
   '/promoter-management/promoters/:id': PromoterForm,
   // Reports
   '/reports/sales': SalesReports,
+  // System Settings
+  '/system-settings/audit-trail': AuditTrail,
   // Cashier Portal (nested layout)
   '/cashier': CashierLayout,
   '/system-settings/navigation': Navigations,
