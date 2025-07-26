@@ -71,5 +71,49 @@ class UserSeeder extends Seeder
             'theme' => 'light',
         ];
         $salesUser->saveUserMeta($salesMetaData);
+
+        // Add cashier1 user with role id = 4
+        $cashier1Salt = PasswordHelper::generateSalt();
+        $cashier1Password = PasswordHelper::generatePassword($cashier1Salt, 'password123');
+        $cashier1User = User::create([
+            'user_login' => 'cashier1',
+            'user_email' => 'cashier1@example.com',
+            'user_pass' => $cashier1Password,
+            'user_salt' => $cashier1Salt,
+            'user_status' => 1,
+            'user_activation_key' => null,
+            'remember_token' => null,
+            'user_role_id' => 4,
+        ]);
+        $cashier1MetaData = [
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'nickname' => 'Cashier1',
+            'biography' => 'Cashier account.',
+            'theme' => 'light',
+        ];
+        $cashier1User->saveUserMeta($cashier1MetaData);
+
+        // Add cashier2 user with role id = 4
+        $cashier2Salt = PasswordHelper::generateSalt();
+        $cashier2Password = PasswordHelper::generatePassword($cashier2Salt, 'password123');
+        $cashier2User = User::create([
+            'user_login' => 'cashier2',
+            'user_email' => 'cashier2@example.com',
+            'user_pass' => $cashier2Password,
+            'user_salt' => $cashier2Salt,
+            'user_status' => 1,
+            'user_activation_key' => null,
+            'remember_token' => null,
+            'user_role_id' => 4,
+        ]);
+        $cashier2MetaData = [
+            'first_name' => 'Jane',
+            'last_name' => 'Smith',
+            'nickname' => 'Cashier2',
+            'biography' => 'Cashier account.',
+            'theme' => 'light',
+        ];
+        $cashier2User->saveUserMeta($cashier2MetaData);
     }
 } 

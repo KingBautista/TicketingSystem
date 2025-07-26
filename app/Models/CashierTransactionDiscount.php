@@ -2,27 +2,25 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class CashierTransactionDetail extends Model
+class CashierTransactionDiscount extends Model
 {
-    use HasFactory, SoftDeletes;
+    protected $table = 'cashier_transaction_discount';
 
     protected $fillable = [
-        'transaction_id',
+        'cashier_transaction_id',
         'discount_id',
         'discount_value',
     ];
 
     public function transaction()
     {
-        return $this->belongsTo(CashierTransaction::class, 'transaction_id');
+        return $this->belongsTo(CashierTransaction::class, 'cashier_transaction_id');
     }
 
     public function discount()
     {
         return $this->belongsTo(Discount::class, 'discount_id');
     }
-} 
+}

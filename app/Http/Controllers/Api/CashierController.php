@@ -47,4 +47,27 @@ class CashierController extends Controller
         $tickets = $this->service->getTickets($transactionId);
         return CashierTicketResource::collection($tickets);
     }
+
+    /**
+     * Get daily transactions for current cashier
+     */
+    public function getDailyTransactions()
+    {
+        $cashierId = auth()->id();
+        $transactions = $this->service->getDailyTransactions($cashierId);
+        $total = $transactions->sum('total');
+        return response()->json([
+            'transactions' => $transactions,
+            'total' => $total
+        ]);
+    }
+
+    /**
+     * Get session details
+     */
+    public function getSession($id)
+    {
+        $session = $this->service->getSession($id);
+        return new CashierSessionResource($session);
+    }
 }

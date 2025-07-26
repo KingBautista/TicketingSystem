@@ -12,19 +12,22 @@ class DatabaseSeeder extends Seeder
    */
   public function run(): void
   {
-    // Call PermissionSeeder
+    // Basic Settings Seeders
     $this->call(PermissionSeeder::class);
-
-    // Call RoleSeeder
     $this->call(RoleSeeder::class);
-
-    // Call UserSeeder
     $this->call(UserSeeder::class);
-
-    // Call NavigationSeeder
     $this->call(NavigationSeeder::class);
-
-    // Call RolePermissionSeeder
     $this->call(RolePermissionSeeder::class);
+    $this->call(RateSeeder::class);
+    $this->call(DiscountSeeder::class);
+    $this->call(CashierTransactionSeeder::class);
+
+    // Business Logic Seeders
+    $this->call(RateSeeder::class);
+    $this->call(DiscountSeeder::class);
+    $this->call(VIPSeeder::class);
+    $this->call(PromoterSeeder::class);
+    $this->call(PromoterScheduleSeeder::class);
+    // $this->call(MediaLibrarySeeder::class);
   }
 }

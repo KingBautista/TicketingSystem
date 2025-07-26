@@ -16,4 +16,11 @@ class Discount extends Model
         'discount_value_type',
         'status',
     ];
+
+    public function transactions()
+    {
+        return $this->belongsToMany(CashierTransaction::class, 'cashier_transaction_discount')
+            ->withPivot('discount_value')
+            ->withTimestamps();
+    }
 } 

@@ -31,7 +31,6 @@ export default function CloseCashModal({
                 <input
                   type="number"
                   className="form-control form-control-lg"
-                  value={cashOnHand}
                   onChange={e => setCashOnHand(e.target.value)}
                   min="0"
                   required
@@ -42,7 +41,6 @@ export default function CloseCashModal({
                 <input
                   type="password"
                   className="form-control form-control-lg"
-                  value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
                 />

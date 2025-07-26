@@ -49,10 +49,6 @@ const routeMap = {
   '/content-management/media-library': Library,
   '/content-management/media-library/upload': LibraryForm,
   '/content-management/media-library/:id': MediaForm,
-  '/system-settings/navigation': Navigations,
-  '/system-settings/navigation/create': NavigationForm,
-  '/system-settings/navigation/:id': NavigationForm,
-  '/profile': Profile,
   // VIP Management
   '/vip-management/vips': VIPs,
   '/vip-management/vips/create': VIPForm,
@@ -72,6 +68,10 @@ const routeMap = {
   '/reports/sales': SalesReports,
   // Cashier Portal (nested layout)
   '/cashier': CashierLayout,
+  '/system-settings/navigation': Navigations,
+  '/system-settings/navigation/create': NavigationForm,
+  '/system-settings/navigation/:id': NavigationForm,
+  '/profile': Profile,
 };
 
 const Index = () => {

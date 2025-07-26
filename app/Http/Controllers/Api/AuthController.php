@@ -137,4 +137,23 @@ class AuthController extends Controller
 		$user->currentAccessToken()->delete();
 		return response('', 204);
 	}
+
+	/**
+	 * Validate password for the currently authenticated user.
+	 */
+	public function validatePassword(Request $request)
+	{
+		$request->validate([
+			'password' => 'required|string',
+		]);
+		$user = $request->user();
+		if (!$user) {
+			return response(['message' => 'Unauthenticated.'], 401);
+		}
+		// Use the same password check as login
+		if (!\Hash::check($user->user_salt.$request->password.env('PEPPER_HASH'), $user->user_pass)) {
+			return response(['message' => 'Invalid password.'], 422);
+		}
+		return response(['message' => 'Password is valid.'], 200);
+	}
 }

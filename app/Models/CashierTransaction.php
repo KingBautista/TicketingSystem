@@ -18,6 +18,7 @@ class CashierTransaction extends Model
         'total',
         'paid_amount',
         'change',
+        'session_id',
     ];
 
     public function cashier()
@@ -38,5 +39,17 @@ class CashierTransaction extends Model
     public function details()
     {
         return $this->hasMany(CashierTransactionDetail::class, 'transaction_id');
+    }
+
+    public function discounts()
+    {
+        return $this->belongsToMany(Discount::class, 'cashier_transaction_discount')
+            ->withPivot('discount_value')
+            ->withTimestamps();
+    }
+
+    public function session()
+    {
+        return $this->belongsTo(CashierSession::class, 'session_id');
     }
 } 

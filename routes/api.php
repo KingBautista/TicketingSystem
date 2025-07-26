@@ -27,6 +27,8 @@ use App\Http\Controllers\Api\CashierController;
 */
 
 Route::middleware('auth:sanctum')->group(function () {
+	// Validate password for current authenticated user
+	Route::post('/validate-password', [AuthController::class, 'validatePassword']);
 	Route::get('/user', [UserController::class, 'getUser']);
 	Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -199,6 +201,8 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::post('/close-session', [CashierController::class, 'closeSession']);
 		Route::post('/transactions', [CashierController::class, 'storeTransaction']);
 		Route::get('/tickets/{transactionId}', [CashierController::class, 'tickets']);
+		Route::get('/transactions/daily', [CashierController::class, 'getDailyTransactions']);
+		Route::get('/sessions/{id}', [CashierController::class, 'getSession']);
 	});
 });
 

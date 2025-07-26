@@ -11,13 +11,14 @@ import CloseCashModal from '../pages/cashier/CloseCashModal.jsx';
 import PrintCloseCashModal from '../pages/cashier/PrintCloseCashModal.jsx';
 
 export default function CashierLayout() {
-  const [showOpenCash, setShowOpenCash] = useState(true);
-  const [showTransaction, setShowTransaction] = useState(false);
+  // Check for cashier session token in localStorage to persist session
+  const [showOpenCash, setShowOpenCash] = useState(() => !localStorage.getItem('cashier_session_token'));
+  const [showTransaction, setShowTransaction] = useState(() => !!localStorage.getItem('cashier_session_token'));
   const [showCloseCash, setShowCloseCash] = useState(false);
   const [cashOnHand, setCashOnHand] = useState('');
   const [password, setPassword] = useState('');
   const [paidAmount, setPaidAmount] = useState('');
-  const [sessionOpen, setSessionOpen] = useState(false);
+  const [sessionOpen, setSessionOpen] = useState(() => !!localStorage.getItem('cashier_session_token'));
   const [sessionClosed, setSessionClosed] = useState(false);
   const [showPrintOpen, setShowPrintOpen] = useState(false);
   const [showPrintClose, setShowPrintClose] = useState(false);
@@ -26,13 +27,48 @@ export default function CashierLayout() {
   const [rateId, setRateId] = useState(1);
   const toastRef = useRef();
   const navigate = useNavigate();
-  const { setToken } = useStateContext();
+  const { user, setUser, setToken } = useStateContext();
+
+  const handleLogout = () => {
+    localStorage.removeItem('cashier_session_token');
+    localStorage.removeItem('opening_cash');
+    setToken(null);
+    setUser({});
+    navigate('/login');
+  };
 
   // State for backend data
   const [rates, setRates] = useState([]);
   const [discounts, setDiscounts] = useState([]);
   const [promoter, setPromoter] = useState(null);
   const [sessionId, setSessionId] = useState(null);
+
+  // Load session data and setup initial state
+  useEffect(() => {
+    const sessionToken = localStorage.getItem('cashier_session_token');
+    const openingCash = localStorage.getItem('opening_cash');
+    if (sessionToken) {
+      setSessionId(sessionToken);
+      setSessionOpen(true);
+      if (openingCash) {
+        setCashOnHand(openingCash);
+      }
+      setShowTransaction(true);
+      setShowOpenCash(false);
+    }
+  }, []);
+
+    // execute once component is loaded
+  useEffect(() => {
+    axiosClient.get('/user')
+		.then(({data}) => {
+      const user = data.data; 
+      setUser(user);
+		})
+    .catch((errors) => {
+      toastAction.current.showError(errors.response);
+		});
+  }, []); // empty array means 'run once'
 
   // Fetch rates, discounts, and promoter of the day on mount
   useEffect(() => {
@@ -66,15 +102,42 @@ export default function CashierLayout() {
   const changeDue = paidAmount ? Math.max(0, paidAmount - total) : 0;
 
   // Open Cash Handlers
-  const handleOpenCash = (e) => {
+  // Integrate handleOpenCash with backend
+  const handleOpenCash = async (e) => {
     e && e.preventDefault();
     if (!cashOnHand || !password) {
       toastRef.current.showToast('Please enter cash on hand and password.', 'warning');
       return;
     }
-    setSessionOpen(true);
-    setShowPrintOpen(true);
-    toastRef.current.showToast('Cash session opened!', 'success');
+    // Validate password by calling /validate-password endpoint
+    try {
+      await axiosClient.post('/validate-password', { password });
+    } catch (err) {
+      toastRef.current.showToast('Invalid password.', 'danger');
+      return;
+    }
+    // Open cashier session
+    try {
+      const cashierId = user?.id || user?.user_id || null;
+      if (!cashierId) {
+        toastRef.current.showToast('User ID not found. Please re-login.', 'danger');
+        return;
+      }
+      const openingCash = parseFloat(cashOnHand);
+      const payload = { cashier_id: cashierId, cash_on_hand: openingCash };
+      const { data } = await axiosClient.post('/cashier/open-session', payload);
+      // Save session token and opening cash to localStorage
+      localStorage.setItem('cashier_session_token', data?.data?.id || data?.id || '1');
+      localStorage.setItem('opening_cash', openingCash.toString());
+      setSessionId(data?.data?.id || data?.id || null);
+      setCashOnHand(openingCash.toString());
+      setSessionOpen(true);
+      setShowPrintOpen(true);
+      setShowOpenCash(false);
+      toastRef.current.showToast('Cash session opened!', 'success');
+    } catch (err) {
+      toastRef.current.showToast('Failed to open cash session.', 'danger');
+    }
   };
   const handlePrintOpenClose = () => {
     setShowPrintOpen(false);
@@ -97,7 +160,11 @@ export default function CashierLayout() {
       toastRef.current.showToast('Paid amount is less than total.', 'warning');
       return;
     }
-    const cashierId = parseInt(localStorage.getItem('user_id'), 10); // or get from context
+    const cashierId = user?.id || user?.user_id || null;
+    if (!cashierId) {
+      toastRef.current.showToast('User ID not found. Please re-login.', 'danger');
+      return;
+    }
     const payload = {
       cashier_id: cashierId,
       promoter_id: promoter?.id || null,
@@ -113,8 +180,15 @@ export default function CashierLayout() {
     };
     axiosClient.post('/cashier/transactions', payload)
       .then(({ data }) => {
+        // Reset all form fields
+        setPaidAmount('');
+        setQuantity(1);
+        setAppliedDiscounts([]);
+        if ((rates || []).length > 0) {
+          setRateId(rates[0].id);
+        }
+
         toastRef.current.showToast('Transaction saved!', 'success');
-        // Optionally show receipt/print modal here
       })
       .catch(() => {
         toastRef.current.showToast('Failed to save transaction.', 'danger');
@@ -125,22 +199,51 @@ export default function CashierLayout() {
   const handleShowCloseCash = () => {
     setShowCloseCash(true);
   };
-  const handleCloseCash = (e) => {
+  const [dailyTransactions, setDailyTransactions] = useState([]);
+  const [dailyTotal, setDailyTotal] = useState(0);
+  const [closingCash, setClosingCash] = useState('');
+
+  const handleCloseCash = async (e) => {
     e && e.preventDefault();
     if (!cashOnHand || !password) {
       toastRef.current.showToast('Please enter cash on hand and password.', 'warning');
       return;
     }
-    setSessionClosed(true);
-    setShowPrintClose(true);
-    toastRef.current.showToast('Cash session closed!', 'success');
-  };
-  const handlePrintClose = () => {
-    setShowPrintClose(false);
-    // Auto logout after closing cash
-    localStorage.clear();
-    setToken(null);
-    navigate('/login');
+
+    try {
+      // First validate password
+      await axiosClient.post('/validate-password', { password });
+    } catch (err) {
+      toastRef.current.showToast('Invalid password.', 'danger');
+      return;
+    }
+
+    try {
+      const sessionToken = localStorage.getItem('cashier_session_token');
+      
+      // Get daily transactions
+      const { data: transactionsData } = await axiosClient.get('/cashier/transactions/daily');
+      
+      // Close the session and get the session data
+      const response = await axiosClient.post('/cashier/close-session', {
+        session_id: sessionToken,
+        closing_cash: cashOnHand
+      });
+      
+      const sessionData = response.data.data;  // Access the nested data object
+      
+      setDailyTransactions(transactionsData.transactions || []);
+      setDailyTotal(transactionsData.total || 0);
+      setCashOnHand(sessionData.cash_on_hand);
+      setClosingCash(sessionData.closing_cash);
+
+      setSessionClosed(true);
+      setShowPrintClose(true);
+      toastRef.current.showToast('Cash session closed!', 'success');
+      localStorage.removeItem('cashier_session_token');
+    } catch (err) {
+      toastRef.current.showToast('Failed to close cash session.', 'danger');
+    }
   };
 
   const now = new Date().toISOString();
@@ -294,7 +397,7 @@ export default function CashierLayout() {
         headerStyle={headerStyle}
         modalStyle={modalStyle}
         divider={divider}
-        cashierName={'John Doe'}
+        cashierName={user?.user_login || 'N/A'}
         sessionId={sessionId ? String(sessionId) : 'N/A'}
       />
       {/* Transaction Page */}
@@ -349,13 +452,17 @@ export default function CashierLayout() {
       <PrintCloseCashModal
         show={showPrintClose}
         cashOnHand={cashOnHand}
-        onClose={handlePrintClose}
+        closingCash={closingCash}
+        dailyTransactions={dailyTransactions}
+        dailyTotal={dailyTotal}
+        handleCloseAndLogout={handleLogout}
         promoterName={promoter?.name || 'N/A'}
         headerStyle={headerStyle}
         modalStyle={modalStyle}
         divider={divider}
-        cashierName={'John Doe'}
+        cashierName={user?.user_login || 'N/A'}
         sessionId={sessionId ? String(sessionId) : 'N/A'}
+        thermalPrintStyles={thermalPrintStyles}
       />
     </div>
   );
