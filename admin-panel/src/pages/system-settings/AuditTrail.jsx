@@ -1,81 +1,116 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import axiosClient from "../../axios-client";
+import DataTable from "../../components/table/DataTable";
+import NotificationModal from "../../components/NotificationModal";
 import ToastMessage from "../../components/ToastMessage";
+import SearchBox from "../../components/SearchBox";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { solidIconMap } from '../../utils/solidIcons';
-import axiosClient from '../../axios-client';
-import { format } from 'date-fns';
-
-const modules = [
-  { value: '', label: 'All Modules' },
-  { value: 'Login', label: 'Login' },
-  { value: 'User Management', label: 'User Management' },
-  { value: 'Sales', label: 'Sales' },
-  { value: 'VIP Management', label: 'VIP Management' },
-  { value: 'Rate Management', label: 'Rate Management' },
-  { value: 'Promoter Management', label: 'Promoter Management' },
-];
 
 export default function AuditTrail() {
-  const [filters, setFilters] = useState({ module: '', startDate: '', endDate: '', user: '' });
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [dataStatus, setDataStatus] = useState({
+    totalRows: 0,
+    totalTrash: 0,
+    classAll: 'current',
+    classTrash: null,
+  });
+  const [options, setOptions] = useState({
+    dataSource: '/system-settings/audit-trail',
+    dataFields: {
+      created_at: { name: "Date/Time", withSort: true },
+      user: { name: "User", withSort: false },
+      module: { name: "Module", withSort: true },
+      action: { 
+        name: "Action", 
+        withSort: true,
+        badge: {
+          'CREATE': 'bg-success',
+          'UPDATE': 'bg-warning',
+          'DELETE': 'bg-danger',
+          'RESTORE': 'bg-info',
+          'VIEW': 'bg-primary',
+          'LOGIN': 'bg-success',
+          'LOGOUT': 'bg-secondary',
+          'EXPORT': 'bg-info',
+          'BULK_DELETE': 'bg-danger',
+          'BULK_RESTORE': 'bg-info',
+          'PASSWORD_RESET': 'bg-warning',
+          'PASSWORD_VALIDATION': 'bg-primary'
+        },
+        badgeLabels: {
+          'CREATE': 'CREATE',
+          'UPDATE': 'UPDATE',
+          'DELETE': 'DELETE',
+          'RESTORE': 'RESTORE',
+          'VIEW': 'VIEW',
+          'LOGIN': 'LOGIN',
+          'LOGOUT': 'LOGOUT',
+          'EXPORT': 'EXPORT',
+          'BULK_DELETE': 'BULK DELETE',
+          'BULK_RESTORE': 'BULK RESTORE',
+          'PASSWORD_RESET': 'PASSWORD RESET',
+          'PASSWORD_VALIDATION': 'PASSWORD VALIDATION'
+        }
+      },
+      description: { name: "Description", withSort: false },
+      ip_address: { name: "IP Address", withSort: false },
+      user_agent: { name: "User Agent", withSort: false },
+    },
+    softDelete: false,
+    primaryKey: "id",
+    redirectUrl: '',
+  });
+  const [params, setParams] = useState({ search: '' });
+  const searchRef = useRef();
+  const tableRef = useRef();
+  const modalAction = useRef();
   const toastAction = useRef();
-  const rowsPerPage = 10;
+  const bulkAction = useRef();
+  const [modalParams, setModalParams] = useState({
+    id: 'auditTrailModal',
+    title: "Confirmation",
+    descriptions: "Are you sure to apply these changes?",
+  });
 
-  // Fetch audit trail data
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const response = await axiosClient.get('/api/audit-trail', { params: filters });
-      setData(response.data);
-    } catch (error) {
-      toastAction.current.showToast('Failed to fetch audit trail data', 'error');
-    } finally {
-      setLoading(false);
-    }
+  // Helper function to update data source and tabs
+  const handleTabChange = (ev, type) => {
+    ev.preventDefault();
+    const isTrash = type === 'Trash';
+    setDataStatus(prevStatus => ({
+      ...prevStatus,
+      classAll: isTrash ? null : 'current',
+      classTrash: isTrash ? 'current' : null,
+    }));
+    searchRef.current.value = '';
+    setParams({ search: '' });
+    tableRef.current.clearPage();
+    setOptions(prevOptions => ({
+      ...prevOptions,
+      dataSource: isTrash ? '/system-settings/audit-trail/archived' : '/system-settings/audit-trail',
+    }));
   };
 
-  // Fetch users for filter
-  const fetchUsers = async () => {
-    try {
-      const response = await axiosClient.get('/api/users');
-      setUsers([{ value: '', label: 'All Users' }, ...response.data.map(user => ({
-        value: user.id,
-        label: user.name
-      }))]);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-    }
+  // Handle search action
+  const handleSearch = () => {
+    setParams(prevParams => ({
+      ...prevParams,
+      search: searchRef.current.value,
+    }));
   };
-
-  useState(() => {
-    fetchData();
-    fetchUsers();
-  }, []);
-
-  // Filter and paginate data
-  const filteredData = data.filter(row =>
-    (!filters.module || row.module === filters.module) &&
-    (!filters.startDate || row.created_at >= filters.startDate) &&
-    (!filters.endDate || row.created_at <= filters.endDate) &&
-    (!filters.user || row.user_id === filters.user)
-  );
-  const paginatedData = filteredData.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
 
   // Export handlers
   const exportData = async (type, format) => {
     try {
-      let dataToExport = type === 'current' ? paginatedData : 
-                        type === 'selected' ? data.filter(row => selectedRows.includes(row.id)) :
-                        data;
+      let exportFilters = { ...params };
+      
+      if (type === 'selected' && tableRef.current.getSelectedRows().length > 0) {
+        exportFilters.selected_ids = tableRef.current.getSelectedRows();
+      }
 
-      const response = await axiosClient.post('/api/audit-trail/export', {
-        data: dataToExport,
-        format
+      const response = await axiosClient.post('/system-settings/audit-trail/export', {
+        format,
+        filters: exportFilters
       }, {
         responseType: 'blob'
       });
@@ -84,119 +119,75 @@ export default function AuditTrail() {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `audit-trail-${format}.${format.toLowerCase()}`);
+      link.setAttribute('download', `audit-trail-${format}-${new Date().toISOString().split('T')[0]}.${format.toLowerCase()}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
 
-      toastAction.current.showToast(`Successfully exported audit trail as ${format}`, 'success');
+      toastAction.current.showToast(`Successfully exported audit trail as ${format.toUpperCase()}`, 'success');
     } catch (error) {
       toastAction.current.showToast(`Failed to export audit trail: ${error.message}`, 'error');
     }
   };
 
+  // Show total rows and total trash count
+  const showSubSub = (all, archived) => {
+    setDataStatus(prevStatus => ({
+      ...prevStatus,
+      totalRows: all,
+      totalTrash: archived,
+    }));
+  };
+
   return (
-    <div className="card">
-      <ToastMessage ref={toastAction} />
-      <div className="card-header d-flex justify-content-between align-items-center">
-        <h4>Audit Trail</h4>
-        <div>
-          <button className="btn btn-outline-primary btn-sm me-2" onClick={() => exportData('current', 'pdf')}>
-            <FontAwesomeIcon icon={solidIconMap.filePdf} className="me-1" /> Export Current Page (PDF)
-          </button>
-          <button className="btn btn-outline-primary btn-sm me-2" onClick={() => exportData('current', 'csv')}>
-            <FontAwesomeIcon icon={solidIconMap.fileCsv} className="me-1" /> Export Current Page (CSV)
-          </button>
-          <button className="btn btn-outline-success btn-sm me-2" onClick={() => exportData('selected', 'pdf')} disabled={selectedRows.length === 0}>
-            <FontAwesomeIcon icon={solidIconMap.filePdf} className="me-1" /> Export Selected (PDF)
-          </button>
-          <button className="btn btn-outline-success btn-sm" onClick={() => exportData('selected', 'csv')} disabled={selectedRows.length === 0}>
-            <FontAwesomeIcon icon={solidIconMap.fileCsv} className="me-1" /> Export Selected (CSV)
-          </button>
-        </div>
-      </div>
-      <div className="card-header">
-        <div className="row g-2 align-items-end">
-          <div className="col-md-3">
-            <label className="form-label">Module</label>
-            <select className="form-select" value={filters.module} onChange={e => setFilters(f => ({ ...f, module: e.target.value }))}>
-              {modules.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-            </select>
-          </div>
-          <div className="col-md-3">
-            <label className="form-label">User</label>
-            <select className="form-select" value={filters.user} onChange={e => setFilters(f => ({ ...f, user: e.target.value }))}>
-              {users.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
-            </select>
-          </div>
-          <div className="col-md-3">
-            <label className="form-label">Start Date</label>
-            <input type="date" className="form-control" value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} />
-          </div>
-          <div className="col-md-3">
-            <label className="form-label">End Date</label>
-            <input type="date" className="form-control" value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} />
+    <>
+      <div className="card mb-2">
+        <div className="card-header d-flex justify-content-between align-items-center">
+          <h4>Audit Trail</h4>
+          <div>
+            <button className="btn btn-outline-primary btn-sm me-2" onClick={() => exportData('current', 'pdf')}>
+              <FontAwesomeIcon icon={solidIconMap.filePdf} className="me-1" /> Export Current (PDF)
+            </button>
+            <button className="btn btn-outline-primary btn-sm me-2" onClick={() => exportData('current', 'csv')}>
+              <FontAwesomeIcon icon={solidIconMap.fileCsv} className="me-1" /> Export Current (CSV)
+            </button>
+            <button className="btn btn-outline-success btn-sm me-2" onClick={() => exportData('selected', 'pdf')} disabled={tableRef.current?.getSelectedRows()?.length === 0}>
+              <FontAwesomeIcon icon={solidIconMap.filePdf} className="me-1" /> Export Selected (PDF)
+            </button>
+            <button className="btn btn-outline-success btn-sm" onClick={() => exportData('selected', 'csv')} disabled={tableRef.current?.getSelectedRows()?.length === 0}>
+              <FontAwesomeIcon icon={solidIconMap.fileCsv} className="me-1" /> Export Selected (CSV)
+            </button>
           </div>
         </div>
-      </div>
-      <div className="card-body">
-        {loading ? (
-          <div className="text-center">Loading...</div>
-        ) : (
-          <>
-            <table className="table table-bordered table-hover">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Date/Time</th>
-                  <th>User</th>
-                  <th>Module</th>
-                  <th>Action</th>
-                  <th>Description</th>
-                  <th>IP Address</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedData.map(row => (
-                  <tr key={row.id}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.includes(row.id)}
-                        onChange={e => {
-                          setSelectedRows(sel =>
-                            e.target.checked
-                              ? [...sel, row.id]
-                              : sel.filter(id => id !== row.id)
-                          );
-                        }}
-                      />
-                    </td>
-                    <td>{format(new Date(row.created_at), 'yyyy-MM-dd HH:mm:ss')}</td>
-                    <td>{row.user?.name}</td>
-                    <td>{row.module}</td>
-                    <td>{row.action}</td>
-                    <td>{row.description}</td>
-                    <td>{row.ip_address}</td>
-                  </tr>
-                ))}
-                {paginatedData.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="text-center">No data found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-            <div className="d-flex justify-content-between align-items-center">
-              <div>Page {page} of {totalPages}</div>
-              <div>
-                <button className="btn btn-sm btn-outline-secondary me-2" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Prev</button>
-                <button className="btn btn-sm btn-outline-secondary" disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</button>
-              </div>
+        <div className="card-header">
+          <ul className="subsubsub">
+            <li>
+              <a href="#" className={dataStatus.classAll} onClick={ev => handleTabChange(ev, 'All')}>
+                All <span className="count">({dataStatus.totalRows})</span>
+              </a>
+            </li>
+            {dataStatus.totalTrash > 0 && (
+              <li>
+                |<a href="#" className={dataStatus.classTrash} onClick={ev => handleTabChange(ev, 'Trash')}>
+                  Trash <span className="count">({dataStatus.totalTrash})</span>
+                </a>
+              </li>
+            )}
+          </ul>
+        </div>
+        <div className="card-header">
+          <div className="row">
+            <div className="col-md-4 col-12 offset-md-8">
+              <SearchBox ref={searchRef} onClick={handleSearch} />
             </div>
-          </>
-        )}
+          </div>
+        </div>
+        <div className="card-body">
+          <DataTable options={options} params={params} ref={tableRef} setSubSub={showSubSub} />
+        </div>
       </div>
-    </div>
+      <NotificationModal params={modalParams} ref={modalAction} confirmEvent={() => {}} />
+      <ToastMessage ref={toastAction} />
+    </>
   );
 }

@@ -9,9 +9,12 @@ use App\Services\RoleService;
 use App\Models\Role;
 use App\Models\Permission;
 use App\Models\RolePermission;
+use App\Traits\Auditable;
 
 class RoleController extends BaseController
 {
+  use Auditable;
+
   public function __construct(RoleService $roleService, MessageService $messageService)
   {
     // Call the parent constructor to initialize services
@@ -65,6 +68,8 @@ class RoleController extends BaseController
         $resource = RolePermission::insert($dataToInsert);
       }
     
+      $this->logCreate("Created new role: {$role->name}", $role);
+    
       return response($resource, 201);
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -81,6 +86,7 @@ class RoleController extends BaseController
 
       // Find the existing role by ID
       $role = Role::findOrFail($id);
+      $oldData = $role->toArray();
 
       // Update the role's basic information
       $role->name = $data['name'];
@@ -124,6 +130,8 @@ class RoleController extends BaseController
         RolePermission::insert($dataToInsert);
       }
 
+      $this->logUpdate("Updated role: {$role->name}", $oldData, $role->toArray());
+
       // Return the updated resource (role)
       return response($role, 200);
     } catch (\Exception $e) {
@@ -138,7 +146,11 @@ class RoleController extends BaseController
   public function getRoles() 
   {
     try {
-      return $this->service->getRoles();
+      $roles = $this->service->getRoles();
+      
+      $this->logAudit('VIEW', 'Viewed roles list');
+      
+      return $roles;
     } catch (\Exception $e) {
       return $this->messageService->responseError();
     }

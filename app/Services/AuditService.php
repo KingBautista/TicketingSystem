@@ -26,7 +26,7 @@ class AuditService
             $logMessage = sprintf(
                 "[%s] User %s performed %s in %s: %s",
                 now()->format('Y-m-d H:i:s'),
-                Auth::user()->name,
+                Auth::user()->name ?? 'Unknown',
                 $action,
                 $module,
                 $description
@@ -43,5 +43,51 @@ class AuditService
             Log::error('Failed to create audit log: ' . $e->getMessage());
             return null;
         }
+    }
+
+    public function getAuditTrails($filters = [])
+    {
+        $query = AuditTrail::with('user')->latest();
+
+        if (isset($filters['module']) && !empty($filters['module'])) {
+            $query->where('module', $filters['module']);
+        }
+
+        if (isset($filters['action']) && !empty($filters['action'])) {
+            $query->where('action', $filters['action']);
+        }
+
+        if (isset($filters['user_id']) && !empty($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+        }
+
+        if (isset($filters['start_date']) && !empty($filters['start_date'])) {
+            $query->whereDate('created_at', '>=', $filters['start_date']);
+        }
+
+        if (isset($filters['end_date']) && !empty($filters['end_date'])) {
+            $query->whereDate('created_at', '<=', $filters['end_date']);
+        }
+
+        if (isset($filters['search']) && !empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('module', 'like', "%{$search}%")
+                  ->orWhere('action', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->paginate($filters['per_page'] ?? 15);
+    }
+
+    public function getModules()
+    {
+        return AuditTrail::distinct()->pluck('module')->filter()->values();
+    }
+
+    public function getActions()
+    {
+        return AuditTrail::distinct()->pluck('action')->filter()->values();
     }
 }

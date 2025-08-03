@@ -10,9 +10,12 @@ use App\Models\Rate;
 use App\Models\Discount;
 use App\Http\Resources\RateResource;
 use App\Http\Resources\DiscountResource;
+use App\Traits\Auditable;
 
 class RateController extends BaseController
 {
+    use Auditable;
+
     public function __construct(RateService $rateService, MessageService $messageService)
     {
         parent::__construct($rateService, $messageService);
@@ -23,6 +26,9 @@ class RateController extends BaseController
         try {
             $data = $request->validated();
             $rate = Rate::create($data);
+            
+            $this->logCreate("Created new rate: {$rate->name} (₱{$rate->price})", $rate);
+            
             return new RateResource($rate);
         } catch (\Exception $e) {
             return $this->messageService->responseError();
@@ -34,7 +40,11 @@ class RateController extends BaseController
         try {
             $data = $request->validated();
             $rate = Rate::findOrFail($id);
+            $oldData = $rate->toArray();
             $rate->update($data);
+            
+            $this->logUpdate("Updated rate: {$rate->name} (₱{$rate->price})", $oldData, $rate->toArray());
+            
             return new RateResource($rate);
         } catch (\Exception $e) {
             return $this->messageService->responseError();
@@ -47,6 +57,9 @@ class RateController extends BaseController
         try {
             $rates = Rate::where('status', 1)->get();
             $discounts = Discount::where('status', 1)->get();
+            
+            $this->logAudit('VIEW', 'Viewed rates and discounts dropdown');
+            
             return response()->json([
                 'rates' => RateResource::collection($rates),
                 'discounts' => DiscountResource::collection($discounts),

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Traits\Auditable;
 use Illuminate\Http\Request;
 use App\Http\Requests\SignupRequest;
 use App\Http\Requests\LoginRequest;
@@ -19,6 +20,8 @@ use Hash;
 
 class AuthController extends Controller
 {
+	use Auditable;
+
 	/**
 	 * Create a new user.
 	 */
@@ -50,6 +53,8 @@ class AuthController extends Controller
 			$message = 'Aww yeah, you have successfuly registered. Verification email has been sent to your registered email.';
 		}
 
+		$this->logCreate("New user registration: {$user->user_login} ({$user->user_email})", $user);
+
 		return response(compact('message'));
 		
 	}
@@ -67,6 +72,8 @@ class AuthController extends Controller
 		if($user) {
 			$user->update(['user_status' => 1]);
 			$message = 'Your registered email address has been validated, you can login you account and enjoy.';
+			
+			$this->logUpdate("User account activated: {$user->user_login} ({$user->user_email})", null, $user->toArray());
 		}
 
 		return response(compact('message'));
@@ -98,6 +105,8 @@ class AuthController extends Controller
 			if(Mail::to($user->user_email)->send(new ForgotPasswordEmail($user, $options))) {
 				$message = 'Your temporary password has been sent to your registered email.';
 			}
+
+			$this->logAudit('PASSWORD_RESET', "Password reset requested for user: {$user->user_login} ({$user->user_email})");
 		}
 
 		return response(compact('message'));
@@ -124,6 +133,8 @@ class AuthController extends Controller
 		$token = $user->createToken('admin')->plainTextToken;
 		$user = new AuthResource($user);
 
+		$this->logLogin("User logged in: {$user->user_login} ({$user->user_email})");
+
 		return response(compact('user', 'token'));	
 
 	}
@@ -135,6 +146,9 @@ class AuthController extends Controller
 	{
 		$user = $request->user();
 		$user->currentAccessToken()->delete();
+		
+		$this->logLogout("User logged out: {$user->user_login} ({$user->user_email})");
+		
 		return response('', 204);
 	}
 
@@ -154,6 +168,9 @@ class AuthController extends Controller
 		if (!\Hash::check($user->user_salt.$request->password.env('PEPPER_HASH'), $user->user_pass)) {
 			return response(['message' => 'Invalid password.'], 422);
 		}
+		
+		$this->logAudit('PASSWORD_VALIDATION', "Password validation for user: {$user->user_login} - SUCCESS");
+		
 		return response(['message' => 'Password is valid.'], 200);
 	}
 }

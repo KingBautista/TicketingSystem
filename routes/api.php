@@ -112,6 +112,9 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::get('/', [AuditTrailController::class, 'index']);
 			Route::post('/export', [AuditTrailController::class, 'export']);
 			Route::get('/logs/{date?}', [AuditTrailController::class, 'downloadLogFile']);
+			Route::get('/modules', [AuditTrailController::class, 'getModules']);
+			Route::get('/actions', [AuditTrailController::class, 'getActions']);
+			Route::get('/stats', [AuditTrailController::class, 'getStats']);
 		});
 	});
 
@@ -199,6 +202,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::prefix('reports')->group(function () {
 		Route::get('/sales', [SalesReportController::class, 'index']);
 		Route::post('/sales/export', [SalesReportController::class, 'export']);
+		Route::get('/sales/statistics', [SalesReportController::class, 'statistics']);
 	});
 
 	// Cashier Routes

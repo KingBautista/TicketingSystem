@@ -6,9 +6,12 @@ use Illuminate\Http\Request;
 use App\Http\Requests\NavigationRequest;
 use App\Services\MessageService;
 use App\Services\NavigationService;
+use App\Traits\Auditable;
 
 class NavigationController extends BaseController
 {
+  use Auditable;
+
   public function __construct(NavigationService $navigationService, MessageService $messageService)
   {
     // Call the parent constructor to initialize services
@@ -23,6 +26,9 @@ class NavigationController extends BaseController
     try {
       $data = $request->all();
       $resource = $this->service->store($data);
+      
+      $this->logCreate("Created new navigation: {$data['name']}", $resource);
+      
       return response($resource, 201);
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -36,7 +42,11 @@ class NavigationController extends BaseController
   {
     try {
       $data = $request->all();
+      $oldData = $this->service->show($id);
       $resource = $this->service->update($data, $id);
+      
+      $this->logUpdate("Updated navigation: {$data['name']}", $oldData, $resource);
+      
       return response($resource, 200);
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -46,8 +56,12 @@ class NavigationController extends BaseController
   public function getNavigations() 
   {
     try {
-			return $this->service->navigations();
-		} catch (\Exception $e) {
+      $navigations = $this->service->navigations();
+      
+      $this->logAudit('VIEW', 'Viewed navigation list');
+      
+      return $navigations;
+    } catch (\Exception $e) {
       return $this->messageService->responseError();
     }
   }
@@ -55,8 +69,12 @@ class NavigationController extends BaseController
   public function getSubNavigations($id) 
   {
     try {
-			return $this->service->subNavigations($id);
-		} catch (\Exception $e) {
+      $subNavigations = $this->service->subNavigations($id);
+      
+      $this->logAudit('VIEW', "Viewed sub-navigations for navigation ID: {$id}");
+      
+      return $subNavigations;
+    } catch (\Exception $e) {
       return $this->messageService->responseError();
     }
   }
@@ -64,8 +82,12 @@ class NavigationController extends BaseController
   public function getRoutes() 
   {
     try {
-			return $this->service->getRoutes();
-		} catch (\Exception $e) {
+      $routes = $this->service->getRoutes();
+      
+      $this->logAudit('VIEW', 'Viewed system routes');
+      
+      return $routes;
+    } catch (\Exception $e) {
       return $this->messageService->responseError();
     }
   }

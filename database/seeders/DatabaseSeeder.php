@@ -29,5 +29,8 @@ class DatabaseSeeder extends Seeder
     $this->call(PromoterSeeder::class);
     $this->call(PromoterScheduleSeeder::class);
     // $this->call(MediaLibrarySeeder::class);
+
+    // Audit Trail Seeder (should be last to capture all activities)
+    $this->call(AuditTrailSeeder::class);
   }
 }

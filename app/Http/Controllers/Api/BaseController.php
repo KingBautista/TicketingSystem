@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Traits\Auditable;
 use Illuminate\Http\Request;
 use App\Services\MessageService;
 
 class BaseController extends Controller
 {
+  use Auditable;
+
   protected $service;
   protected $messageService;
 
@@ -25,6 +28,7 @@ class BaseController extends Controller
   {
     try {
       $items = $this->service->list();
+      $this->logAudit('VIEW', 'Viewed list of ' . $this->getModuleName());
       return $items;
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -36,6 +40,7 @@ class BaseController extends Controller
   {
     try {
       $item = $this->service->show($id);
+      $this->logAudit('VIEW', "Viewed {$this->getModuleName()} with ID: {$id}");
       return $item;
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -46,7 +51,9 @@ class BaseController extends Controller
   public function destroy($id)
   {
     try {
+      $item = $this->service->show($id);
       $this->service->destroy($id);
+      $this->logDelete("Deleted {$this->getModuleName()} with ID: {$id}", $item);
       return response(['message' => 'Resource has been moved to trash.'], 200);
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -57,7 +64,9 @@ class BaseController extends Controller
   public function bulkDelete(Request $request)
   {
     try {
+      $count = count($request->ids);
       $this->service->bulkDelete($request->ids);
+      $this->logBulkAction('DELETE', "Bulk deleted {$count} {$this->getModuleName()} records", $count);
       return response(['message' => 'Resources have been deleted.'], 200);
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -69,6 +78,7 @@ class BaseController extends Controller
   {
     try {
       $items = $this->service->list(10, true);
+      $this->logAudit('VIEW', "Viewed trashed {$this->getModuleName()} records");
       return $items;
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -80,6 +90,7 @@ class BaseController extends Controller
   {
     try {
       $item = $this->service->restore($id);
+      $this->logRestore("Restored {$this->getModuleName()} with ID: {$id}", $item);
       return response([
         'message' => 'Resource has been restored.',
         'resource' => $item
@@ -93,7 +104,9 @@ class BaseController extends Controller
   public function bulkRestore(Request $request)
   {
     try {
+      $count = count($request->ids);
       $this->service->bulkRestore($request->ids);
+      $this->logBulkAction('RESTORE', "Bulk restored {$count} {$this->getModuleName()} records", $count);
       return response(['message' => 'Resources have been restored.'], 200);
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -104,8 +117,9 @@ class BaseController extends Controller
   public function forceDelete($id)
   {
     try {
-      return $id;
+      $item = $this->service->show($id);
       $this->service->forceDelete($id);
+      $this->logDelete("Permanently deleted {$this->getModuleName()} with ID: {$id}", $item);
       return response(['message' => 'Resource has been permanently deleted.'], 200);
     } catch (\Exception $e) {
       return $this->messageService->responseError();
@@ -116,7 +130,9 @@ class BaseController extends Controller
   public function bulkForceDelete(Request $request)
   {
     try {
+      $count = count($request->ids);
       $this->service->bulkForceDelete($request->ids);
+      $this->logBulkAction('FORCE_DELETE', "Bulk permanently deleted {$count} {$this->getModuleName()} records", $count);
       return response(['message' => 'Resources have been permanently deleted.'], 200);
     } catch (\Exception $e) {
       return $this->messageService->responseError();

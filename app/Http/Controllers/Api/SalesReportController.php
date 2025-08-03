@@ -3,49 +3,84 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Traits\Auditable;
+use App\Services\SalesReportService;
 use Illuminate\Http\Request;
 use App\Http\Resources\SalesReportResource;
 
 class SalesReportController extends Controller
 {
+    use Auditable;
+
+    protected $salesReportService;
+
+    public function __construct(SalesReportService $salesReportService)
+    {
+        $this->salesReportService = $salesReportService;
+    }
+
     public function index(Request $request)
     {
-        // Sample data
-        $data = [];
-        for ($i = 1; $i <= 30; $i++) {
-            $data[] = [
-                'id' => $i,
-                'cashier' => 'Cashier ' . (($i % 3) + 1),
-                'transaction_id' => 'TXN' . (1000 + $i),
-                'date' => '2024-06-' . str_pad(($i % 30 + 1), 2, '0', STR_PAD_LEFT),
-                'amount' => number_format(mt_rand(1000, 10000) / 100, 2),
-            ];
+        try {
+            $filters = $request->only([
+                'search', 'cashier', 'startDate', 'endDate', 
+                'promoter', 'rate', 'per_page', 'page'
+            ]);
+
+            $query = $this->salesReportService->getSalesReport($filters);
+            
+            // Pagination
+            $perPage = $request->get('per_page', 15);
+            $transactions = $query->paginate($perPage);
+            
+            $this->logAudit('VIEW', "Viewed sales report with filters: " . json_encode($filters));
+            
+            return response()->json([
+                'data' => SalesReportResource::collection($transactions->items()),
+                'meta' => [
+                    'total' => $transactions->total(),
+                    'page' => $transactions->currentPage(),
+                    'per_page' => $transactions->perPage(),
+                    'last_page' => $transactions->lastPage(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch sales report'], 500);
         }
-        // Filtering
-        $filtered = array_filter($data, function($row) use ($request) {
-            return
-                (!$request->cashier || $row['cashier'] === $request->cashier) &&
-                (!$request->startDate || $row['date'] >= $request->startDate) &&
-                (!$request->endDate || $row['date'] <= $request->endDate);
-        });
-        // Pagination
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
-        $total = count($filtered);
-        $paged = array_slice(array_values($filtered), ($page - 1) * $perPage, $perPage);
-        return response()->json([
-            'data' => SalesReportResource::collection($paged),
-            'meta' => [
-                'total' => $total,
-                'page' => $page,
-                'per_page' => $perPage,
-            ],
-        ]);
     }
 
     public function export(Request $request)
     {
-        // Simulate export
-        return response()->json(['message' => 'Export simulated.']);
+        try {
+            $format = $request->format ?? 'csv';
+            $filters = $request->only([
+                'search', 'cashier', 'startDate', 'endDate', 
+                'promoter', 'rate'
+            ]);
+
+            $this->logExport("Exported sales report as {$format}", $format, 0);
+            
+            return $this->salesReportService->exportSalesReport($filters, $format);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to export sales report'], 500);
+        }
+    }
+
+    public function statistics(Request $request)
+    {
+        try {
+            $filters = $request->only([
+                'search', 'cashier', 'startDate', 'endDate', 
+                'promoter', 'rate'
+            ]);
+
+            $stats = $this->salesReportService->getSalesStatistics($filters);
+            
+            $this->logAudit('VIEW', 'Viewed sales report statistics');
+            
+            return response()->json($stats);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch sales statistics'], 500);
+        }
     }
 } 

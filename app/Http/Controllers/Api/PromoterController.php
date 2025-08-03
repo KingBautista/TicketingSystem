@@ -10,9 +10,12 @@ use App\Services\PromoterService;
 use Illuminate\Http\Request;
 use App\Services\MessageService;
 use App\Models\Promoter;
+use App\Traits\Auditable;
 
 class PromoterController extends BaseController
 {
+    use Auditable;
+
     public function __construct(PromoterService $service, MessageService $messageService)
     {
         parent::__construct($service, $messageService);
@@ -23,6 +26,9 @@ class PromoterController extends BaseController
         try {
             $data = $request->validated();
             $resource = $this->service->store($data);
+            
+            $this->logCreate("Created new promoter: {$data['name']}", $resource);
+            
             return response($resource, 201);
         } catch (\Exception $e) {
             return $this->messageService->responseError();
@@ -33,7 +39,11 @@ class PromoterController extends BaseController
     {
         try {
             $data = $request->validated();
+            $oldData = $this->service->show($id);
             $resource = $this->service->update($data, $id);
+            
+            $this->logUpdate("Updated promoter: {$data['name']}", $oldData, $resource);
+            
             return response($resource, 200);
         } catch (\Exception $e) {
             return $this->messageService->responseError();
@@ -45,6 +55,9 @@ class PromoterController extends BaseController
         try {
             $data = $request->validated();
             $schedule = $this->service->schedule($data['promoter_id'], $data['date'], $data['is_manual'] ?? false);
+            
+            $this->logAudit('SCHEDULE', "Scheduled promoter for date: {$data['date']}");
+            
             return response()->json(['message' => 'Schedule set successfully.', 'schedule' => $schedule]);
         } catch (\Exception $e) {
             return $this->messageService->responseError();
@@ -57,6 +70,9 @@ class PromoterController extends BaseController
             $date = $request->input('date');
             $promoterId = $request->input('promoter_id');
             $schedule = $this->service->manualUpdateForDay($date, $promoterId);
+            
+            $this->logAudit('MANUAL_UPDATE', "Manual update for promoter on date: {$date}");
+            
             return response()->json(['message' => 'Manual update set successfully.', 'schedule' => $schedule]);
         } catch (\Exception $e) {
             return $this->messageService->responseError();
@@ -71,6 +87,7 @@ class PromoterController extends BaseController
                 ->orderByDesc('is_manual') // manual override first
                 ->first();
             if ($schedule && $schedule->promoter) {
+                $this->logAudit('VIEW', "Viewed promoter of the day for date: {$date}");
                 return new \App\Http\Resources\PromoterResource($schedule->promoter);
             }
             return response()->json(['data' => null]);
