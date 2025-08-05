@@ -93,4 +93,23 @@ class CashierController extends Controller
         
         return new CashierSessionResource($session);
     }
+
+    public function sendToDisplay(Request $request)
+    {
+        $line1 = substr($request->input('line1', ''), 0, 20);
+        $line2 = substr($request->input('line2', ''), 0, 20);
+
+        $batPath = base_path('pd300-display/send-display.bat');
+        $line1Escaped = escapeshellarg($line1);
+        $line2Escaped = escapeshellarg($line2);
+        $command = "\"$batPath\" $line1Escaped $line2Escaped";
+
+        try {
+            shell_exec($command);
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
 }

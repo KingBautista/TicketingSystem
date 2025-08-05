@@ -62,7 +62,7 @@ export default function CashierLayout() {
   useEffect(() => {
     axiosClient.get('/user')
 		.then(({data}) => {
-      const user = data.data; 
+      const user = data; 
       setUser(user);
 		})
     .catch((errors) => {
@@ -100,6 +100,21 @@ export default function CashierLayout() {
   });
   const total = Math.max(0, baseTotal - discountTotal);
   const changeDue = paidAmount ? Math.max(0, paidAmount - total) : 0;
+
+  useEffect(() => {
+    if (total === 0 || !promoter?.name) return;
+    console.log(total, promoter);
+    const timeout = setTimeout(() => {
+      axiosClient.post('/cashier/send-to-display', {
+        line1: `Promoter: ${promoter.name}`.substring(0, 20),
+        line2: `Total: ₱${total.toFixed(2)}`.substring(0, 20),
+      }).catch(err => {
+        console.error('PD-300 display error:', err);
+      });
+    }, 400);
+  
+    return () => clearTimeout(timeout);
+  }, [total, promoter]);
 
   // Open Cash Handlers
   // Integrate handleOpenCash with backend

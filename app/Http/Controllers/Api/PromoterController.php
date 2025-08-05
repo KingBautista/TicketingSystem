@@ -10,6 +10,7 @@ use App\Services\PromoterService;
 use Illuminate\Http\Request;
 use App\Services\MessageService;
 use App\Models\Promoter;
+use App\Models\PromoterSchedule;
 use App\Traits\Auditable;
 
 class PromoterController extends BaseController

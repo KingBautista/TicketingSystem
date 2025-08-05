@@ -219,6 +219,7 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/tickets/{transactionId}', [CashierController::class, 'tickets']);
 		Route::get('/transactions/daily', [CashierController::class, 'getDailyTransactions']);
 		Route::get('/sessions/{id}', [CashierController::class, 'getSession']);
+		Route::post('/send-to-display', [CashierController::class, 'sendToDisplay']);
 	});
 });
 
