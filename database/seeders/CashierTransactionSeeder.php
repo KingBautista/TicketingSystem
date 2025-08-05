@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Rate;
 use App\Models\Discount;
+use App\Models\Promoter;
 use App\Models\CashierSession;
 use App\Models\CashierTransaction;
 use App\Models\CashierTicket;
@@ -22,6 +23,7 @@ class CashierTransactionSeeder extends Seeder
         $cashiers = User::where('user_role_id', 4)->get();
         $rates = Rate::all();
         $discounts = Discount::all();
+        $promoters = Promoter::where('status', true)->get(); // Get active promoters
         
         foreach ($cashiers as $cashier) {
             // Create a session for each cashier
@@ -33,7 +35,7 @@ class CashierTransactionSeeder extends Seeder
             ]);
 
             // Create 5-10 transactions for each cashier
-            $numTransactions = rand(5, 10);
+            $numTransactions = rand(15, 40);
             $totalSales = 0;
 
             for ($i = 0; $i < $numTransactions; $i++) {
@@ -66,10 +68,14 @@ class CashierTransactionSeeder extends Seeder
                 $totalSales += $total;
 
                 $paid_amount = $total + rand(0, 500); // Random excess payment
+                // Randomly decide if this transaction has a promoter (70% chance)
+                $hasPromoter = rand(1, 100) <= 70;
+                $promoterId = $promoters->random()->id;
+
                 // Create transaction
                 $transaction = CashierTransaction::create([
                     'cashier_id' => $cashier->id,
-                    'promoter_id' => null, // You can add random promoter if needed
+                    'promoter_id' => $promoterId,
                     'rate_id' => $rate->id,
                     'quantity' => $quantity,
                     'total' => $total,

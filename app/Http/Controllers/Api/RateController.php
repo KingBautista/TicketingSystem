@@ -68,4 +68,18 @@ class RateController extends BaseController
             return $this->messageService->responseError();
         }
     }
+
+    public function getRatesForDropdown()
+    {
+        try {
+            $rates = Rate::select('id', 'name', 'price')
+                ->where('status', 1)
+                ->orderBy('name')
+                ->get();
+            
+            return response()->json($rates);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch rates'], 500);
+        }
+    }
 } 

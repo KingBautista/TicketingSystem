@@ -204,4 +204,18 @@ class UserController extends BaseController
       return $this->messageService->responseError();
     }
   }
+
+  public function getUsersForDropdown()
+  {
+    try {
+      $users = User::select('id', 'user_login', 'user_email')
+        ->where('user_status', 1)
+        ->orderBy('user_login')
+        ->get();
+      
+      return response()->json($users);
+    } catch (\Exception $e) {
+      return response()->json(['error' => 'Failed to fetch users'], 500);
+    }
+  }
 }

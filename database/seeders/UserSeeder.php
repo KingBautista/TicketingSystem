@@ -115,5 +115,49 @@ class UserSeeder extends Seeder
             'theme' => 'light',
         ];
         $cashier2User->saveUserMeta($cashier2MetaData);
+
+        // Add promoter1 user with role id = 4
+        $promoter1Salt = PasswordHelper::generateSalt();
+        $promoter1Password = PasswordHelper::generatePassword($promoter1Salt, 'password123');
+        $promoter1User = User::create([
+            'user_login' => 'promoter1',
+            'user_email' => 'promoter1@example.com',
+            'user_pass' => $promoter1Password,
+            'user_salt' => $promoter1Salt,
+            'user_status' => 1,
+            'user_activation_key' => null,
+            'remember_token' => null,
+            'user_role_id' => 4,
+        ]);
+        $promoter1MetaData = [
+            'first_name' => 'Alice',
+            'last_name' => 'Johnson',
+            'nickname' => 'Promoter1',
+            'biography' => 'Promoter account.',
+            'theme' => 'light',
+        ];
+        $promoter1User->saveUserMeta($promoter1MetaData);
+
+        // Add promoter2 user with role id = 4
+        $promoter2Salt = PasswordHelper::generateSalt();
+        $promoter2Password = PasswordHelper::generatePassword($promoter2Salt, 'password123');
+        $promoter2User = User::create([
+            'user_login' => 'promoter2',
+            'user_email' => 'promoter2@example.com',
+            'user_pass' => $promoter2Password,
+            'user_salt' => $promoter2Salt,
+            'user_status' => 1,
+            'user_activation_key' => null,
+            'remember_token' => null,
+            'user_role_id' => 4,
+        ]);
+        $promoter2MetaData = [
+            'first_name' => 'Bob',
+            'last_name' => 'Wilson',
+            'nickname' => 'Promoter2',
+            'biography' => 'Promoter account.',
+            'theme' => 'light',
+        ];
+        $promoter2User->saveUserMeta($promoter2MetaData);
     }
 } 

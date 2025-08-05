@@ -10,7 +10,7 @@ const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-sm-2', inpu
     let length = len || 10;
     let string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     let numeric = '0123456789';
-    let punctuation = '@$!%*#?&';
+    let punctuation = '@$!#?&';
     let password = "";
     
     while (password.length < length) {

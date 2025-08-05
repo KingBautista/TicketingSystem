@@ -83,7 +83,7 @@ class PromoterController extends BaseController
     {
         try {
             $date = $request->input('date', date('Y-m-d'));
-            $schedule = \App\Models\PromoterSchedule::where('date', $date)
+            $schedule = PromoterSchedule::where('date', $date)
                 ->orderByDesc('is_manual') // manual override first
                 ->first();
             if ($schedule && $schedule->promoter) {
@@ -93,6 +93,20 @@ class PromoterController extends BaseController
             return response()->json(['data' => null]);
         } catch (\Exception $e) {
             return $this->messageService->responseError();
+        }
+    }
+
+    public function getPromotersForDropdown()
+    {
+        try {
+            $promoters = Promoter::select('id', 'name', 'description')
+                ->where('status', 1)
+                ->orderBy('name')
+                ->get();
+            
+            return response()->json($promoters);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch promoters'], 500);
         }
     }
 } 

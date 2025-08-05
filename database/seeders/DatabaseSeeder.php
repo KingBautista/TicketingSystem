@@ -20,13 +20,11 @@ class DatabaseSeeder extends Seeder
     $this->call(RolePermissionSeeder::class);
     $this->call(RateSeeder::class);
     $this->call(DiscountSeeder::class);
+    $this->call(PromoterSeeder::class);
     $this->call(CashierTransactionSeeder::class);
 
     // Business Logic Seeders
-    $this->call(RateSeeder::class);
-    $this->call(DiscountSeeder::class);
     $this->call(VIPSeeder::class);
-    $this->call(PromoterSeeder::class);
     $this->call(PromoterScheduleSeeder::class);
     // $this->call(MediaLibrarySeeder::class);
 

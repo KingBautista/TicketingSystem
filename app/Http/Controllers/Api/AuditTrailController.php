@@ -27,14 +27,17 @@ class AuditTrailController extends Controller
         try {
             $filters = $request->only([
                 'module', 'action', 'user_id', 'start_date', 
-                'end_date', 'search', 'per_page'
+                'end_date', 'search'
             ]);
 
-            $auditTrails = $this->auditService->getAuditTrails($filters);
+            $query = $this->auditService->getAuditTrails($filters);
+            $auditTrails = $query->get();
             
             $this->logAudit('VIEW', 'Viewed audit trail with filters: ' . json_encode($filters));
             
-            return response()->json($auditTrails);
+            return response()->json([
+                'data' => $auditTrails
+            ]);
         } catch (\Exception $e) {
             Log::error('Audit trail index error: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch audit trail'], 500);

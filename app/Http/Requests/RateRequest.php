@@ -20,4 +20,19 @@ class RateRequest extends FormRequest
             'status' => 'required|boolean',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Rate name is required.',
+            'name.string' => 'Rate name must be a valid text.',
+            'name.max' => 'Rate name cannot exceed 255 characters.',
+            'description.string' => 'Description must be a valid text.',
+            'price.required' => 'Price is required.',
+            'price.numeric' => 'Price must be a valid number.',
+            'price.min' => 'Price cannot be negative.',
+            'status.required' => 'Status is required.',
+            'status.boolean' => 'Status must be either active or inactive.',
+        ];
+    }
 } 

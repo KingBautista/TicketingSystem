@@ -19,4 +19,16 @@ class PromoterRequest extends FormRequest
             'status' => 'required|boolean',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Promoter name is required.',
+            'name.string' => 'Promoter name must be a valid text.',
+            'name.max' => 'Promoter name cannot exceed 255 characters.',
+            'description.string' => 'Description must be a valid text.',
+            'status.required' => 'Status is required.',
+            'status.boolean' => 'Status must be either active or inactive.',
+        ];
+    }
 } 

@@ -46,6 +46,12 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/navigations/{id}', [NavigationController::class, 'getSubNavigations']);  // Retrieve subcategories for a specific category		
 		Route::get('/routes', [NavigationController::class, 'getRoutes']);  // Retrieve all routes
 		Route::get('/roles', [RoleController::class, 'getRoles']);  // Retrieve all routes
+		// users for dropdowns
+		Route::get('/users', [UserController::class, 'getUsersForDropdown']);
+		// promoters for dropdowns
+		Route::get('/promoters', [PromoterController::class, 'getPromotersForDropdown']);
+		// rates for dropdowns
+		Route::get('/rates', [RateController::class, 'getRatesForDropdown']);
 	});
 
 	// User Management Routes
