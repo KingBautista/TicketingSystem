@@ -21,7 +21,6 @@ export default function AuditTrail() {
   const [modules, setModules] = useState([]);
   const [actions, setActions] = useState([]);
   const [stats, setStats] = useState(null);
-  const [showStats, setShowStats] = useState(false);
   const toastAction = useRef();
 
   // Fetch audit trail data
@@ -191,23 +190,12 @@ export default function AuditTrail() {
     }
   };
 
-  const toggleStats = () => {
-    if (!stats) {
-      fetchStats();
-    }
-    setShowStats(!showStats);
-  };
-
   return (
     <div className="card">
       <ToastMessage ref={toastAction} />
       <div className="card-header d-flex justify-content-between align-items-center">
         <h4>Audit Trail</h4>
         <div>
-          <button className="btn btn-outline-info btn-sm me-2" onClick={toggleStats}>
-            <FontAwesomeIcon icon={solidIconMap.chartBar} className="me-1" /> 
-            {showStats ? 'Hide' : 'Show'} Stats
-          </button>
           <button className="btn btn-outline-primary btn-sm me-2" onClick={() => exportData('pdf')}>
             <FontAwesomeIcon icon={solidIconMap.filePdf} className="me-1" /> Export PDF
           </button>
@@ -216,37 +204,6 @@ export default function AuditTrail() {
           </button>
         </div>
       </div>
-
-      {showStats && stats && (
-        <div className="card-body border-bottom">
-          <div className="row">
-            <div className="col-md-3">
-              <div className="text-center">
-                <h5 className="text-primary">{stats.total_actions}</h5>
-                <small className="text-muted">Total Actions</small>
-              </div>
-            </div>
-            <div className="col-md-3">
-              <div className="text-center">
-                <h5 className="text-success">{stats.actions_by_module.length}</h5>
-                <small className="text-muted">Active Modules</small>
-              </div>
-            </div>
-            <div className="col-md-3">
-              <div className="text-center">
-                <h5 className="text-info">{stats.actions_by_type.length}</h5>
-                <small className="text-muted">Action Types</small>
-              </div>
-            </div>
-            <div className="col-md-3">
-              <div className="text-center">
-                <h5 className="text-warning">{stats.actions_by_user.length}</h5>
-                <small className="text-muted">Active Users</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="card-header">
         <div className="row g-2 align-items-end">
