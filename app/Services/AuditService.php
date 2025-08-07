@@ -78,7 +78,7 @@ class AuditService
             });
         }
 
-        return $query->paginate($filters['per_page'] ?? 15);
+        return $query->get();
     }
 
     public function getModules()

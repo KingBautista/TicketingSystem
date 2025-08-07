@@ -64,7 +64,7 @@ export default function Profile() {
   useEffect(() => {
     axiosClient.get('/user')
 		.then(({data}) => {
-      const user = data.data; 
+      const user = data; 
       setUser(user);
 		})
   }, []); // empty array means 'run once'
@@ -84,7 +84,7 @@ export default function Profile() {
           <Field
             label="Admin Color Scheme"
             inputComponent={
-              <select className="form-select form-select-sm" value={user.theme} aria-label="Bulk actions" onChange={ev => {handleSelectedTheme(ev.target.value); setUser({ ...user, theme: DOMPurify.sanitize(ev.target.value) }); }}>
+              <select className="form-select form-select-sm" value={user?.theme} aria-label="Bulk actions" onChange={ev => {handleSelectedTheme(ev.target.value); setUser({ ...user, theme: DOMPurify.sanitize(ev.target.value) }); }}>
                 <option value="">Select Theme Color</option>
                 <option value="dark">Dark</option>
                 <option value="light">Light</option>

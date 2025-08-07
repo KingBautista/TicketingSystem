@@ -115,7 +115,7 @@ export default function AuditTrail() {
           fetchUsers(),
           fetchModules(),
           fetchActions(),
-          fetchData(1)
+          //fetchData(1)
         ]);
       } catch (error) {
         console.error('Failed to initialize data:', error);

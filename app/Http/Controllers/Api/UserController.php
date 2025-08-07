@@ -171,7 +171,7 @@ class UserController extends BaseController
 
       $user = $this->service->updateWithMeta($upData, $meta_details, $user);
 
-      $this->logUpdate("Updated own profile: {$user->user_login} ({$user->user_email})", $oldData, $user->toArray());
+      $this->logUpdate("Updated own profile: {$user->user_login} ({$user->user_email})", $oldData, $user);
 
       return response([
         'message' => 'Profile has been updated successfully.',

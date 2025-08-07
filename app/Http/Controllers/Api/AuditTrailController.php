@@ -30,8 +30,7 @@ class AuditTrailController extends Controller
                 'end_date', 'search'
             ]);
 
-            $query = $this->auditService->getAuditTrails($filters);
-            $auditTrails = $query->get();
+            $auditTrails = $this->auditService->getAuditTrails($filters);
             
             $this->logAudit('VIEW', 'Viewed audit trail with filters: ' . json_encode($filters));
             

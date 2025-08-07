@@ -30,7 +30,7 @@ export default function Header() {
   useEffect(() => {
     axiosClient.get('/user')
 		.then(({data}) => {
-      const user = data.data; 
+      const user = data; 
       setUser(user);
       // setTheme(user.theme);
       setuserIcon('/assets/img/avatars/default-user.png');
@@ -66,17 +66,6 @@ export default function Header() {
               <div className="avatar avatar-md"><img className="avatar-img" src={userIcon} alt={user && user.user_login}/></div>
             </a>
             <div className="dropdown-menu dropdown-menu-end pt-0">
-              <div className="dropdown-header bg-body-tertiary text-body-secondary fw-semibold rounded-top mb-2">Account</div>
-              <a className="dropdown-item" href="#">
-                <svg className="icon me-2">
-                  <use xlinkHref="/assets/vendors/@coreui/icons/svg/free.svg#cil-bell"></use>
-                </svg> Notifications<span className="badge badge-sm bg-info ms-2">42</span>
-              </a>
-              <a className="dropdown-item" href="#">
-                <svg className="icon me-2">
-                  <use xlinkHref="/assets/vendors/@coreui/icons/svg/free.svg#cil-envelope-open"></use>
-                </svg> Messages<span className="badge badge-sm bg-success ms-2">42</span>
-              </a>
               <div className="dropdown-header bg-body-tertiary text-body-secondary fw-semibold my-2">
                 <div className="fw-semibold">Settings</div>
               </div>
