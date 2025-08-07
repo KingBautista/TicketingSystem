@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () { return view('welcome'); });
+Route::get('/', function () { return view('scan'); });
 Route::get('/check-shell-exec', function () {
     if (function_exists('shell_exec')) {
-        try {
+        try {   
             $output = shell_exec('echo Shell exec works');
             return 'shell_exec is enabled. Output: ' . $output;
         } catch (\Throwable $e) {

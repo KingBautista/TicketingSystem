@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\PromoterController;
 use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\CashierTransactionController;
 use App\Http\Controllers\Api\CashierController;
+use App\Http\Controllers\Api\ScanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -227,3 +228,5 @@ Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/validate', [AuthController::class, 'activateUser']);
 Route::post('/generate-password', [AuthController::class, 'genTempPassword']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/access/validate', [ScanController::class, 'store']);
+Route::get('/access/latest', [ScanController::class, 'showLatest']);
