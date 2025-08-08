@@ -9,8 +9,12 @@ import TreeDropdown from "../../components/TreeDropdown";
 import DOMPurify from 'dompurify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { solidIconMap } from '../../utils/solidIcons';
+import { useAccess } from '../../hooks/useAccess';
 
 export default function Users() {
+
+  const accessHelper = useAccess();
+  const access = accessHelper.hasAccess(); // defaults to window.location.pathname
   // Grouping states that are related
   const [dataStatus, setDataStatus] = useState({
     totalRows: 0,
@@ -211,10 +215,14 @@ export default function Users() {
       <div className="card mb-2">
         <div className="card-header d-flex justify-content-between align-items-center">
           <h4>Users</h4>
-          <Link to="/user-management/users/create" className="btn btn-primary btn-sm" type="button">
-            <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
-            Create New User
-          </Link>
+          {access?.can_create && 
+            <div className="d-flex gap-2">
+              <Link to="/user-management/users/create" className="btn btn-primary btn-sm" type="button">
+                <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
+                Create New User
+              </Link>
+            </div>
+          }
         </div>
         <div className="card-header">
           <ul className="subsubsub">
@@ -234,32 +242,42 @@ export default function Users() {
         </div>
         <div className="card-header">
           <div className="row"> 
-            <div className="col-md-3 col-12">
-              <div className="input-group">
-                <select ref={bulkAction} className="form-select form-select-sm" aria-label="Bulk actions">
-                  <option value="">Bulk actions</option>
-                  {dataStatus.classTrash && <option value="restore">Restore</option>}
-                  {dataStatus.classTrash && <option value="delete">Delete Permanently</option>}
-                  {dataStatus.classAll && <option value="delete">Delete</option>}
-                  {dataStatus.classAll && <option value="reset_password">Send password reset</option>}
-                </select>
-                <button type="button" className="btn btn-primary btn-sm" onClick={showNotificationModal}>
-                  Apply
-                </button>
-              </div>
-            </div>
-            <div className="col-md-3 col-12">
-              {dataStatus.classAll && 
-              <div className="input-group">
-                <TreeDropdown
-                  options={roles}
-                  onChange={selectedRoles => setSelectedRole(DOMPurify.sanitize(JSON.stringify(selectedRoles)))}
-                  placeholder="Change role to..."
-                />
-                <button type="button" className="btn btn-primary btn-sm" onClick={ev => {setRoleAction('change_role'); showNotificationModal();}}>
-                  Change
-                </button>
-              </div>
+          <div className="col-md-6 col-12 d-flex flex-wrap gap-2 align-items-start">
+              {access?.can_delete && 
+                <div className="input-group input-group-sm" style={{ flex: '1 1 250px' }}>
+                  <select ref={bulkAction} className="form-select" aria-label="Bulk actions">
+                    <option value="">Bulk actions</option>
+                    {dataStatus.classTrash && <option value="restore">Restore</option>}
+                    {dataStatus.classTrash && <option value="delete">Delete Permanently</option>}
+                    {dataStatus.classAll && <option value="delete">Delete</option>}
+                    {dataStatus.classAll && <option value="reset_password">Send password reset</option>}
+                  </select>
+                  <button type="button" className="btn btn-primary" onClick={showNotificationModal}>
+                    Apply
+                  </button>
+                </div>
+              }
+
+              {dataStatus.classAll && access?.can_edit && 
+                <div className="input-group input-group-sm" style={{ flex: '1 1 250px' }}>
+                  <TreeDropdown
+                    options={roles}
+                    onChange={selectedRoles =>
+                      setSelectedRole(DOMPurify.sanitize(JSON.stringify(selectedRoles)))
+                    }
+                    placeholder="Change role to..."
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={(ev) => {
+                      setRoleAction('change_role');
+                      showNotificationModal();
+                    }}
+                  >
+                    Change
+                  </button>
+                </div>
               }
             </div>
             <div className="col-md-4 col-12 offset-md-2">
@@ -268,7 +286,7 @@ export default function Users() {
           </div>
         </div>
         <div className="card-body">
-          <DataTable options={options} params={params} ref={tableRef} setSubSub={showSubSub} />
+          <DataTable options={options} params={params} ref={tableRef} setSubSub={showSubSub} access={access} />
         </div>
       </div>
       <NotificationModal params={modalParams} ref={modalAction} confirmEvent={onConfirm} />

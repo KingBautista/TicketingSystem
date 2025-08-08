@@ -3,7 +3,6 @@ import AccessHelper from '../utils/AccessHelper';
 
 export const useAccess = () => {
   const { user, userRoutes } = useStateContext();
-
   // Create instance once per hook call
   const accessHelper = new AccessHelper(user, userRoutes);
 

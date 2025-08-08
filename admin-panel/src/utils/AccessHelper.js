@@ -2,7 +2,6 @@ class AccessHelper {
   constructor(user, userRoutes) {
     this.user = user;
     this.userRoutes = userRoutes;
-  
     // Parse user_role if it is a string
     let userRoleObj = user?.user_role;
     if (typeof userRoleObj === 'string') {
@@ -27,6 +26,24 @@ class AccessHelper {
       console.error('Failed to parse permissions:', error);
       return {};
     }
+  }
+
+  // Check if user is a developer/admin with full access
+  isDeveloper() {
+    const userRole = this.user?.user_role;
+    if (typeof userRole === 'string') {
+      try {
+        const parsedRole = JSON.parse(userRole);
+        return parsedRole?.name?.toLowerCase().includes('admin') || 
+               parsedRole?.name?.toLowerCase().includes('developer') ||
+               parsedRole?.name?.toLowerCase().includes('super');
+      } catch (error) {
+        return false;
+      }
+    }
+    return userRole?.name?.toLowerCase().includes('admin') || 
+           userRole?.name?.toLowerCase().includes('developer') ||
+           userRole?.name?.toLowerCase().includes('super');
   }
 
   matchPath(routePath, currentPath) {
@@ -60,15 +77,69 @@ class AccessHelper {
   }
 
   hasAccess(pathname = window.location.pathname) {
+    // If user is developer/admin, grant full access
+    if (this.isDeveloper()) {
+      return {
+        can_view: true,
+        can_create: true,
+        can_edit: true,
+        can_delete: true,
+        route: {
+          name: 'Developer Access',
+          icon: '',
+          parentId: 'developer',
+          childId: 'full_access'
+        }
+      };
+    }
+
+    // If no userRoutes, grant basic access (fallback for development)
+    if (!this.userRoutes || this.userRoutes.length === 0) {
+      console.warn('No userRoutes found, granting basic access for development');
+      return {
+        can_view: true,
+        can_create: true,
+        can_edit: true,
+        can_delete: true,
+        route: {
+          name: 'Development Access',
+          icon: '',
+          parentId: 'dev',
+          childId: 'basic_access'
+        }
+      };
+    }
+
     const route = this.findRouteWithParent(this.userRoutes, pathname);
     if (!route) {
-      return {
-        can_view: false,
-        can_create: false,
-        can_edit: false,
-        can_delete: false,
-        route: null
-      };
+      // If no specific route found, check if user has any permissions
+      const hasAnyPermissions = Object.keys(this.permissions).length > 0;
+      
+      if (hasAnyPermissions) {
+        // User has permissions but no specific route match - deny access
+        return {
+          can_view: false,
+          can_create: false,
+          can_edit: false,
+          can_delete: false,
+          route: null
+        };
+      } else {
+        // No permissions defined - grant basic access for development
+        console.warn('No permissions defined, granting basic access for development');
+        return {
+          can_view: true,
+          can_create: true,
+          can_edit: true,
+          can_delete: true,
+          route: {
+            name: 'Development Access',
+            icon: '',
+            parentId: 'dev',
+            childId: 'basic_access'
+          }
+        };
+      }
     }
 
     const { parentId, childId, name, icon } = route;
