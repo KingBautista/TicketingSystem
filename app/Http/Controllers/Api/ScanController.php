@@ -4,9 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Services\MessageService;
+use Illuminate\Support\Facades\Cache;
 
 class ScanController extends BaseController
 {
+    public function __construct(MessageService $messageService)
+    {
+        parent::__construct(null, $messageService);
+    }
+
     public function store(Request $request)
     {
         $rawBody = $request->getContent();

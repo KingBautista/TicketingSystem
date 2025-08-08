@@ -102,6 +102,22 @@ class User extends Authenticatable
 		return $this->belongsTo(Role::class, 'user_role_id');
 	}
 
+	/**
+	 * Get the user's cashier transactions
+	 */
+	public function transactions()
+	{
+		return $this->hasMany(CashierTransaction::class, 'cashier_id');
+	}
+
+	/**
+	 * Get the user's cashier sessions
+	 */
+	public function sessions()
+	{
+		return $this->hasMany(CashierSession::class, 'cashier_id');
+	}
+
 	/****************************************
 	*           ATTRIBUTES PARTS            *
 	****************************************/

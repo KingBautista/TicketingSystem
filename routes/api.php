@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\CashierTransactionController;
 use App\Http\Controllers\Api\CashierController;
 use App\Http\Controllers\Api\ScanController;
+use App\Http\Controllers\Api\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -221,6 +222,13 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/transactions/daily', [CashierController::class, 'getDailyTransactions']);
 		Route::get('/sessions/{id}', [CashierController::class, 'getSession']);
 		Route::post('/send-to-display', [CashierController::class, 'sendToDisplay']);
+	});
+
+	// Dashboard Routes
+	Route::prefix('dashboard')->group(function () {
+		Route::get('/statistics', [DashboardController::class, 'statistics']);
+		Route::get('/cashier-performance', [DashboardController::class, 'cashierPerformance']);
+		Route::get('/today-summary', [DashboardController::class, 'todaySummary']);
 	});
 });
 

@@ -4,20 +4,6 @@ import { solidIconMap } from '../utils/solidIcons';
 import axiosClient from '../axios-client';
 import { useNavigate } from 'react-router-dom';
 
-const mockStats = {
-	liveTransaction: 3,
-	views: 1245,
-	allTransaction: 3200,
-	totalTransactions: 3200,
-	totalSales: 158000,
-	dailyCounts: 120,
-	cashiers: [
-		{ name: 'Alice', today: 30, total: 800, sales: 40000 },
-		{ name: 'Bob', today: 25, total: 700, sales: 35000 },
-		{ name: 'Charlie', today: 20, total: 600, sales: 30000 },
-	]
-};
-
 const getCurrentDate = () => {
 	const now = new Date();
 	return now.toLocaleDateString(undefined, {
@@ -34,22 +20,67 @@ const validityBadge = (validity) => {
 };
 
 export default function Dashboard() {
+	const [dashboardData, setDashboardData] = useState({
+		statistics: {
+			total_transactions: 0,
+			total_sales: 0,
+			today_transactions: 0,
+			today_sales: 0,
+			active_sessions: 0,
+			expiring_vips: 0,
+		},
+		cashier_performance: [],
+		today_summary: {
+			total_transactions: 0,
+			total_sales: 0,
+			total_quantity: 0,
+		}
+	});
 	const [expiringVIPs, setExpiringVIPs] = useState([]);
 	const [showVIPNotification, setShowVIPNotification] = useState(false);
 	const [showExpiringModal, setShowExpiringModal] = useState(false);
+	const [loading, setLoading] = useState(true);
 	const expiringModalRef = useRef();
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		axiosClient.get('/vip-management/vips/expiring')
-			.then(({ data }) => {
-				if (data && data.data && data.data.length > 0) {
-					setExpiringVIPs(data.data);
-					setShowVIPNotification(true);
-				}
-			})
-			.catch(() => setExpiringVIPs([]));
+		loadDashboardData();
+		loadExpiringVIPs();
 	}, []);
+
+	const loadDashboardData = async () => {
+		try {
+			setLoading(true);
+			const [statsResponse, performanceResponse, summaryResponse] = await Promise.all([
+				axiosClient.get('/dashboard/statistics'),
+				axiosClient.get('/dashboard/cashier-performance'),
+				axiosClient.get('/dashboard/today-summary')
+			]);
+
+			setDashboardData({
+				statistics: statsResponse.data.data,
+				cashier_performance: performanceResponse.data.data,
+				today_summary: summaryResponse.data.data,
+			});
+		} catch (error) {
+			console.error('Error loading dashboard data:', error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const loadExpiringVIPs = async () => {
+		try {
+			const { data } = await axiosClient.get('/vip-management/vips/expiring');
+			if (data && data.data && data.data.length > 0) {
+				setExpiringVIPs(data.data);
+				setShowVIPNotification(true);
+			}
+		} catch (error) {
+			console.error('Error loading expiring VIPs:', error);
+			setExpiringVIPs([]);
+		}
+	};
 
 	const handleViewList = (e) => {
 		e.preventDefault();
@@ -62,6 +93,16 @@ export default function Dashboard() {
 	};
 
 	const closeExpiringModal = () => setShowExpiringModal(false);
+
+	if (loading) {
+		return (
+			<div className="d-flex justify-content-center align-items-center" style={{ height: '50vh' }}>
+				<div className="spinner-border text-primary" role="status">
+					<span className="visually-hidden">Loading...</span>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="dashboard-metrics container-fluid">
@@ -88,7 +129,7 @@ export default function Dashboard() {
 						<div className="card-body">
 							<FontAwesomeIcon icon={solidIconMap.save} className="mb-2 text-info" size="2x" />
 							<h5 className="card-title">All Transactions</h5>
-							<p className="card-text fs-4 fw-bold">{mockStats.allTransaction}</p>
+							<p className="card-text fs-4 fw-bold">{dashboardData.statistics.total_transactions}</p>
 						</div>
 					</div>
 				</div>
@@ -111,11 +152,11 @@ export default function Dashboard() {
 											</tr>
 										</thead>
 										<tbody>
-											{mockStats.cashiers.map((c, i) => (
+											{dashboardData.cashier_performance.map((cashier, i) => (
 												<tr key={i}>
-													<td>{c.name}</td>
-													<td>{c.total}</td>
-													<td>₱{c.sales.toLocaleString()}</td>
+													<td>{cashier.name}</td>
+													<td>{cashier.total_transactions}</td>
+													<td>₱{parseFloat(cashier.total_sales || 0).toLocaleString()}</td>
 												</tr>
 											))}
 										</tbody>
@@ -137,17 +178,17 @@ export default function Dashboard() {
 											</tr>
 										</thead>
 										<tbody>
-											{mockStats.cashiers.map((c, i) => (
+											{dashboardData.cashier_performance.map((cashier, i) => (
 												<tr key={i}>
-													<td>{c.name}</td>
-													<td>{c.today}</td>
+													<td>{cashier.name}</td>
+													<td>{cashier.today_transactions}</td>
 												</tr>
 											))}
 										</tbody>
 									</table>
 									<div className="mt-2 text-end">
 										<span className="fw-bold">All Transactions Today: </span>
-										<span className="text-primary fw-bold">{mockStats.dailyCounts}</span>
+										<span className="text-primary fw-bold">{dashboardData.today_summary.total_transactions}</span>
 									</div>
 								</div>
 							</div>
@@ -161,7 +202,7 @@ export default function Dashboard() {
 						<div className="card-body">
 							<FontAwesomeIcon icon={solidIconMap.save} className="mb-2 text-success" size="2x" />
 							<h5 className="card-title">Total Sales</h5>
-							<p className="card-text fs-4 fw-bold">₱{mockStats.totalSales.toLocaleString()}</p>
+							<p className="card-text fs-4 fw-bold">₱{parseFloat(dashboardData.statistics.total_sales || 0).toLocaleString()}</p>
 						</div>
 					</div>
 				</div>
@@ -169,8 +210,8 @@ export default function Dashboard() {
 					<div className="card text-center h-100">
 						<div className="card-body">
 							<FontAwesomeIcon icon={solidIconMap.file} className="mb-2 text-dark" size="2x" />
-							<h5 className="card-title">Total Transactions</h5>
-							<p className="card-text fs-4 fw-bold">{mockStats.totalTransactions}</p>
+							<h5 className="card-title">Today's Sales</h5>
+							<p className="card-text fs-4 fw-bold">₱{parseFloat(dashboardData.statistics.today_sales || 0).toLocaleString()}</p>
 						</div>
 					</div>
 				</div>
