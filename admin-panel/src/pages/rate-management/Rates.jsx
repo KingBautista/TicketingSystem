@@ -8,8 +8,12 @@ import SearchBox from "../../components/SearchBox";
 import DOMPurify from 'dompurify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { solidIconMap } from '../../utils/solidIcons';
+import { useAccess } from '../../hooks/useAccess';
 
 export default function Rates() {
+  const accessHelper = useAccess();
+  const access = accessHelper.hasAccess(); // defaults to window.location.pathname
+
   const [dataStatus, setDataStatus] = useState({
     totalRows: 0,
     totalTrash: 0,
@@ -140,10 +144,14 @@ export default function Rates() {
       <div className="card mb-2">
         <div className="card-header d-flex justify-content-between align-items-center">
           <h4>Rates Management</h4>
-          <Link to="/rate-management/rates/create" className="btn btn-primary btn-sm" type="button">
-            <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
-            Add New Rate
-          </Link>
+          {access?.can_create && 
+            <div className="d-flex gap-2">
+              <Link to="/rate-management/rates/create" className="btn btn-primary btn-sm" type="button">
+                <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
+                Add New Rate
+              </Link>
+            </div>
+          }
         </div>
         <div className="card-header">
           <ul className="subsubsub">
@@ -163,26 +171,28 @@ export default function Rates() {
         </div>
         <div className="card-header">
           <div className="row">
-            <div className="col-md-3 col-12">
-              <div className="input-group">
-                <select ref={bulkAction} className="form-select form-select-sm" aria-label="Bulk actions">
-                  <option value="">Bulk actions</option>
-                  {dataStatus.classTrash && <option value="restore">Restore</option>}
-                  {dataStatus.classTrash && <option value="delete">Delete Permanently</option>}
-                  {dataStatus.classAll && <option value="delete">Delete</option>}
-                </select>
-                <button type="button" className="btn btn-primary btn-sm" onClick={showNotificationModal}>
-                  Apply
-                </button>
-              </div>
+            <div className="col-md-6 col-12 d-flex flex-wrap gap-2 align-items-start">
+              {access?.can_delete && 
+                <div className="input-group input-group-sm" style={{ flex: '1 1 250px' }}>
+                  <select ref={bulkAction} className="form-select" aria-label="Bulk actions">
+                    <option value="">Bulk actions</option>
+                    {dataStatus.classTrash && <option value="restore">Restore</option>}
+                    {dataStatus.classTrash && <option value="delete">Delete Permanently</option>}
+                    {dataStatus.classAll && <option value="delete">Delete</option>}
+                  </select>
+                  <button type="button" className="btn btn-primary" onClick={showNotificationModal}>
+                    Apply
+                  </button>
+                </div>
+              }
             </div>
-            <div className="col-md-4 col-12 offset-md-5">
+            <div className="col-md-4 col-12 offset-md-2">
               <SearchBox ref={searchRef} onClick={handleSearch} />
             </div>
           </div>
         </div>
         <div className="card-body">
-          <DataTable options={options} params={params} ref={tableRef} setSubSub={showSubSub} />
+          <DataTable options={options} params={params} ref={tableRef} setSubSub={showSubSub} access={access} />
         </div>
       </div>
       <NotificationModal params={modalParams} ref={modalAction} confirmEvent={onConfirm} />

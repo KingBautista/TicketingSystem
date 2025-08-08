@@ -211,6 +211,8 @@ const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedA
                     <span className={`badge ${dataFields[field].badge[row[field]] || 'bg-secondary'}`}>
                       {dataFields[field].badgeLabels ? dataFields[field].badgeLabels[row[field]] || row[field] : row[field]}
                     </span>
+                  ) : dataFields[field].render ? (
+                    dataFields[field].render(row)
                   ) : (
                     row[field]
                   )}

@@ -7,8 +7,12 @@ import ToastMessage from "../../components/ToastMessage";
 import SearchBox from "../../components/SearchBox";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { solidIconMap } from '../../utils/solidIcons';
+import { useAccess } from '../../hooks/useAccess';
 
 export default function Roles() {
+  const accessHelper = useAccess();
+  const access = accessHelper.hasAccess(); // defaults to window.location.pathname
+
   const [totalRows, setTotalRows] = useState(0);
   const [totalTrash, setTotalTrash] = useState(0);
   const [activeTab, setActiveTab] = useState('all');  // 'all' or 'trash'
@@ -140,15 +144,16 @@ export default function Roles() {
     <>
       <div className="card mb-2">
         <div className="card-header d-flex justify-content-between align-items-center">
-          <h4>
-            Roles
-          </h4>
-          <Link to="/user-management/roles/create" className="btn btn-primary btn-sm" type="button">
-            <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
-            Create New Role
-          </Link>
+          <h4>Roles</h4>
+          {access?.can_create && 
+            <div className="d-flex gap-2">
+              <Link to="/user-management/roles/create" className="btn btn-primary btn-sm" type="button">
+                <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
+                Create New Role
+              </Link>
+            </div>
+          }
         </div>
-
         <div className="card-header">
           <ul className="subsubsub">
             <li>
@@ -171,34 +176,32 @@ export default function Roles() {
             )}
           </ul>
         </div>
-
         <div className="card-header">
           <div className="row">
-            <div className="col-md-3 col-12">
-              <div className="input-group">
-                <select ref={bulkAction} className="form-select form-select-sm">
-                  <option value="">Bulk actions</option>
-                  {activeTab === 'trash' && <option value="restore">Restore</option>}
-                  {activeTab === 'trash' && <option value="delete">Delete Permanently</option>}
-                  {activeTab === 'all' && <option value="delete">Delete</option>}                  
-                </select>
-                <button type="button" className="btn btn-primary btn-sm" onClick={showModalNotification}>
-                  Apply
-                </button>
-              </div>
+            <div className="col-md-6 col-12 d-flex flex-wrap gap-2 align-items-start">
+              {access?.can_delete && 
+                <div className="input-group input-group-sm" style={{ flex: '1 1 250px' }}>
+                  <select ref={bulkAction} className="form-select" aria-label="Bulk actions">
+                    <option value="">Bulk actions</option>
+                    {activeTab === 'trash' && <option value="restore">Restore</option>}
+                    {activeTab === 'trash' && <option value="delete">Delete Permanently</option>}
+                    {activeTab === 'all' && <option value="delete">Delete</option>}                  
+                  </select>
+                  <button type="button" className="btn btn-primary" onClick={showModalNotification}>
+                    Apply
+                  </button>
+                </div>
+              }
             </div>
-
-            <div className="col-md-4 col-12 offset-md-5">
+            <div className="col-md-4 col-12 offset-md-2">
               <SearchBox ref={searchRef} onClick={handleSearch} />
             </div>
           </div>
         </div>
-
         <div className="card-body">
-          <DataTable options={options} params={params} ref={tableRef} setSubSub={updateTotalCount} />
+          <DataTable options={options} params={params} ref={tableRef} setSubSub={updateTotalCount} access={access} />
         </div>
       </div>
-
       <NotificationModal params={modalParams} ref={modalAction} confirmEvent={handleBulkActionConfirmation} />
       <ToastMessage ref={toastAction} />
     </>
