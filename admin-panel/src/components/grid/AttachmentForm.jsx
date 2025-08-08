@@ -4,10 +4,13 @@ import NotificationModal from "../NotificationModal";
 import ToastMessage from "../ToastMessage";
 import axiosClient from "../../axios-client";
 import Field from "../Field";
+import { useAccess } from '../../hooks/useAccess';
 
 const AttachmentForm = forwardRef((props, ref) => {
   const [details, setDetails] = useState(null);
   const [toDelete, setToDelete] = useState(null);
+  const accessHelper = useAccess();
+  const access = accessHelper.hasAccess(); // defaults to window.location.pathname
 
   const fileLinkRef = useRef(null);
   const toastAction = useRef();
@@ -164,8 +167,12 @@ const AttachmentForm = forwardRef((props, ref) => {
       </div>
       <div className="actions">
         <Link to={details.file_url} target="_blank" download>Download file</Link>
-        <span className="links-separator">&nbsp;|&nbsp;</span>
-        <button type="button" className="button-link delete-attachment" onClick={ ev => {ev.preventDefault(); onDelete(details.id);}}>Delete permanently</button>
+        {access?.can_delete && 
+          <>
+          <span className="links-separator">&nbsp;|&nbsp;</span>
+          <button type="button" className="button-link delete-attachment" onClick={ ev => {ev.preventDefault(); onDelete(details.id);}}>Delete permanently</button>
+          </>
+        }
       </div>
     </div>}
     <ToastMessage ref={toastAction} />

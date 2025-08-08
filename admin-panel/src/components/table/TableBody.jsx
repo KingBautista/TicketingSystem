@@ -2,9 +2,10 @@ import React, { forwardRef, useState, useImperativeHandle } from 'react';
 import { Link } from 'react-router-dom';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 
-const TableBody = forwardRef(({ options, rows, onAction, onCheckedAll, onRowClick }, ref) => {
+const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedAll, onRowClick }, ref) => {
   const { dataFields, primaryKey, dataSource, softDelete, displayInModal, otherActions } = options;
   const tableRows = rows;
+  const hasPermission = permissions;
   
   const [selectedData, setSelectedData] = useState([]);
   const [isCheckedAll, setIsCheckedAll] = useState(false);
@@ -39,77 +40,90 @@ const TableBody = forwardRef(({ options, rows, onAction, onCheckedAll, onRowClic
 
   const renderActions = (id, row, delDate, attachment) => {
     const actionLinks = [
-      delDate ? (
+      // Restore - requires can_delete permission and delDate must exist
+      delDate && hasPermission?.can_delete && (
         <Link
           to="/"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             onAction(id, 'Restore');
-          }}>
+          }}
+        >
           Restore
         </Link>
-      ) : (
+      ),
+  
+      // Edit - requires can_edit permission and row must NOT be deleted (optional, depending on your logic)
+      !delDate && hasPermission?.can_edit && (
         displayInModal ? (
           <Link
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onAction(row, 'Edit');
-            }}>
+            }}
+          >
             Edit
           </Link>
         ) : (
           <Link
             to={`${dataSource}/${id}`}
-            onClick={(e) => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}
+          >
             Edit
           </Link>
         )
       ),
+  
+      // Download attachment (only if attachment exists and item is not deleted)
       attachment && !delDate && (
         <Link
           to={attachment}
           target="_blank"
           download
-          onClick={(e) => e.stopPropagation()}>
+          onClick={(e) => e.stopPropagation()}
+        >
           Download file
         </Link>
       ),
+  
+      // Other actions (only if not deleted)
       ...(
-        Array.isArray(otherActions)
+        Array.isArray(otherActions) && !delDate
           ? otherActions
               .filter(action => !action.show || action.show(row))
               .map((action, index) => {
-                if (!delDate) {
-                  if (action.onClick) {
-                    return (
-                      <Link
-                        key={index}
-                        to="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          action.onClick(row);
-                        }}>
-                        {action.name}
-                      </Link>
-                    );
-                  }
+                if (action.onClick) {
                   return (
                     <Link
                       key={index}
-                      to={`${action.link}/${id}`}
-                      onClick={(e) => e.stopPropagation()}>
+                      to="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        action.onClick(row);
+                      }}
+                    >
                       {action.name}
                     </Link>
                   );
                 }
-                return null;
+                return (
+                  <Link
+                    key={index}
+                    to={`${action.link}/${id}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {action.name}
+                  </Link>
+                );
               })
           : []
       ),
-      softDelete && !delDate && (
+  
+      // Trash - requires can_delete permission and item not deleted
+      softDelete && !delDate && hasPermission?.can_delete && (
         <Link
           to="/"
           className="submitdelete"
@@ -117,11 +131,14 @@ const TableBody = forwardRef(({ options, rows, onAction, onCheckedAll, onRowClic
             e.preventDefault();
             e.stopPropagation();
             onAction(id, 'Trash');
-          }}>
+          }}
+        >
           Trash
         </Link>
       ),
-      softDelete && delDate && (
+  
+      // Delete Permanently - requires can_delete permission and item deleted
+      softDelete && delDate && hasPermission?.can_delete && (
         <Link
           to="/"
           className="submitdelete"
@@ -129,7 +146,8 @@ const TableBody = forwardRef(({ options, rows, onAction, onCheckedAll, onRowClic
             e.preventDefault();
             e.stopPropagation();
             onAction(id, 'Delete');
-          }}>
+          }}
+        >
           Delete Permanently
         </Link>
       )
@@ -170,29 +188,11 @@ const TableBody = forwardRef(({ options, rows, onAction, onCheckedAll, onRowClic
               />
             </td>
             {Object.keys(dataFields).map((field, index) => {
-              const columnMaxWidth = dataFields[field].maxWidth || 'none';
-
+              const columnMaxWidth = dataFields[field].maxWidth || '350px';
+              const extraStyle = (index === 0) ? { whiteSpace: 'nowrap' } : {};
               return (
-                <td key={field} style={{ 
-                  maxWidth: columnMaxWidth,
-                  whiteSpace: index === 0 ? 'nowrap' : 'normal'
-                }}>
-                  {field === 'name' && dataFields[field].attachment && row[dataFields[field].attachment] && (
-                    <span className="media-icon me-2">
-                      <LazyLoadImage
-                        src={row[dataFields[field].attachment]}
-                        alt={row[dataFields[field].attachment]}
-                        width={40}
-                        height={40}
-                        effect="blur"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = '/assets/img/no-image.png';
-                        }}
-                      />
-                    </span>
-                  )}
-                  {field !== 'name' && dataFields[field].attachment && row[field] && (
+                <td key={field} style={{ maxWidth: columnMaxWidth, ...extraStyle }} className={dataFields[field].className || undefined}>
+                  {dataFields[field].attachment && row[field] && (
                     <span className="media-icon">
                       <LazyLoadImage
                         src={row[field]}
@@ -211,8 +211,6 @@ const TableBody = forwardRef(({ options, rows, onAction, onCheckedAll, onRowClic
                     <span className={`badge ${dataFields[field].badge[row[field]] || 'bg-secondary'}`}>
                       {dataFields[field].badgeLabels ? dataFields[field].badgeLabels[row[field]] || row[field] : row[field]}
                     </span>
-                  ) : dataFields[field].render ? (
-                    dataFields[field].render(row)
                   ) : (
                     row[field]
                   )}

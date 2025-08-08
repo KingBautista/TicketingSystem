@@ -25,6 +25,7 @@ const generateUniqueId = () => `notifModal_${Math.random().toString(36).substr(2
  * @param {Function} props.onOpenModal - Callback for opening edit modal
  * @param {Function} props.onRowClick - Callback for row click
  * @param {Function} props.setSubSub - Callback for updating counts
+ * @param {Function} props.access - Access permissions
  */
 const DataTable = forwardRef((props, ref) => {
   const tHeader = props.options.dataFields;
@@ -153,6 +154,7 @@ const DataTable = forwardRef((props, ref) => {
         setDataRows(data);
         setMetaData({});
       }
+      theadRef.current.setCheckedAll(false);
       setIsLoading(false);
     })
     .catch((errors) => {
@@ -217,6 +219,7 @@ const DataTable = forwardRef((props, ref) => {
         options={props.options}
         rows={dataRows}
         ref={tbodyRef}
+        permissions={props.access}
         onAction={handleAction}
         onCheckedAll={(checked) => theadRef.current.setCheckedAll(checked)}
         onRowClick={props.onRowClick}
@@ -225,9 +228,18 @@ const DataTable = forwardRef((props, ref) => {
   };
 
   const renderPagination = () => {
-    if (!isLoading && totalRows > 0 && dataRows) {
+    // console.log('Pagination Debug:', {
+    //   isLoading,
+    //   totalRows,
+    //   dataRows: dataRows?.length,
+    //   metaData
+    // });
+
+    // Check if we have pagination data
+    if (!isLoading && metaData?.total > 0) {
       return <Pagination metas={metaData} onClick={setNextPage} />;
     }
+    return null;
   };
 
   return (
@@ -243,7 +255,7 @@ const DataTable = forwardRef((props, ref) => {
           />
           {renderTableContent()}
         </table>
-        <div>{renderPagination()}</div>
+        {renderPagination()}
       </div>
       <NotificationModal params={notifParams} ref={actionRef} confirmEvent={onValidate} />
       <ToastMessage ref={toastMessage} />

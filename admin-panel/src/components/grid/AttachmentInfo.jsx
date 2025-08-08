@@ -5,7 +5,6 @@ import AttachmentForm from "./AttachmentForm";
 const AttachmentInfo = forwardRef(({ options, onChange }, ref) => {
   const [details, setDetails] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-
   // To control modal visibility directly
   const closeModal = () => setIsModalVisible(false);
   const openModal = () => setIsModalVisible(true);
