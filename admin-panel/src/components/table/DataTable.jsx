@@ -18,6 +18,7 @@ const generateUniqueId = () => `notifModal_${Math.random().toString(36).substr(2
  * @param {boolean} props.options.softDelete - Enable soft delete functionality
  * @param {boolean} props.options.displayInModal - Show edit form in modal
  * @param {boolean} props.options.edit_link - Enable edit link on first column (hides renderActions)
+ * @param {boolean} props.options.bulk_action - Enable bulk actions and checkboxes (default: true)
  * @param {Array} props.options.otherActions - Additional action buttons
  * @param {Object} props.options.otherActions[].name - Action button label
  * @param {string} [props.options.otherActions[].link] - URL for navigation action
@@ -193,11 +194,14 @@ const DataTable = forwardRef((props, ref) => {
   }));
 
   const renderTableContent = () => {
+    const bulkActionEnabled = props.options.bulk_action !== false;
+    const colspan = bulkActionEnabled ? columnSize + 1 : columnSize;
+
     if (isLoading) {
       return (
         <tbody>
           <tr>
-            <td colSpan={columnSize + 1} className="text-center">
+            <td colSpan={colspan} className="text-center">
               <span className="spinner-border spinner-border-sm ml-1"></span>&nbsp;Loading ...
             </td>
           </tr>
@@ -209,7 +213,7 @@ const DataTable = forwardRef((props, ref) => {
       return (
         <tbody>
           <tr>
-            <td colSpan={columnSize + 1} className="text-center">
+            <td colSpan={colspan} className="text-center">
               {props.options.noRecordText || "No Record Found"}
             </td>
           </tr>
@@ -226,6 +230,7 @@ const DataTable = forwardRef((props, ref) => {
         onAction={handleAction}
         onCheckedAll={(checked) => theadRef.current.setCheckedAll(checked)}
         onRowClick={props.onRowClick}
+        bulkAction={props.options.bulk_action !== false}
       />
     );
   };
@@ -261,6 +266,7 @@ const DataTable = forwardRef((props, ref) => {
             onCheckAll={(checked) => tbodyRef.current.checkedAll(checked)} 
             onSort={sorting} 
             onFilter={handleFilter}
+            bulkAction={props.options.bulk_action !== false}
             ref={theadRef} 
           />
           {renderTableContent()}

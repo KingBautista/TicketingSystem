@@ -2,7 +2,7 @@ import React, { forwardRef, useState, useImperativeHandle } from 'react';
 import { Link } from 'react-router-dom';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 
-const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedAll, onRowClick }, ref) => {
+const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedAll, onRowClick, bulkAction = true }, ref) => {
   const { dataFields, primaryKey, dataSource, softDelete, displayInModal, edit_link, otherActions } = options;
   const tableRows = rows;
   const hasPermission = permissions;
@@ -182,16 +182,18 @@ const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedA
             key={key}
             style={{ cursor: onRowClick ? 'pointer' : 'default' }}
             onClick={() => onRowClick?.(row)}>
-            <td>
-              <input
-                className="form-check-input"
-                type="checkbox"
-                value={rowId}
-                onChange={handleCheckboxChange}
-                onClick={(e) => e.stopPropagation()}
-                checked={selectedData.includes(rowId)}
-              />
-            </td>
+            {bulkAction && (
+              <td>
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  value={rowId}
+                  onChange={handleCheckboxChange}
+                  onClick={(e) => e.stopPropagation()}
+                  checked={selectedData.includes(rowId)}
+                />
+              </td>
+            )}
             {Object.keys(dataFields).map((field, index) => {
               const columnMaxWidth = dataFields[field].maxWidth || '350px';
               const extraStyle = (index === 0) ? { whiteSpace: 'nowrap' } : {};

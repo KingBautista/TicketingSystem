@@ -17,8 +17,8 @@ export default function VIPs() {
   const [options, setOptions] = useState({
     dataSource: '/vip-management/vips',
     dataFields: {
-      name: { name: "Name", withSort: true },
       card_number: { name: "Card Number", withSort: true },
+      name: { name: "Name", withSort: true },
       validity_days: { name: "Validity Days", withSort: false },
       validity: {
         name: "Validity",
@@ -54,6 +54,7 @@ export default function VIPs() {
     primaryKey: "id",
     redirectUrl: '',
     edit_link: true,
+    bulk_action: false,
   });
   const [params, setParams] = useState({ search: '' });
   const searchRef = useRef();

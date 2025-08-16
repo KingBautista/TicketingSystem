@@ -1,6 +1,6 @@
 import { forwardRef, useState, useCallback, useImperativeHandle } from "react";
 
-const TableHeader = forwardRef(({ header, onCheckAll, onSort }, ref) => {
+const TableHeader = forwardRef(({ header, onCheckAll, onSort, bulkAction = true }, ref) => {
   const [isCheckedAll, setIsCheckedAll] = useState(false);
 
   // Toggle the "select all" checkbox state
@@ -37,14 +37,16 @@ const TableHeader = forwardRef(({ header, onCheckAll, onSort }, ref) => {
   return (
     <thead className="align-middle">
       <tr>
-        <th scope="col">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            onChange={checkedAll}
-            checked={isCheckedAll}
-          />
-        </th>
+        {bulkAction && (
+          <th scope="col">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              onChange={checkedAll}
+              checked={isCheckedAll}
+            />
+          </th>
+        )}
         {header && Object.keys(header).map((key, i) => (
           <th
             key={key}

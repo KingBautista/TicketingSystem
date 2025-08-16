@@ -51,6 +51,7 @@ export default function Navigations() {
     redirectUrl: '',
     otherActions: {},
     edit_link: true,
+    bulk_action: false,
   });
 
   const searchRef = useRef();

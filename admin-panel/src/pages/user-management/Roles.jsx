@@ -48,6 +48,7 @@ export default function Roles() {
     redirectUrl: '',
     otherActions: {},
     edit_link: true,
+    bulk_action: false,
   });
   
   const modalParams = {

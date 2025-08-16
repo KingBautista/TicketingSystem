@@ -41,6 +41,7 @@ export default function Discounts() {
     primaryKey: "id",
     redirectUrl: '',
     edit_link: true,
+    bulk_action: false,
   });
   const [params, setParams] = useState({ search: '' });
   const searchRef = useRef();
