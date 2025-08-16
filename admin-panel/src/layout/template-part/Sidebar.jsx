@@ -40,18 +40,20 @@ export default function Sidebar() {
 
   const navLinks = [
     // Add Dashboard as the first item
-    <li className="nav-item" key="dashboard">
-      <Link to="/dashboard" className={`nav-link ${isPathActive('/dashboard') ? "active" : ""}`}>
-        <div className="nav-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/>
-            <rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/>
-            <rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/>
-            <rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/>
-          </svg>
-        </div>
-        <span className="nav-text">Dashboard</span>
-      </Link>
+    <li className="nav-group" key="dashboard">
+      <div className="nav-group-header">
+        <Link to="/dashboard" className={`nav-link ${isPathActive('/dashboard') ? "active" : ""}`}>
+          <div className="nav-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/>
+              <rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/>
+              <rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/>
+              <rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/>
+            </svg>
+          </div>
+          <span className="nav-text">Dashboard</span>
+        </Link>
+      </div>
     </li>,
     // ... existing dynamic routes
     ...userRoutes.map((navItem, idx) => {
@@ -60,7 +62,7 @@ export default function Sidebar() {
         const navIcon = "/assets/new-icons/icons-bold/" + navItem.icon + ".svg";
 
         if (hasChildren) {
-                        const childLinks = navItem.children.map((childItem, cidx) => {
+          const childLinks = navItem.children.map((childItem, cidx) => {
             if (childItem.side_nav === "true") {
               const isActive = isPathActive(childItem.path);
               return (

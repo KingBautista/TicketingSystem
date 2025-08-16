@@ -218,14 +218,14 @@ export default function Users() {
             </div>
           }
         </div>
-        <div className="card-header">
+        <div className="card-header pb-0 pt-0">
           <div className="row"> 
-            <div className="col-md-8 col-12">
+            <div className="col-md-5 col-12">
               <SearchBox ref={searchRef} onClick={handleSearch} />
             </div>
           </div>
         </div>
-        <div className="card-body">
+        <div className="card-body pb-0 pt-3">
           <DataTable options={options} params={params} ref={tableRef} setSubSub={showSubSub} access={access} />
         </div>
       </div>
