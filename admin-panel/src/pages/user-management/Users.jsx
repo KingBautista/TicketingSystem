@@ -50,14 +50,6 @@ export default function Users() {
     softDelete: true,
     primaryKey: "id",
     redirectUrl: '',
-    // otherActions: [
-    //   { 
-    //     name: "Validate Audit",
-    //     onClick: (row) => {
-    //       showAuditInfo(row);
-    //     },
-    //     show: (row) => row.active === 'Pending Approval'
-    //   }
   });
 
   const [params, setParams] = useState({ search: '' });
@@ -217,7 +209,7 @@ export default function Users() {
           <h4>Users</h4>
           {access?.can_create && 
             <div className="d-flex gap-2">
-              <Link to="/user-management/users/create" className="btn btn-primary btn-sm" type="button">
+              <Link to="/user-management/users/create" className="btn btn-primary" type="button">
                 <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
                 Create New User
               </Link>
@@ -225,62 +217,8 @@ export default function Users() {
           }
         </div>
         <div className="card-header">
-          <ul className="subsubsub">
-            <li>
-              <a href="#" className={dataStatus.classAll} onClick={ev => handleTabChange(ev, 'All')}>
-                All <span className="count">({dataStatus.totalRows})</span>
-              </a>
-            </li>
-            {dataStatus.totalTrash > 0 && (
-              <li>
-                |<a href="#" className={dataStatus.classTrash} onClick={ev => handleTabChange(ev, 'Trash')}>
-                  Trash <span className="count">({dataStatus.totalTrash})</span>
-                </a>
-              </li>
-            )}
-          </ul>
-        </div>
-        <div className="card-header">
           <div className="row"> 
-          <div className="col-md-6 col-12 d-flex flex-wrap gap-2 align-items-start">
-              {access?.can_delete && 
-                <div className="input-group input-group-sm" style={{ flex: '1 1 250px' }}>
-                  <select ref={bulkAction} className="form-select" aria-label="Bulk actions">
-                    <option value="">Bulk actions</option>
-                    {dataStatus.classTrash && <option value="restore">Restore</option>}
-                    {dataStatus.classTrash && <option value="delete">Delete Permanently</option>}
-                    {dataStatus.classAll && <option value="delete">Delete</option>}
-                    {dataStatus.classAll && <option value="reset_password">Send password reset</option>}
-                  </select>
-                  <button type="button" className="btn btn-primary" onClick={showNotificationModal}>
-                    Apply
-                  </button>
-                </div>
-              }
-
-              {dataStatus.classAll && access?.can_edit && 
-                <div className="input-group input-group-sm" style={{ flex: '1 1 250px' }}>
-                  <TreeDropdown
-                    options={roles}
-                    onChange={selectedRoles =>
-                      setSelectedRole(DOMPurify.sanitize(JSON.stringify(selectedRoles)))
-                    }
-                    placeholder="Change role to..."
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={(ev) => {
-                      setRoleAction('change_role');
-                      showNotificationModal();
-                    }}
-                  >
-                    Change
-                  </button>
-                </div>
-              }
-            </div>
-            <div className="col-md-4 col-12 offset-md-2">
+            <div className="col-md-4 col-12">
               <SearchBox ref={searchRef} onClick={handleSearch} />
             </div>
           </div>

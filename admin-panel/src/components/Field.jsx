@@ -7,8 +7,8 @@ const Field = ({
   tipMessage, 
   errorMessage,
   required = false,
-  labelClass = 'col-sm-2', 
-  inputClass = 'col-sm-4',
+  labelClass = 'col-2', 
+  inputClass = 'col-4',
   validationState = null,
   helpText = null,
   inline = false

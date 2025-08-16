@@ -48,7 +48,7 @@ export default function OpenCashModal({
                 />
               </div>
               <div className="d-flex justify-content-end">
-                <button className="btn btn-primary btn-sm px-3" type="submit" style={{ background: '#321fdb', border: 'none', fontSize: 15, height: 32, minHeight: 32 }}>
+                <button className="btn btn-primary px-3" type="submit" style={{ background: '#321fdb', border: 'none', fontSize: 15, height: 32, minHeight: 32 }}>
                   <FontAwesomeIcon icon={solidIconMap.cashRegister} className="me-2" />
                   Open Cash
                 </button>

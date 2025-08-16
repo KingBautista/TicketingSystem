@@ -35,8 +35,8 @@ export default function PrintOpenCashModal({
             <div className="text-muted">--- End of Receipt ---</div>
           </div>
           <div className="modal-footer d-flex justify-content-between">
-            <button className="btn btn-outline-secondary btn-sm px-3" style={{ height: 32, minHeight: 32, fontSize: 15 }} onClick={onClose}>Close</button>
-            <button className="btn btn-primary btn-sm px-3" style={{ height: 32, minHeight: 32, fontSize: 15 }} onClick={() => window.print()}><FontAwesomeIcon icon={solidIconMap.print} className="me-2" />Print</button>
+            <button className="btn btn-outline-secondary px-3" style={{ height: 32, minHeight: 32, fontSize: 15 }} onClick={onClose}>Close</button>
+            <button className="btn btn-primary px-3" style={{ height: 32, minHeight: 32, fontSize: 15 }} onClick={() => window.print()}><FontAwesomeIcon icon={solidIconMap.print} className="me-2" />Print</button>
           </div>
         </div>
       </div>

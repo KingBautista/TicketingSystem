@@ -17,14 +17,14 @@ const SearchBox = forwardRef((props, ref) => {
     <div className="input-group">
       <input
         ref={ref}
-        className="form-control form-control-sm"
+        className="form-control"
         type="text"
         placeholder="Search"
         onKeyDown={handleKeyDown}
       />
       <button
         type="button"
-        className="btn btn-primary btn-sm"
+        className="btn btn-primary"
         onClick={handleButtonClick}
       >
         Search &nbsp;

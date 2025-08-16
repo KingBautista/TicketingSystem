@@ -89,7 +89,7 @@ export default function Library() {
     <div className="input-group">
       <button
         type="button"
-        className={`btn btn-primary btn-sm ${mode === 'list' ? 'current' : ''}`}
+        className={`btn btn-primary ${mode === 'list' ? 'current' : ''}`}
         onClick={() => handleModeChange('list')}>
         <svg className="sidebar-brand-narrow" width="18" height="18">
           <use xlinkHref="/assets/vendors/@coreui/icons/svg/free.svg#cil-list-rich" />
@@ -98,7 +98,7 @@ export default function Library() {
       &nbsp;
       <button
         type="button"
-        className={`btn btn-primary btn-sm ${mode === 'grid' ? 'current' : ''}`}
+        className={`btn btn-primary ${mode === 'grid' ? 'current' : ''}`}
         onClick={() => handleModeChange('grid')}>
         <svg className="sidebar-brand-narrow" width="18" height="18">
           <use xlinkHref="/assets/vendors/@coreui/icons/svg/free.svg#cil-border-all" />
@@ -111,7 +111,7 @@ export default function Library() {
       {mode === 'grid' && (
         <button
           type="button"
-          className="btn btn-primary btn-sm"
+          className="btn btn-primary"
           onClick={(ev) => {
             ev.preventDefault();
             setEditMode(false);
@@ -130,7 +130,7 @@ export default function Library() {
             <option value="">Bulk actions</option>
             <option value="delete">Delete Permanently</option>
           </select>
-          <button type="button" className="btn btn-primary btn-sm" onClick={() => modalAction.current.show()}>
+          <button type="button" className="btn btn-primary" onClick={() => modalAction.current.show()}>
             Apply
           </button>
         </>
@@ -142,7 +142,7 @@ export default function Library() {
     <div>
       <button
         type="button"
-        className="btn btn-secondary btn-sm"
+        className="btn btn-secondary"
         onClick={(ev) => {
           ev.preventDefault();
           modalAction.current.show();
@@ -152,7 +152,7 @@ export default function Library() {
       &nbsp;&nbsp;
       <button
         type="button"
-        className="btn btn-primary btn-sm"
+        className="btn btn-primary"
         onClick={(ev) => {
           ev.preventDefault();
           setEditMode(true);
@@ -170,7 +170,7 @@ export default function Library() {
           <h4>
             Media Library
           </h4>
-          <Link to="/content-management/media-library/upload" className="btn btn-primary btn-sm" type="button">
+          <Link to="/content-management/media-library/upload" className="btn btn-primary" type="button">
             <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
             Add New Media File
           </Link>

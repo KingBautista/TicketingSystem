@@ -42,26 +42,31 @@ export default function Sidebar() {
     // Add Dashboard as the first item
     <li className="nav-item" key="dashboard">
       <Link to="/dashboard" className={`nav-link ${isPathActive('/dashboard') ? "active" : ""}`}>
-        <svg className="nav-icon">
-          <use xlinkHref="/assets/vendors/@coreui/icons/svg/free.svg#cil-speedometer" />
-        </svg>
-        Dashboard
+        <div className="nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/>
+            <rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/>
+            <rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/>
+            <rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <span className="nav-text">Dashboard</span>
       </Link>
     </li>,
     // ... existing dynamic routes
     ...userRoutes.map((navItem, idx) => {
       if (navItem.side_nav === "true") {
         const hasChildren = Array.isArray(navItem.children) && navItem.children.length > 0;
-        const navIcon = "/assets/vendors/@coreui/icons/svg/free.svg#" + navItem.icon;
+        const navIcon = "/assets/new-icons/icons-bold/" + navItem.icon + ".svg";
 
         if (hasChildren) {
-          const childLinks = navItem.children.map((childItem, cidx) => {
+                        const childLinks = navItem.children.map((childItem, cidx) => {
             if (childItem.side_nav === "true") {
               const isActive = isPathActive(childItem.path);
               return (
-                <li className="nav-item" key={cidx}>
-                  <Link to={childItem.path} className={`nav-link ${isActive ? "active" : ""}`}>
-                    <span className="nav-icon"><span className="nav-icon-bullet" /></span> {childItem.name}
+                <li className="nav-item sub-nav-item" key={cidx}>
+                  <Link to={childItem.path} className={`nav-link sub-nav-link ${isActive ? "active" : ""}`}>
+                    <span className="nav-text">{childItem.name}</span>
                   </Link>
                 </li>
               );
@@ -71,15 +76,19 @@ export default function Sidebar() {
 
           return (
             <li className={`nav-group${isOpen[navItem.name] ? " show" : ""}`} key={idx}>
-              <Link
-                to="#"
-                className="nav-link nav-group-toggle"
-                onClick={() => toggleSubMenu(navItem.name)}>
-                <svg className="nav-icon">
-                  <use xlinkHref={navIcon} />
-                </svg>{navItem.name}
-              </Link>
-              <ul className="nav-group-items compact">
+              <div className="nav-group-header">
+                <button
+                  className="nav-link nav-group-toggle"
+                  onClick={() => toggleSubMenu(navItem.name)}>
+                  <div className="nav-icon">
+                    <svg className="nav-icon-svg">
+                      <use xlinkHref={navIcon} />
+                    </svg>
+                  </div>
+                  <span className="nav-text">{navItem.name}</span>
+                </button>
+              </div>
+              <ul className="nav-group-items">
                 {childLinks}
               </ul>
             </li>
@@ -91,9 +100,12 @@ export default function Sidebar() {
         return (
           <li className="nav-item" key={idx}>
             <Link to={navItem.path} className={`nav-link ${isActive ? "active" : ""}`}>
-              <svg className="nav-icon">
-                <use xlinkHref={navIcon} />
-              </svg>{navItem.name}
+              <div className="nav-icon">
+                <svg className="nav-icon-svg">
+                  <use xlinkHref={navIcon} />
+                </svg>
+              </div>
+              <span className="nav-text">{navItem.name}</span>
             </Link>
           </li>
         );
@@ -103,15 +115,28 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
-      <div className="sidebar-header border-bottom">
+    <div className="sidebar sidebar-modern" id="sidebar">
+      <div className="sidebar-header">
         <div className="sidebar-brand">
-          TICKETING SYSTEM
+          <div className="brand-logo">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="3" width="7" height="7" rx="1" fill="#059669"/>
+              <rect x="14" y="3" width="7" height="7" rx="1" fill="#059669"/>
+              <rect x="3" y="14" width="7" height="7" rx="1" fill="#059669"/>
+              <rect x="14" y="14" width="7" height="7" rx="1" fill="#059669"/>
+            </svg>
+          </div>
+          <div className="brand-text">
+            <span className="brand-title">TICKETING</span>
+            <span className="brand-subtitle">SYSTEM</span>
+          </div>
         </div>
       </div>
-      <ul className="sidebar-nav" data-coreui="navigation">
-        {navLinks}
-      </ul>
+      <div className="sidebar-content">
+        <ul className="sidebar-nav">
+          {navLinks}
+        </ul>
+      </div>
     </div>
   );
 }

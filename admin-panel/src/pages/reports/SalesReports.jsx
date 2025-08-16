@@ -145,10 +145,10 @@ export default function SalesReports() {
       <div className="card-header d-flex justify-content-between align-items-center">
         <h4>Sales Reports</h4>
         <div>
-          <button className="btn btn-outline-primary btn-sm me-2" onClick={() => exportData('pdf')}>
+          <button className="btn btn-outline-primary me-2" onClick={() => exportData('pdf')}>
             <FontAwesomeIcon icon={solidIconMap.filePdf} className="me-1" /> Export PDF
           </button>
-          <button className="btn btn-outline-primary btn-sm me-2" onClick={() => exportData('csv')}>
+          <button className="btn btn-outline-primary me-2" onClick={() => exportData('csv')}>
             <FontAwesomeIcon icon={solidIconMap.fileCsv} className="me-1" /> Export CSV
           </button>
         </div>
@@ -189,10 +189,10 @@ export default function SalesReports() {
         </div>
         <div className="row mt-2">
           <div className="col-12">
-            <button className="btn btn-primary btn-sm me-2" onClick={handleSearch}>
+            <button className="btn btn-primary me-2" onClick={handleSearch}>
               <FontAwesomeIcon icon={solidIconMap.search} className="me-1" /> Search/Filter
             </button>
-            <button className="btn btn-outline-secondary btn-sm" onClick={clearFilters}>
+            <button className="btn btn-outline-secondary" onClick={clearFilters}>
               <FontAwesomeIcon icon={solidIconMap.times} className="me-1" /> Clear Filters
             </button>
           </div>

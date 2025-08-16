@@ -84,14 +84,14 @@ export default function Profile() {
           <Field
             label="Admin Color Scheme"
             inputComponent={
-              <select className="form-select form-select-sm" value={user?.theme} aria-label="Bulk actions" onChange={ev => {handleSelectedTheme(ev.target.value); setUser({ ...user, theme: DOMPurify.sanitize(ev.target.value) }); }}>
+              <select className="form-select" value={user?.theme} aria-label="Bulk actions" onChange={ev => {handleSelectedTheme(ev.target.value); setUser({ ...user, theme: DOMPurify.sanitize(ev.target.value) }); }}>
                 <option value="">Select Theme Color</option>
                 <option value="dark">Dark</option>
                 <option value="light">Light</option>
               </select>
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
         </div>
         <div className="card-header d-flex justify-content-between align-items-center">
@@ -106,7 +106,7 @@ export default function Profile() {
             label="Username"
             inputComponent={
               <input
-                className="form-control form-control-sm"
+                className="form-control"
                 type="text"
                 value={user.user_login}
                 onChange={ev => setUser({ ...user, user_login: DOMPurify.sanitize(ev.target.value) })}
@@ -114,65 +114,65 @@ export default function Profile() {
               />
             }
             tipMessage="Usernames cannot be changed."
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           {/* Email Field */}
           <Field
             label="Email"
             inputComponent={
               <input
-                className="form-control form-control-sm"
+                className="form-control"
                 type="text"
                 value={user.user_email}
                 onChange={ev => setUser({ ...user, user_email: DOMPurify.sanitize(ev.target.value) })}
               />
             }
             tipMessage="If you change this, an email will be sent at your new address to confirm it. The new address will not become active until confirmed."
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           {/* First Name Field */}
           <Field
             label="First Name"
             inputComponent={
               <input
-                className="form-control form-control-sm"
+                className="form-control"
                 type="text"
                 value={user.first_name}
                 onChange={ev => setUser({ ...user, first_name: DOMPurify.sanitize(ev.target.value) })}
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           {/* Last Name Field */}
           <Field
             label="Last Name"
             inputComponent={
               <input
-                className="form-control form-control-sm"
+                className="form-control"
                 type="text"
                 value={user.last_name}
                 onChange={ev => setUser({ ...user, last_name: DOMPurify.sanitize(ev.target.value) })}
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           {/* Nickname Field */}
           <Field
             label="Nickname"
             inputComponent={
               <input
-                className="form-control form-control-sm"
+                className="form-control"
                 type="text"
                 value={user.nickname}
                 onChange={ev => setUser({ ...user, nickname: DOMPurify.sanitize(ev.target.value) })}
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
         </div>
         <div className="card-header d-flex justify-content-between align-items-center">
@@ -187,22 +187,22 @@ export default function Profile() {
             label="Biographical Info"
             inputComponent={
               <textarea 
-                className="form-control form-control-sm" 
+                className="form-control" 
                 rows={4} 
                 value={(user.biography) ? user.biography : ''} 
                 onChange={ev => setUser({...user, biography : ev.target.value})}
               />              
             }
             tipMessage="Share a little biographical information to fill out your profile. This may be shown publicly."
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           {/* Profile Picture Field */}
           <Field
             label="Profile Picture"
             inputComponent={<AddMedia onChange={setAttachment} value={user.attachment_metadata} />}
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
         </div>
         <div className="card-header d-flex justify-content-between align-items-center">
@@ -217,15 +217,15 @@ export default function Profile() {
             label="New Password"
             setUser={setUser} 
             user={user}
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
         </div>
         <div className="card-footer">
           <button type="submit" className="btn btn-primary">
             <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
             Update Profile &nbsp;
-            {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
+            {isLoading && <span className="spinner-border ml-1" role="status"></span>}
           </button>
         </div>
       </form>

@@ -111,7 +111,7 @@ export default function Dashboard() {
 					<FontAwesomeIcon icon={solidIconMap.warning} className="me-2" />
 					<strong>Expiring VIPs:</strong>&nbsp;
 					{expiringVIPs.length} VIP(s) expiring soon!&nbsp;
-					<a href="#" className="btn btn-link btn-sm p-0" onClick={handleViewList} style={{textDecoration: 'underline'}}>View List</a>
+					<a href="#" className="btn btn-link p-0" onClick={handleViewList} style={{textDecoration: 'underline'}}>View List</a>
 				</div>
 			)}
 			<div className="row g-3 mb-3">

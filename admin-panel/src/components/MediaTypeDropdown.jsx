@@ -4,7 +4,7 @@ const MediaTypeDropdown = forwardRef((props, ref) => {
   const [selectedOption, setSelectedOption] = useState('');
 
   return (
-    <select className="form-select form-select-sm" ref={ref}
+    <select className="form-select" ref={ref}
     value={selectedOption} 
     onChange={ev => {ev.preventDefault(); setSelectedOption(ev.target.value); props.onChange(ev)}}>
       <option value="">All Media Items</option>

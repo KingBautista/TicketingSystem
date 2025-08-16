@@ -157,7 +157,7 @@ const AttachmentForm = forwardRef((props, ref) => {
           inputComponent={
             <button 
               type="button" 
-              className="btn btn-secondary btn-sm" 
+              className="btn btn-secondary" 
               onClick={copyToClipboard}> Copy URL to clipboard
             </button>
           }

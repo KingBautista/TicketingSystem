@@ -181,7 +181,7 @@ export default function PromoterForm() {
                 <li className="list-group-item d-flex justify-content-between align-items-center" key={s.id || s.date}>
                   {s.date} {s.is_manual ? <span className="badge bg-warning ms-2">Manual</span> : ''}
                   {/* Optionally, add remove button for unsaved schedules */}
-                  {/* <button className="btn btn-sm btn-danger" onClick={() => removeSchedule(s.date)}>Remove</button> */}
+                  {/* <button className="btn btn-danger" onClick={() => removeSchedule(s.date)}>Remove</button> */}
                 </li>
               ))}
             </ul>

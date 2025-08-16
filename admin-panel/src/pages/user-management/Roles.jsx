@@ -147,7 +147,7 @@ export default function Roles() {
           <h4>Roles</h4>
           {access?.can_create && 
             <div className="d-flex gap-2">
-              <Link to="/user-management/roles/create" className="btn btn-primary btn-sm" type="button">
+              <Link to="/user-management/roles/create" className="btn btn-primary" type="button">
                 <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
                 Create New Role
               </Link>
@@ -155,45 +155,8 @@ export default function Roles() {
           }
         </div>
         <div className="card-header">
-          <ul className="subsubsub">
-            <li>
-              <a
-                href="#"
-                className={activeTab === 'all' ? 'current' : ''}
-                onClick={(ev) => handleTabSwitch(ev, 'all')}>
-                All <span className="count">({totalRows})</span>
-              </a>
-            </li>
-            {totalTrash > 0 && (
-              <li>
-                <a
-                  href="#"
-                  className={activeTab === 'trash' ? 'current' : ''}
-                  onClick={(ev) => handleTabSwitch(ev, 'trash')}>
-                  Trash <span className="count">({totalTrash})</span>
-                </a>
-              </li>
-            )}
-          </ul>
-        </div>
-        <div className="card-header">
           <div className="row">
-            <div className="col-md-6 col-12 d-flex flex-wrap gap-2 align-items-start">
-              {access?.can_delete && 
-                <div className="input-group input-group-sm" style={{ flex: '1 1 250px' }}>
-                  <select ref={bulkAction} className="form-select" aria-label="Bulk actions">
-                    <option value="">Bulk actions</option>
-                    {activeTab === 'trash' && <option value="restore">Restore</option>}
-                    {activeTab === 'trash' && <option value="delete">Delete Permanently</option>}
-                    {activeTab === 'all' && <option value="delete">Delete</option>}                  
-                  </select>
-                  <button type="button" className="btn btn-primary" onClick={showModalNotification}>
-                    Apply
-                  </button>
-                </div>
-              }
-            </div>
-            <div className="col-md-4 col-12 offset-md-2">
+            <div className="col-md-4 col-12">
               <SearchBox ref={searchRef} onClick={handleSearch} />
             </div>
           </div>

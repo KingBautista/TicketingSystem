@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DOMPurify from 'dompurify';
 
-const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-sm-2', inputClass = 'col-sm-4'}) => {
+const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-2', inputClass = 'col-4'}) => {
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -48,7 +48,7 @@ const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-sm-2', inpu
       <label className={`col-form-label ${labelClass}`}>{label}</label>
       <div className={`has-validation ${inputClass}`}>
         {!showPassword ? (
-          <button className="btn btn-secondary btn-sm" type="button" onClick={handleShowPassword}>
+          <button className="btn btn-secondary" type="button" onClick={handleShowPassword}>
             Generate Password
           </button>
         ) : (
@@ -64,12 +64,12 @@ const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-sm-2', inpu
               }}
               autoComplete="new-password"
             />
-            <button className="btn btn-primary btn-sm" type="button" onClick={handleRegenPassword}>
+            <button className="btn btn-primary" type="button" onClick={handleRegenPassword}>
               <svg className="icon">
                 <use xlinkHref="/assets/vendors/@coreui/icons/svg/free.svg#cil-loop-circular"></use>
               </svg>
             </button>
-            <button className="btn btn-primary btn-sm" type="button" onClick={handleHidePassword}>
+            <button className="btn btn-primary" type="button" onClick={handleHidePassword}>
               Cancel
             </button>
           </div>

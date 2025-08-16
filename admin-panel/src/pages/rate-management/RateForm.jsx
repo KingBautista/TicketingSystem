@@ -82,8 +82,8 @@ export default function RateForm() {
                 required
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           <Field
             label="Description"
@@ -94,8 +94,8 @@ export default function RateForm() {
                 onChange={ev => setRate({ ...rate, description: DOMPurify.sanitize(ev.target.value) })}
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           <Field
             label="Price"
@@ -111,8 +111,8 @@ export default function RateForm() {
                 required
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           <Field
             label="Active"
@@ -124,8 +124,8 @@ export default function RateForm() {
                 onChange={() => setIsActive(!isActive)}
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
         </div>
         <div className="card-footer">
@@ -136,7 +136,7 @@ export default function RateForm() {
           <button type="submit" className="btn btn-primary">
             <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
             {buttonText} &nbsp;
-            {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
+            {isLoading && <span className="spinner-border ml-1" role="status"></span>}
           </button>
         </div>
       </form>

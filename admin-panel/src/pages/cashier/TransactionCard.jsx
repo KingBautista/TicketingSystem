@@ -28,7 +28,7 @@ export default function TransactionCard({
       </div>
       <div className="card-header d-flex align-items-center" style={{ ...headerStyle, flexDirection: 'row', justifyContent: 'space-between', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
         <h4 className="mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16 }}>Ticket Transaction</h4>
-        <button className="btn btn-warning btn-sm px-3" onClick={handleShowCloseCash} style={{ background: '#ffb400', border: 'none', color: '#321fdb', fontWeight: 600, whiteSpace: 'nowrap', height: 32, minHeight: 32, fontSize: 15 }}>
+        <button className="btn btn-warning px-3" onClick={handleShowCloseCash} style={{ background: '#ffb400', border: 'none', color: '#321fdb', fontWeight: 600, whiteSpace: 'nowrap', height: 32, minHeight: 32, fontSize: 15 }}>
           <FontAwesomeIcon icon={solidIconMap.moneyBill} className="me-2" />
           Close Cash
         </button>
@@ -51,7 +51,7 @@ export default function TransactionCard({
               {discounts.map(d => (
                 <button
                   type="button"
-                  className="btn btn-outline-info btn-sm"
+                  className="btn btn-outline-info"
                   key={d.id}
                   onClick={() => handleAddDiscount(d)}
                   disabled={appliedDiscounts.some(ad => ad.id === d.id)}
@@ -76,7 +76,7 @@ export default function TransactionCard({
             <div className="h4">₱{changeDue.toFixed(2)}</div>
           </div>
           <div className="d-flex justify-content-end">
-            <button className="btn btn-success btn-sm px-3" type="submit" style={{ background: '#00c292', border: 'none', fontSize: 15, height: 32, minHeight: 32 }}>
+            <button className="btn btn-success px-3" type="submit" style={{ background: '#00c292', border: 'none', fontSize: 15, height: 32, minHeight: 32 }}>
               <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
               Save & Print
             </button>

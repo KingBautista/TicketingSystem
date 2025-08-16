@@ -85,8 +85,8 @@ export default function DiscountForm() {
                 required
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           <Field
             label="Discount Value Type"
@@ -102,8 +102,8 @@ export default function DiscountForm() {
                 <option value="amount">Exact Amount</option>
               </select>
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           <Field
             label={discount.discount_value_type === 'percentage' ? 'Discount Value (%)' : 'Discount Value (Amount)'}
@@ -119,8 +119,8 @@ export default function DiscountForm() {
                 required
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
           <Field
             label="Active"
@@ -132,8 +132,8 @@ export default function DiscountForm() {
                 onChange={() => setIsActive(!isActive)}
               />
             }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
+            labelClass="col-12 col-md-3"
+            inputClass="col-12 col-md-9"
           />
         </div>
         <div className="card-footer">
@@ -144,7 +144,7 @@ export default function DiscountForm() {
           <button type="submit" className="btn btn-primary">
             <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
             {buttonText} &nbsp;
-            {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
+            {isLoading && <span className="spinner-border ml-1" role="status"></span>}
           </button>
         </div>
       </form>

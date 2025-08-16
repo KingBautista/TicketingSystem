@@ -179,7 +179,7 @@ export default function MediaForm() {
             inputComponent={
               <button 
                 type="button" 
-                className="btn btn-secondary btn-sm" 
+                className="btn btn-secondary" 
                 onClick={copyToClipboard}> Copy URL to clipboard
               </button>
             }
@@ -191,10 +191,10 @@ export default function MediaForm() {
           <Link to={details.file_url} target="_blank" download>Download file</Link>
           <span className="links-separator">&nbsp;|&nbsp;</span>
           <button type="button" className="button-link delete-attachment" data-coreui-dismiss="modal" onClick={ ev => {doAction(details.id);}}>Delete permanently</button>
-          <button type="submit" className="btn btn-primary btn-sm float-end" style={{marginLeft:5+'px'}} >Update &nbsp;
+          <button type="submit" className="btn btn-primary float-end" style={{marginLeft:5+'px'}} >Update &nbsp;
             {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
           </button>
-          <Link type="button" to="/content-management/media-library" className="btn btn-secondary btn-sm float-end">Cancel </Link>
+          <Link type="button" to="/content-management/media-library" className="btn btn-secondary float-end">Cancel </Link>
         </div>
       </div>}
       </>

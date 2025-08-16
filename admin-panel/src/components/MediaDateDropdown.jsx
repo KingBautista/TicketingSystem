@@ -39,7 +39,7 @@ const MediaDateDropdown = forwardRef((props, ref) => {
   const options = renderOptions();
 
   return (
-    <select className="form-select form-select-sm" ref={ref}
+    <select className="form-select" ref={ref}
     value={selectedOption} 
     onChange={ev => {ev.preventDefault(); setSelectedOption(ev.target.value); props.onChange(ev)}}>
       {isLoading && <option value="">Loading ...</option>}

@@ -43,12 +43,12 @@ export default function DefaultLayout() {
   }
 
   return (
-    <div>
+    <div className="main-wrapper">
       <Sidebar />
-      <div className="wrapper d-flex flex-column min-vh-100">
+      <div className="main-content">
         <Header />
-        <div className="body flex-grow-1">
-          <div className="container-fluid px-4">
+        <div className="content-area">
+          <div className="content-container">
             <Outlet />
           </div>
         </div>

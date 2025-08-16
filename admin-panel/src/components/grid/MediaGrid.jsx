@@ -308,7 +308,7 @@ const MediaGrid = forwardRef((props, ref) => {
             {dataRows.length < totalRows && (
               <button 
                 type="button" 
-                className="btn btn-secondary btn-sm" 
+                className="btn btn-secondary" 
                 onClick={handleLoadMoreClick}
                 disabled={isLoadingMore}
               >
@@ -324,7 +324,7 @@ const MediaGrid = forwardRef((props, ref) => {
             )}
             
             {dataRows.length >= totalRows && dataRows.length > 0 && (
-              <button type="button" className="btn btn-secondary btn-sm">
+              <button type="button" className="btn btn-secondary">
                 Jump to first loaded item
               </button>
             )}

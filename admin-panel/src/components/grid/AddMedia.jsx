@@ -201,7 +201,7 @@ const AddMedia = forwardRef((props, ref) => {
     }
     return (
       <>
-      <button className="btn btn-primary btn-sm" type="button" onClick={showModal} {...props.buttonProps}>
+      <button className="btn btn-primary" type="button" onClick={showModal} {...props.buttonProps}>
         <svg className="sidebar-brand-narrow" width="18" height="18">
           <use xlinkHref="/assets/vendors/@coreui/icons/svg/free.svg#cil-image-plus"></use>
         </svg>&nbsp;
@@ -331,7 +331,7 @@ const AddMedia = forwardRef((props, ref) => {
                 ))}
               </div>
               <button 
-                className="btn btn-sm btn-outline-danger mt-2 w-100"
+                className="btn btn-outline-danger mt-2 w-100"
                 onClick={() => {
                   setAttachments([]);
                   setAttachment(null);
@@ -380,7 +380,7 @@ const AddMedia = forwardRef((props, ref) => {
             </div>
             {!isUploadFile &&
             <div className="modal-footer">
-              <button type="button" className="btn btn-primary btn-sm" onClick={ ev => { ev.preventDefault(); setIsShow(true); props.onChange(attachment); hideModal(); }}>Select</button>
+              <button type="button" className="btn btn-primary" onClick={ ev => { ev.preventDefault(); setIsShow(true); props.onChange(attachment); hideModal(); }}>Select</button>
             </div>}
           </div>
         </div>
