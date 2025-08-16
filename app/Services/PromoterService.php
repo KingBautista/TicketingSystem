@@ -16,6 +16,7 @@ class PromoterService extends BaseService
 
     public function list($perPage = 10, $trash = false)
     {
+        $perPage = request('per_page') ?? $perPage; // Default to 10 if not provided
         $allPromoters = $this->getTotalCount();
         $trashedPromoters = $this->getTrashedCount();
         $query = Promoter::with('schedules');

@@ -46,7 +46,8 @@ export default function Roles() {
     softDelete: true,
     primaryKey: "id",
     redirectUrl: '',
-    otherActions: {}
+    otherActions: {},
+    edit_link: true,
   });
   
   const modalParams = {
@@ -156,7 +157,7 @@ export default function Roles() {
         </div>
         <div className="card-header">
           <div className="row">
-            <div className="col-md-4 col-12">
+            <div className="col-md-8 col-12">
               <SearchBox ref={searchRef} onClick={handleSearch} />
             </div>
           </div>

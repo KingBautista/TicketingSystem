@@ -21,6 +21,7 @@ class RoleService extends BaseService
   public function list($perPage = 10, $trash = false)
   {
     try {
+      $perPage = request('per_page') ?? $perPage; // Default to 10 if not provided
       $allRoles = $this->getTotalCount();
       $trashedRoles = $this->getTrashedCount();
 

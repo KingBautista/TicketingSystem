@@ -15,6 +15,7 @@ class RateService extends BaseService
 
     public function list($perPage = 10, $trash = false)
     {
+        $perPage = request('per_page') ?? $perPage; // Default to 10 if not provided
         $allRates = $this->getTotalCount();
         $trashedRates = $this->getTrashedCount();
         $query = Rate::query();

@@ -40,6 +40,7 @@ export default function Discounts() {
     softDelete: true,
     primaryKey: "id",
     redirectUrl: '',
+    edit_link: true,
   });
   const [params, setParams] = useState({ search: '' });
   const searchRef = useRef();

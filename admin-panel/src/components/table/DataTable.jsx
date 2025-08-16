@@ -17,6 +17,7 @@ const generateUniqueId = () => `notifModal_${Math.random().toString(36).substr(2
  * @param {string} props.options.dataSource - API endpoint for data
  * @param {boolean} props.options.softDelete - Enable soft delete functionality
  * @param {boolean} props.options.displayInModal - Show edit form in modal
+ * @param {boolean} props.options.edit_link - Enable edit link on first column (hides renderActions)
  * @param {Array} props.options.otherActions - Additional action buttons
  * @param {Object} props.options.otherActions[].name - Action button label
  * @param {string} [props.options.otherActions[].link] - URL for navigation action
@@ -40,6 +41,7 @@ const DataTable = forwardRef((props, ref) => {
   const [toRestore, setToRestore] = useState(null);
   const [filters, setFilters] = useState({});
   const [modalDescription, setModalDescription] = useState("");
+  const [perPage, setPerPage] = useState(10);
 
   const theadRef = useRef();
   const tbodyRef = useRef();
@@ -137,7 +139,8 @@ const DataTable = forwardRef((props, ref) => {
     const params = {
       ...props.params,
       ...sortParams,
-      ...filters
+      ...filters,
+      per_page: perPage
     };
 
     axiosClient.get(dataSource, { params })
@@ -166,7 +169,7 @@ const DataTable = forwardRef((props, ref) => {
   useEffect(() => {
     setColumnSize(Object.keys(tHeader).length);
     getDataSource();
-  }, [props.params, props.options.dataSource, sortParams, nextPage, filters]);
+  }, [props.params, props.options.dataSource, sortParams, nextPage, filters, perPage]);
 
   useEffect(() => {
     setNextPage(null);
@@ -237,7 +240,14 @@ const DataTable = forwardRef((props, ref) => {
 
     // Check if we have pagination data
     if (!isLoading && metaData?.total > 0) {
-      return <Pagination metas={metaData} onClick={setNextPage} />;
+      return <Pagination 
+        metas={metaData} 
+        onClick={setNextPage} 
+        onPerPageChange={(newPerPage) => {
+          setPerPage(newPerPage);
+          setNextPage(null); // Reset to first page when changing per_page
+        }}
+      />;
     }
     return null;
   };
@@ -245,7 +255,7 @@ const DataTable = forwardRef((props, ref) => {
   return (
     <>
       <div className="table-responsive">
-        <table className="table table-striped table-hover table-sm">
+        <table className="table-modern">
           <TableHeader 
             header={tHeader} 
             onCheckAll={(checked) => tbodyRef.current.checkedAll(checked)} 

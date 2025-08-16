@@ -49,7 +49,8 @@ export default function Navigations() {
     softDelete: true,
     primaryKey: "id",
     redirectUrl: '',
-    otherActions: {}
+    otherActions: {},
+    edit_link: true,
   });
 
   const searchRef = useRef();

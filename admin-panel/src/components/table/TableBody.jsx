@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 
 const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedAll, onRowClick }, ref) => {
-  const { dataFields, primaryKey, dataSource, softDelete, displayInModal, otherActions } = options;
+  const { dataFields, primaryKey, dataSource, softDelete, displayInModal, edit_link, otherActions } = options;
   const tableRows = rows;
   const hasPermission = permissions;
   
@@ -39,6 +39,11 @@ const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedA
   }));
 
   const renderActions = (id, row, delDate, attachment) => {
+    // If edit_link is enabled, don't render actions
+    if (edit_link) {
+      return null;
+    }
+
     const actionLinks = [
       // Restore - requires can_delete permission and delDate must exist
       delDate && hasPermission?.can_delete && (
@@ -190,8 +195,10 @@ const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedA
             {Object.keys(dataFields).map((field, index) => {
               const columnMaxWidth = dataFields[field].maxWidth || '350px';
               const extraStyle = (index === 0) ? { whiteSpace: 'nowrap' } : {};
-              return (
-                <td key={field} style={{ maxWidth: columnMaxWidth, ...extraStyle }} className={dataFields[field].className || undefined}>
+              
+              // Render cell content
+              const cellContent = (
+                <>
                   {dataFields[field].attachment && row[field] && (
                     <span className="media-icon">
                       <LazyLoadImage
@@ -216,7 +223,34 @@ const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedA
                   ) : (
                     row[field]
                   )}
-                  {index === 0 && renderActions(rowId, row, delDate, row[dataFields[field].downloadUrl])}
+                  {index === 0 && !edit_link && renderActions(rowId, row, delDate, row[dataFields[field].downloadUrl])}
+                </>
+              );
+
+              // If edit_link is enabled and this is the first column (index 0), make it clickable
+              if (edit_link && index === 0 && hasPermission?.can_edit && !delDate) {
+                return (
+                  <td 
+                    key={field} 
+                    style={{ maxWidth: columnMaxWidth, ...extraStyle, cursor: 'pointer' }} 
+                    className={`${dataFields[field].className || ''} edit-link-cell`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (displayInModal) {
+                        onAction(row, 'Edit');
+                      } else {
+                        window.location.href = `${dataSource}/${rowId}`;
+                      }
+                    }}
+                  >
+                    {cellContent}
+                  </td>
+                );
+              }
+
+              return (
+                <td key={field} style={{ maxWidth: columnMaxWidth, ...extraStyle }} className={dataFields[field].className || undefined}>
+                  {cellContent}
                 </td>
               );
             })}

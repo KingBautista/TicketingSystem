@@ -28,7 +28,7 @@ export default function Users() {
     dataFields: {
       user_login: { name: "Username", withSort: true },
       user_email: { name: "Email", withSort: true },
-      user_role_name: { name: "Role", withSort: false },
+      user_role: { name: "Role", withSort: false },
       user_status: {
         name: "Status",
         withSort: true,
@@ -50,6 +50,7 @@ export default function Users() {
     softDelete: true,
     primaryKey: "id",
     redirectUrl: '',
+    edit_link: true,
   });
 
   const [params, setParams] = useState({ search: '' });
@@ -218,7 +219,7 @@ export default function Users() {
         </div>
         <div className="card-header">
           <div className="row"> 
-            <div className="col-md-4 col-12">
+            <div className="col-md-8 col-12">
               <SearchBox ref={searchRef} onClick={handleSearch} />
             </div>
           </div>
