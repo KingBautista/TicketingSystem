@@ -142,7 +142,7 @@ export default function SalesReports() {
   return (
     <div className="card">
       <ToastMessage ref={toastAction} />
-      <div className="card-header d-flex justify-content-between align-items-center">
+      <div className="card-header d-flex justify-content-between align-items-center ">
         <h4>Sales Reports</h4>
         <div>
           <button className="btn btn-outline-primary me-2" onClick={() => exportData('pdf')}>

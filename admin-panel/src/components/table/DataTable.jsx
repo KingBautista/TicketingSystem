@@ -257,9 +257,38 @@ const DataTable = forwardRef((props, ref) => {
     return null;
   };
 
+  const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)');
+
+  // Calculate dynamic height based on parent container
+  useEffect(() => {
+    const calculateHeight = () => {
+      const tableElement = document.querySelector('.table-responsive');
+      if (tableElement) {
+        const rect = tableElement.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const topOffset = rect.top;
+        const bottomOffset = 50; // Space for pagination and margins
+        const availableHeight = viewportHeight - topOffset - bottomOffset;
+        setTableHeight(`${Math.max(300, availableHeight)}px`);
+      }
+    };
+
+    // Calculate on mount and resize
+    calculateHeight();
+    window.addEventListener('resize', calculateHeight);
+    
+    // Recalculate after a short delay to ensure parent containers are rendered
+    const timeoutId = setTimeout(calculateHeight, 100);
+
+    return () => {
+      window.removeEventListener('resize', calculateHeight);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
   return (
     <>
-      <div className="table-responsive">
+      <div className="table-responsive" style={{ height: tableHeight }}>
         <table className="table-modern">
           <TableHeader 
             header={tHeader} 

@@ -59,7 +59,7 @@ export default function Discounts() {
   return (
     <>
       <div className="card mb-2">
-        <div className="card-header d-flex justify-content-between align-items-center">
+        <div className="card-header d-flex justify-content-between align-items-center border-0">
           <h4>Discounts Management</h4>
           {access?.can_create && 
             <div className="d-flex gap-2">
@@ -70,7 +70,7 @@ export default function Discounts() {
             </div>
           }
         </div>
-        <div className="card-header pb-0 pt-0">
+        <div className="card-header pb-0 pt-0 border-0">
           <div className="row">
             <div className="col-md-5 col-12">
               <SearchBox ref={searchRef} onClick={handleSearch} />
