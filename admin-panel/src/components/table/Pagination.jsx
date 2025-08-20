@@ -3,7 +3,7 @@ import { decode } from 'html-entities';
 import { Link } from "react-router-dom";
 
 const Pagination = forwardRef(({ metas, onClick, onPerPageChange, className = '' }, ref) => {
-  const { total: totalRows, links: paginationLinks, per_page: perPage, current_page: currentPage } = metas;
+  const { total: totalRows, per_page: perPage, current_page: currentPage, last_page: lastPage } = metas;
   
   // State for rows per page selector
   const [selectedPerPage, setSelectedPerPage] = useState(perPage || 10);
@@ -11,9 +11,14 @@ const Pagination = forwardRef(({ metas, onClick, onPerPageChange, className = ''
   // Available rows per page options
   const perPageOptions = [10, 25, 50, 100];
 
-  const goToPage = (event, url) => {
+  const goToPage = (event, page) => {
     event.preventDefault();
-    if (url) onClick(url);
+    if (page && page !== currentPage) {
+      // Create URL with updated page parameter
+      const url = new URL(window.location);
+      url.searchParams.set('page', page);
+      onClick(url.toString());
+    }
   };
 
   const handlePerPageChange = (event) => {
@@ -28,6 +33,50 @@ const Pagination = forwardRef(({ metas, onClick, onPerPageChange, className = ''
     const start = (currentPage - 1) * perPage + 1;
     const end = Math.min(currentPage * perPage, totalRows);
     return `${start}-${end} of ${totalRows}`;
+  };
+
+  // Generate pagination links with max 8 page numbers
+  const generatePaginationLinks = () => {
+    const links = [];
+    const maxVisiblePages = 6;
+    
+    if (lastPage <= maxVisiblePages) {
+      // Show all pages if total pages is 8 or less
+      for (let i = 1; i <= lastPage; i++) {
+        links.push({ page: i, label: i.toString(), active: i === currentPage });
+      }
+    } else {
+      // Show limited pages with ellipsis
+      const halfVisible = Math.floor(maxVisiblePages / 2);
+      
+      // Always show first page
+      links.push({ page: 1, label: '1', active: currentPage === 1 });
+      
+      if (currentPage <= halfVisible + 1) {
+        // Show pages 2 to maxVisiblePages-1, then ellipsis, then last page
+        for (let i = 2; i <= maxVisiblePages - 1; i++) {
+          links.push({ page: i, label: i.toString(), active: i === currentPage });
+        }
+        links.push({ page: null, label: '...', active: false });
+        links.push({ page: lastPage, label: lastPage.toString(), active: false });
+      } else if (currentPage >= lastPage - halfVisible) {
+        // Show first page, ellipsis, then pages from lastPage-maxVisiblePages+2 to lastPage
+        links.push({ page: null, label: '...', active: false });
+        for (let i = lastPage - maxVisiblePages + 2; i <= lastPage; i++) {
+          links.push({ page: i, label: i.toString(), active: i === currentPage });
+        }
+      } else {
+        // Show first page, ellipsis, current page and surrounding pages, ellipsis, last page
+        links.push({ page: null, label: '...', active: false });
+        for (let i = currentPage - halfVisible + 1; i <= currentPage + halfVisible - 1; i++) {
+          links.push({ page: i, label: i.toString(), active: i === currentPage });
+        }
+        links.push({ page: null, label: '...', active: false });
+        links.push({ page: lastPage, label: lastPage.toString(), active: false });
+      }
+    }
+    
+    return links;
   };
 
   return (
@@ -57,15 +106,27 @@ const Pagination = forwardRef(({ metas, onClick, onPerPageChange, className = ''
 
       <div className="pagination-right">
         <ul className="pagination-controls">
-          {paginationLinks?.map((link, index) => {
-            const isDisabled = !link.url;
+          {/* Previous button */}
+          <li className={`pagination-item ${currentPage === 1 ? 'disabled' : ''}`}>
+            <Link
+              className="pagination-link"
+              to="#"
+              onClick={(event) => goToPage(event, currentPage - 1)}
+              aria-label="Previous"
+            >
+              Previous
+            </Link>
+          </li>
+          
+          {/* Page numbers */}
+          {generatePaginationLinks().map((link, index) => {
             const isActive = link.active;
             const isEllipsis = link.label === '...';
             
             return (
               <li
                 key={index}
-                className={`pagination-item ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}
+                className={`pagination-item ${isActive ? 'active' : ''} ${isEllipsis ? 'disabled' : ''}`}
               >
                 {isEllipsis ? (
                   <span className="pagination-link">{link.label}</span>
@@ -73,16 +134,28 @@ const Pagination = forwardRef(({ metas, onClick, onPerPageChange, className = ''
                   <Link
                     className="pagination-link"
                     to="#"
-                    onClick={(event) => goToPage(event, link.url)}
+                    onClick={(event) => goToPage(event, link.page)}
                     aria-label={link.label}
                     aria-current={isActive ? 'page' : undefined}
                   >
-                    {decode(link.label)}
+                    {link.label}
                   </Link>
                 )}
               </li>
             );
           })}
+          
+          {/* Next button */}
+          <li className={`pagination-item ${currentPage === lastPage ? 'disabled' : ''}`}>
+            <Link
+              className="pagination-link"
+              to="#"
+              onClick={(event) => goToPage(event, currentPage + 1)}
+              aria-label="Next"
+            >
+              Next
+            </Link>
+          </li>
         </ul>
       </div>
     </div>

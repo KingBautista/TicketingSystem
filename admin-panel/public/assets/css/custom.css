@@ -2023,9 +2023,14 @@ hr {
 
 /* Full height table with scrollable tbody */
 .table-responsive {
-  height: calc(100vh - 200px);
+  height: calc(100vh - 250px);
   display: flex;
   flex-direction: column;
+}
+
+/* Specific rule for Sales Reports page to prevent vertical scroll */
+.card.mb-0 .table-responsive {
+  height: calc(100vh - 350px);
 }
 
 .table-responsive .table-modern {

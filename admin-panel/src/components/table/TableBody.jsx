@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { LazyLoadImage } from 'react-lazy-load-image-component';
 
 const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedAll, onRowClick, bulkAction = true }, ref) => {
-  const { dataFields, primaryKey, dataSource, softDelete, displayInModal, edit_link, otherActions } = options;
+  const { dataFields, primaryKey, dataSource, softDelete, displayInModal, edit_link, otherActions, hide_actions } = options;
   const tableRows = rows;
   const hasPermission = permissions;
   
@@ -39,8 +39,8 @@ const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedA
   }));
 
   const renderActions = (id, row, delDate, attachment) => {
-    // If edit_link is enabled, don't render actions
-    if (edit_link) {
+    // If edit_link is enabled or hide_actions is true, don't render actions
+    if (edit_link || hide_actions) {
       return null;
     }
 

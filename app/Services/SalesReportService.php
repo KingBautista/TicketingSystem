@@ -6,12 +6,54 @@ use App\Models\CashierTransaction;
 use App\Models\User;
 use App\Models\Rate;
 use App\Models\Promoter;
+use App\Http\Resources\SalesReportResource;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class SalesReportService
+class SalesReportService extends BaseService
 {
-    public function getSalesReport($filters = [])
+    public function __construct()
+    {
+        // Pass the SalesReportResource class to the parent constructor
+        parent::__construct(new SalesReportResource(new CashierTransaction), new CashierTransaction());
+    }
+
+    public function list($perPage = 10, $trash = false)
+    {
+        $perPage = request('per_page') ?? $perPage; // Default to 10 if not provided
+        $allTransactions = $this->getTotalCount();
+        $trashedTransactions = $this->getTrashedCount();
+        $query = $this->buildSalesQuery();
+        
+        if ($trash) {
+            $query->onlyTrashed();
+        }
+        
+        if (request('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('cashier_transactions.transaction_id', 'like', "%{$search}%")
+                  ->orWhere('users.user_login', 'like', "%{$search}%")
+                  ->orWhere('rates.name', 'like', "%{$search}%")
+                  ->orWhere('promoters.name', 'like', "%{$search}%");
+            });
+        }
+        
+        if (request('order')) {
+            $query->orderBy(request('order'), request('sort'));
+        } else {
+            $query->orderBy('cashier_transactions.created_at', 'desc');
+        }
+        
+        return SalesReportResource::collection(
+            $query->paginate($perPage)->withQueryString()
+        )->additional(['meta' => ['all' => $allTransactions, 'trashed' => $trashedTransactions]]);
+    }
+
+    /**
+     * Build the sales query with filters.
+     */
+    private function buildSalesQuery()
     {
         $query = CashierTransaction::with(['cashier', 'rate', 'promoter'])
             ->select([
@@ -25,42 +67,40 @@ class SalesReportService
             ->leftJoin('promoters', 'cashier_transactions.promoter_id', '=', 'promoters.id');
 
         // Apply filters
-        if (isset($filters['cashier']) && !empty($filters['cashier'])) {
-            $query->where('users.user_login', 'like', "%{$filters['cashier']}%");
+        if (request('cashier')) {
+            $query->where('users.user_login', 'like', "%" . request('cashier') . "%");
         }
 
-        if (isset($filters['startDate']) && !empty($filters['startDate'])) {
-            $query->whereDate('cashier_transactions.created_at', '>=', $filters['startDate']);
+        if (request('startDate')) {
+            $query->whereDate('cashier_transactions.created_at', '>=', request('startDate'));
         }
 
-        if (isset($filters['endDate']) && !empty($filters['endDate'])) {
-            $query->whereDate('cashier_transactions.created_at', '<=', $filters['endDate']);
+        if (request('endDate')) {
+            $query->whereDate('cashier_transactions.created_at', '<=', request('endDate'));
         }
 
-        if (isset($filters['promoter']) && !empty($filters['promoter'])) {
-            $query->where('promoters.name', 'like', "%{$filters['promoter']}%");
+        if (request('promoter')) {
+            $query->where('promoters.name', 'like', "%" . request('promoter') . "%");
         }
 
-        if (isset($filters['rate']) && !empty($filters['rate'])) {
-            $query->where('rates.name', 'like', "%{$filters['rate']}%");
+        if (request('rate')) {
+            $query->where('rates.name', 'like', "%" . request('rate') . "%");
         }
 
-        if (isset($filters['search']) && !empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function($q) use ($search) {
-                $q->where('cashier_transactions.transaction_id', 'like', "%{$search}%")
-                  ->orWhere('users.user_login', 'like', "%{$search}%")
-                  ->orWhere('rates.name', 'like', "%{$search}%")
-                  ->orWhere('promoters.name', 'like', "%{$search}%");
-            });
-        }
+        return $query;
+    }
 
-        return $query->orderBy('cashier_transactions.created_at', 'desc');
+    /**
+     * Get sales report query (for backward compatibility).
+     */
+    public function getSalesReport($filters = [])
+    {
+        return $this->buildSalesQuery($filters);
     }
 
     public function getSalesStatistics($filters = [])
     {
-        $query = $this->getSalesReport($filters);
+        $query = $this->buildSalesQuery();
 
         $stats = [
             'total_transactions' => $query->count(),
@@ -84,7 +124,7 @@ class SalesReportService
 
     public function exportSalesReport($filters = [], $format = 'csv')
     {
-        $query = $this->getSalesReport($filters);
+        $query = $this->buildSalesQuery();
         $transactions = $query->get();
 
         if ($format === 'csv') {

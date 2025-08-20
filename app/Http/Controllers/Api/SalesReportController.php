@@ -10,36 +10,16 @@ use App\Http\Resources\SalesReportResource;
 use App\Services\MessageService;
 
 
-class SalesReportController extends Controller
+class SalesReportController extends BaseController
 {
     use Auditable;
 
     protected $salesReportService;
 
-    public function __construct(SalesReportService $salesReportService)
+    public function __construct(SalesReportService $salesReportService, MessageService $messageService)
     {
         $this->salesReportService = $salesReportService;
-    }
-
-    public function index(Request $request)
-    {
-        try {
-            $filters = $request->only([
-                'search', 'cashier', 'startDate', 'endDate', 
-                'promoter', 'rate'
-            ]);
-
-            $query = $this->salesReportService->getSalesReport($filters);
-            $transactions = $query->get();
-            
-            $this->logAudit('VIEW', "Viewed sales report with filters: " . json_encode($filters));
-            
-            return response()->json([
-                'data' => SalesReportResource::collection($transactions)
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to fetch sales report'], 500);
-        }
+        parent::__construct($salesReportService, $messageService);
     }
 
     public function export(Request $request)
@@ -55,7 +35,7 @@ class SalesReportController extends Controller
             
             return $this->salesReportService->exportSalesReport($filters, $format);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to export sales report'], 500);
+            return $this->messageService->responseError();
         }
     }
 
@@ -73,7 +53,12 @@ class SalesReportController extends Controller
             
             return response()->json($stats);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to fetch sales statistics'], 500);
+            return $this->messageService->responseError();
         }
+    }
+
+    protected function getModuleName()
+    {
+        return 'Sales Report';
     }
 } 

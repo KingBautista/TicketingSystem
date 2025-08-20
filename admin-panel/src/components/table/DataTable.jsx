@@ -236,12 +236,12 @@ const DataTable = forwardRef((props, ref) => {
   };
 
   const renderPagination = () => {
-    // console.log('Pagination Debug:', {
-    //   isLoading,
-    //   totalRows,
-    //   dataRows: dataRows?.length,
-    //   metaData
-    // });
+    console.log('Pagination Debug:', {
+      isLoading,
+      totalRows,
+      dataRows: dataRows?.length,
+      metaData
+    });
 
     // Check if we have pagination data
     if (!isLoading && metaData?.total > 0) {
@@ -257,7 +257,7 @@ const DataTable = forwardRef((props, ref) => {
     return null;
   };
 
-  const [tableHeight, setTableHeight] = useState('calc(100vh - 200px)');
+  const [tableHeight, setTableHeight] = useState('calc(100vh - 250px)');
 
   // Calculate dynamic height based on parent container
   useEffect(() => {
@@ -267,7 +267,7 @@ const DataTable = forwardRef((props, ref) => {
         const rect = tableElement.getBoundingClientRect();
         const viewportHeight = window.innerHeight;
         const topOffset = rect.top;
-        const bottomOffset = 50; // Space for pagination and margins
+        const bottomOffset = 110; // Space for pagination and margins
         const availableHeight = viewportHeight - topOffset - bottomOffset;
         setTableHeight(`${Math.max(300, availableHeight)}px`);
       }
@@ -300,8 +300,8 @@ const DataTable = forwardRef((props, ref) => {
           />
           {renderTableContent()}
         </table>
-        {renderPagination()}
       </div>
+      {renderPagination()}
       <NotificationModal params={notifParams} ref={actionRef} confirmEvent={onValidate} />
       <ToastMessage ref={toastMessage} />
     </>
