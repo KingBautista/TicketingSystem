@@ -166,7 +166,10 @@ export default function SalesReports() {
   };
 
   const handleSearch = () => {
-    // The DataTable will automatically reload when params change
+    // Trigger a reload of the DataTable with current params
+    if (tableRef.current) {
+      tableRef.current.clearPage();
+    }
   };
 
   const toggleFilterModal = () => {

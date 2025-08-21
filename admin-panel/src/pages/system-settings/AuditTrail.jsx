@@ -17,7 +17,7 @@ export default function AuditTrail() {
       user: { 
         name: "User", 
         withSort: true,
-        render: (value) => value?.name || value?.user_login || 'Unknown'
+        render: (value) => value || 'Unknown'
       },
       module: { name: "Module", withSort: true },
       action: { 
@@ -99,8 +99,8 @@ export default function AuditTrail() {
       setUsers([
         { value: '', label: 'All Users' }, 
         ...(response.data || []).map(user => ({
-          value: user.id,
-          label: user.name || user.user_login
+          value: user.id.toString(),
+          label: user.name || user.user_login || user.role_name || 'Unknown User'
         }))
       ]);
       return response;
@@ -250,7 +250,10 @@ export default function AuditTrail() {
   };
 
   const handleSearch = () => {
-    // The DataTable will automatically reload when params change
+    // Trigger a reload of the DataTable with current params
+    if (tableRef.current) {
+      tableRef.current.clearPage();
+    }
   };
 
   return (
@@ -422,7 +425,7 @@ export default function AuditTrail() {
                       className="d-flex justify-content-between align-items-center cursor-pointer" 
                       onClick={() => toggleSection('user')}
                       style={{ cursor: 'pointer' }}>
-                      <h6 className="fw-bold text-primary mb-0">User</h6>
+                      <h6 className="fw-bold text-primary mb-0">User Name</h6>
                       <span className="text-muted">
                         <img 
                           src={collapsedSections.user ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
@@ -442,7 +445,7 @@ export default function AuditTrail() {
                                 name="user" 
                                 id={`user-${u.value}`}
                                 value={u.value}
-                                                                 checked={params.user_id === u.value}
+                                checked={params.user_id === u.value || params.user_id === u.value.toString()}
                                 onChange={e => handleFilterChange('user_id', e.target.value)}
                               />
                               <label className="form-check-label" htmlFor={`user-${u.value}`}>

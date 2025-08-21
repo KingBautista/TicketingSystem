@@ -27,6 +27,19 @@ class DiscountService extends BaseService
                 $q->where('discount_name', 'LIKE', '%' . request('search') . '%');
             });
         }
+        
+        if (request('status')) {
+            $status = request('status');
+            if ($status === 'Active') {
+                $query->where('status', 1);
+            } elseif ($status === 'Inactive') {
+                $query->where('status', 0);
+            }
+        }
+        
+        if (request('discount_value_type')) {
+            $query->where('discount_value_type', request('discount_value_type'));
+        }
         if (request('order')) {
             $query->orderBy(request('order'), request('sort'));
         } else {

@@ -26,13 +26,13 @@ class BaseController extends Controller
    */
   public function index()
   {
-    try {
+    // try {
       $items = $this->service->list();
       $this->logAudit('VIEW', 'Viewed list of ' . $this->getModuleName());
       return $items;
-    } catch (\Exception $e) {
-      return $this->messageService->responseError();
-    }
+    // } catch (\Exception $e) {
+    //   return $this->messageService->responseError();
+    // }
   }
 
   // Common method to handle showing resources

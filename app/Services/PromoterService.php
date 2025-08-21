@@ -28,6 +28,15 @@ class PromoterService extends BaseService
                 $q->where('name', 'LIKE', '%' . request('search') . '%');
             });
         }
+        
+        if (request('status')) {
+            $status = request('status');
+            if ($status === 'Active') {
+                $query->where('status', 1);
+            } elseif ($status === 'Inactive') {
+                $query->where('status', 0);
+            }
+        }
         if (request('order')) {
             $query->orderBy(request('order'), request('sort'));
         } else {

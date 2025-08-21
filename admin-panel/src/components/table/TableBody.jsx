@@ -221,7 +221,7 @@ const TableBody = forwardRef(({ options, rows, permissions, onAction, onCheckedA
                       {dataFields[field].badgeLabels ? dataFields[field].badgeLabels[row[field]] || row[field] : row[field]}
                     </span>
                   ) : dataFields[field].render ? (
-                    dataFields[field].render(row)
+                    dataFields[field].render(row[field])
                   ) : (
                     row[field]
                   )}

@@ -23,18 +23,6 @@ class AuditService extends BaseService
         
         // AuditTrail doesn't use soft deletes, so we ignore the trash parameter
         
-        if (request('search')) {
-            $search = request('search');
-            $query->where(function($q) use ($search) {
-                $q->where('audit_trails.description', 'like', "%{$search}%")
-                  ->orWhere('audit_trails.module', 'like', "%{$search}%")
-                  ->orWhere('audit_trails.action', 'like', "%{$search}%")
-                  ->orWhere('users.user_login', 'like', "%{$search}%")
-                  ->orWhere('user_meta_first_name.meta_value', 'like', "%{$search}%")
-                  ->orWhere('user_meta_last_name.meta_value', 'like', "%{$search}%");
-            });
-        }
-        
         if (request('order')) {
             $query->orderBy(request('order'), request('sort'));
         } else {
@@ -51,8 +39,7 @@ class AuditService extends BaseService
      */
     private function buildAuditQuery()
     {
-        $query = AuditTrail::with(['user'])
-            ->select([
+        $query = AuditTrail::select([
                 'audit_trails.*',
                 'users.user_login as user_login',
                 'user_meta_first_name.meta_value as first_name',
@@ -87,6 +74,19 @@ class AuditService extends BaseService
 
         if (request('end_date')) {
             $query->whereDate('audit_trails.created_at', '<=', request('end_date'));
+        }
+
+        // Apply search
+        if (request('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('audit_trails.description', 'like', "%{$search}%")
+                  ->orWhere('audit_trails.module', 'like', "%{$search}%")
+                  ->orWhere('audit_trails.action', 'like', "%{$search}%")
+                  ->orWhere('users.user_login', 'like', "%{$search}%")
+                  ->orWhere('user_meta_first_name.meta_value', 'like', "%{$search}%")
+                  ->orWhere('user_meta_last_name.meta_value', 'like', "%{$search}%");
+            });
         }
 
         return $query;

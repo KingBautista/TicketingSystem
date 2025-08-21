@@ -36,6 +36,20 @@ class UserService extends BaseService
       return $query->where('user_login', 'LIKE', '%' . request('search') . '%')
                    ->orWhere('user_email', 'LIKE', '%' . request('search') . '%');
     })
+    ->when(request('user_role'), function ($query) {
+      return $query->whereHas('userRole', function($q) {
+        $q->where('name', request('user_role'));
+      });
+    })
+    ->when(request('user_status'), function ($query) {
+      $status = request('user_status');
+      if ($status === 'Active') {
+        return $query->where('user_status', 1);
+      } elseif ($status === 'Inactive') {
+        return $query->where('user_status', 0);
+      }
+      return $query;
+    })
     ->when(request('order'), function ($query) {
         return $query->orderBy(request('order'), request('sort'));
     })

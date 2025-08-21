@@ -19,13 +19,19 @@ class AuditTrailResource extends JsonResource
         $lastName = $this->last_name ?? '';
         $fullName = trim($firstName . ' ' . $lastName);
         
+        // Debug: Log the values to see what's being received
+        \Log::info('AuditTrailResource user data:', [
+            'user_id' => $this->user_id,
+            'user_login' => $this->user_login,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'fullName' => $fullName
+        ]);
+        
         return [
             'id' => $this->id,
             'created_at' => $this->created_at->format('Y-m-d H:m:s'),
-            'user' => [
-                'name' => $fullName ?: ($this->user_login ?? 'Unknown'),
-                'user_login' => $this->user_login ?? null,
-            ],
+            'user' => $fullName ?: ($this->user_login ?? 'Unknown'),
             'module' => $this->module,
             'action' => $this->action,
             'description' => $this->description,

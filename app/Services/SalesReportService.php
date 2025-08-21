@@ -29,16 +29,6 @@ class SalesReportService extends BaseService
             $query->onlyTrashed();
         }
         
-        if (request('search')) {
-            $search = request('search');
-            $query->where(function($q) use ($search) {
-                $q->where('cashier_transactions.id', 'like', "%{$search}%")
-                  ->orWhere('users.user_login', 'like', "%{$search}%")
-                  ->orWhere('rates.name', 'like', "%{$search}%")
-                  ->orWhere('promoters.name', 'like', "%{$search}%");
-            });
-        }
-        
         if (request('order')) {
             $query->orderBy(request('order'), request('sort'));
         } else {
@@ -80,11 +70,22 @@ class SalesReportService extends BaseService
         }
 
         if (request('promoter')) {
-            $query->where('promoters.name', 'like', "%" . request('promoter') . "%");
+            $query->where('cashier_transactions.promoter_id', request('promoter'));
         }
 
         if (request('rate')) {
-            $query->where('rates.name', 'like', "%" . request('rate') . "%");
+            $query->where('cashier_transactions.rate_id', request('rate'));
+        }
+
+        // Apply search
+        if (request('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('cashier_transactions.id', 'like', "%{$search}%")
+                  ->orWhere('users.user_login', 'like', "%{$search}%")
+                  ->orWhere('rates.name', 'like', "%{$search}%")
+                  ->orWhere('promoters.name', 'like', "%{$search}%");
+            });
         }
 
         return $query;

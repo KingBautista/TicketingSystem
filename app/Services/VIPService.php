@@ -27,6 +27,35 @@ class VIPService extends BaseService
                   ->orWhere('card_number', 'LIKE', '%' . request('search') . '%');
             });
         }
+        
+        if (request('status')) {
+            $status = request('status');
+            if ($status === 'Active') {
+                $query->where('status', 1);
+            } elseif ($status === 'Inactive') {
+                $query->where('status', 0);
+            }
+        }
+        
+        if (request('validity')) {
+            $now = \Carbon\Carbon::now();
+            switch (request('validity')) {
+                case 'Good':
+                    $query->whereDate('validity_end', '>', $now->copy()->addDays(5)->toDateString());
+                    break;
+                case 'Expiring Soon':
+                    $query->whereDate('validity_end', '<=', $now->copy()->addDays(5)->toDateString())
+                          ->whereDate('validity_end', '>', $now->copy()->addDays(1)->toDateString());
+                    break;
+                case 'Expiring':
+                    $query->whereDate('validity_end', '<=', $now->copy()->addDays(1)->toDateString())
+                          ->whereDate('validity_end', '>', $now->toDateString());
+                    break;
+                case 'Expired':
+                    $query->whereDate('validity_end', '<=', $now->toDateString());
+                    break;
+            }
+        }
         if (request('order')) {
             $query->orderBy(request('order'), request('sort'));
         } else {
