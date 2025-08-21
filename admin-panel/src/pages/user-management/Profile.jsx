@@ -116,12 +116,11 @@ export default function Profile() {
       <div className="row">
         <div className="col-12">
           <div className="card shadow-sm border-0 profile-card">
-            <ToastMessage ref={toastAction} />
             <form onSubmit={onSubmit}>
               {/* Header */}
-              <div className="card-header border-0" style={{ backgroundColor: 'rgb(4, 120, 87)', color: 'white' }}>
+              <div className="card-header border-0 profile-main-header">
                 <div className="d-flex justify-content-between align-items-center">
-                  <h4 className="mb-0" style={{ color: 'white' }}>
+                  <h4 className="mb-0">
                     <FontAwesomeIcon icon={solidIconMap.user} className="me-2" />
                     Profile Settings
                   </h4>
@@ -142,9 +141,9 @@ export default function Profile() {
                   {/* Left Column */}
                   <div className="col-lg-8">
                     {/* Personal Information */}
-                    <div className="card border-0 bg-light mb-4 profile-section">
-                      <div className="card-header bg-white border-bottom">
-                        <h5 className="mb-0" style={{ color: 'black' }}>
+                    <div className="card border-0 mb-4 profile-section profile-section-card">
+                      <div className="card-header border-bottom">
+                        <h5 className="mb-0 profile-section-header">
                           <FontAwesomeIcon icon={solidIconMap.user} className="me-2" />
                           Personal Information
                         </h5>
@@ -231,9 +230,9 @@ export default function Profile() {
                     </div>
 
                     {/* About Yourself */}
-                    <div className="card border-0 bg-light mb-4 profile-section">
-                      <div className="card-header bg-white border-bottom">
-                        <h5 className="mb-0" style={{ color: 'black' }}>
+                    <div className="card border-0 mb-4 profile-section profile-section-card">
+                      <div className="card-header border-bottom">
+                        <h5 className="mb-0 profile-section-header">
                           <FontAwesomeIcon icon={solidIconMap.info} className="me-2" />
                           About Yourself
                         </h5>
@@ -254,9 +253,9 @@ export default function Profile() {
                     </div>
 
                     {/* Password Section */}
-                    <div className="card border-0 bg-light profile-section">
-                      <div className="card-header bg-white border-bottom">
-                        <h5 className="mb-0" style={{ color: 'black' }}>
+                    <div className="card border-0 profile-section profile-section-card">
+                      <div className="card-header border-bottom">
+                        <h5 className="mb-0 profile-section-header">
                           <FontAwesomeIcon icon={solidIconMap.lock} className="me-2" />
                           Security Settings
                         </h5>
@@ -277,9 +276,9 @@ export default function Profile() {
                   {/* Right Column */}
                   <div className="col-lg-4">
                     {/* Profile Picture */}
-                    <div className="card border-0 bg-light profile-section">
-                      <div className="card-header bg-white border-bottom">
-                        <h5 className="mb-0" style={{ color: 'black' }}>
+                    <div className="card border-0 profile-section profile-section-card">
+                      <div className="card-header border-bottom">
+                        <h5 className="mb-0 profile-section-header">
                           <FontAwesomeIcon icon={solidIconMap.image} className="me-2" />
                           Profile Picture
                         </h5>
@@ -294,7 +293,7 @@ export default function Profile() {
               </div>
 
               {/* Footer */}
-              <div className="card-footer bg-light border-0">
+              <div className="card-footer border-0 profile-footer">
                 <div className="d-flex justify-content-between align-items-center">
                   <small className="text-muted">
                     Last updated: {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Never'}
@@ -314,6 +313,7 @@ export default function Profile() {
           </div>
         </div>
       </div>
+      <ToastMessage ref={toastAction} />
     </div>
   );
 }

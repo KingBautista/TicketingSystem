@@ -247,7 +247,7 @@ export default function Users() {
         </div>
         <div className="card-header pb-0 pt-0 border-0">
           <div className="row"> 
-                                      <div className="col-md-7 col-12">
+            <div className="col-md-7 col-12">
                <div className="d-flex align-items-center gap-2">
                  <SearchBox ref={searchRef} onClick={handleSearch} />
                  <button className="btn btn-primary h-100 text-nowrap" onClick={toggleFilterModal}>

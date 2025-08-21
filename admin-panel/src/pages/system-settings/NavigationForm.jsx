@@ -74,8 +74,8 @@ export default function NavigationForm() {
   }, [id]);
 
   return (
+    <>
     <div className="card">
-      <ToastMessage ref={toastAction}/>
       <form onSubmit={handleSubmit}>
         <div className="card-header">
           {navigation.id ? 'Edit Navigation' : 'Create New Navigation'}
@@ -183,5 +183,7 @@ export default function NavigationForm() {
         </div>
       </form>
     </div>
+    <ToastMessage ref={toastAction}/>
+    </>
   )
 }

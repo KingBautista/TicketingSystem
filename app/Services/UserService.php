@@ -14,7 +14,7 @@ class UserService extends BaseService
   public function __construct()
   {
       // Pass the UserResource class to the parent constructor
-      parent::__construct(new UserResource(new User), new User());
+      parent::__construct(UserResource::class, new User());
   }
   /**
   * Retrieve all resources with paginate.

@@ -72,8 +72,8 @@ export default function VIPForm() {
   };
 
   return (
+    <>
     <div className="card">
-      <ToastMessage ref={toastAction} />
       <form onSubmit={onSubmit}>
         <div className="card-header">
           <h4>{vip.id ? 'Edit VIP' : 'Enroll New VIP'}</h4>
@@ -212,5 +212,7 @@ export default function VIPForm() {
         </div>
       </form>
     </div>
+    <ToastMessage ref={toastAction} />
+    </>
   );
 } 

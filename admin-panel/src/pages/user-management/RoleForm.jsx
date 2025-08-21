@@ -300,8 +300,8 @@ export default function RoleForm() {
   }, [id]);
 
   return (
+    <>
     <div className="card mb-2">
-      <ToastMessage ref={toastAction}/>
       <form onSubmit={handleSubmit}>
         <div className="card-header d-flex justify-content-between align-items-center">
           <h4>
@@ -379,5 +379,7 @@ export default function RoleForm() {
         </div>
       </form>
     </div>
+    <ToastMessage ref={toastAction}/>
+    </>
   );
 }

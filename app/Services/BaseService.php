@@ -13,7 +13,7 @@ class BaseService
   protected $model;
 
   // Constructor accepts the Resource class dynamically
-  public function __construct(JsonResource $resource, Model $model)
+  public function __construct($resource, Model $model)
   {
     $this->resource = $resource;
     $this->model = $model;
@@ -41,7 +41,7 @@ class BaseService
   public function store(array $data) 
   {
     $model = $this->model::create($data);
-    return $this->resource::make($model);
+    return new $this->resource($model);
   }
 
   // Get Details for editing the specified resource.
@@ -58,7 +58,7 @@ class BaseService
   {
     $model = $this->findModelById($id);
     $model->update($data);
-    return $this->resource::make($model);
+    return new $this->resource($model);
   }
 
   // Remove the specified resource from storage.
@@ -73,7 +73,7 @@ class BaseService
   {
     $model = $this->model::withTrashed()->findOrFail($id);
     $model->restore();
-    return $this->resource::make($model);
+    return new $this->resource($model);
   }
 
   // Permanently delete a soft-deleted from storage.

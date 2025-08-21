@@ -435,7 +435,8 @@ export default function SalesReports() {
         </>
       )}
 
-      <ToastMessage ref={toastAction} />
+    </>
+    <ToastMessage ref={toastAction} />
     </>
   );
 } 

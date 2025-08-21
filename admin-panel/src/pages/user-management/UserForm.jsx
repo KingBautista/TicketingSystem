@@ -5,7 +5,7 @@ import ToastMessage from "../../components/ToastMessage";
 import Field from "../../components/Field";
 import DOMPurify from 'dompurify';
 import PasswordGenerator from "../../components/PasswordGenerator";
-import TreeDropdown from "../../components/TreeDropdown"; 
+ 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { solidIconMap } from '../../utils/solidIcons';
 
@@ -61,13 +61,26 @@ export default function UserForm() {
   // Handle form submission
   const onSubmit = (ev) => {
     ev.preventDefault();
+    
+    // Validate required fields
+    if (!user.user_role_id) {
+      toastAction.current.showToast('Please select a role', 'warning');
+      return;
+    }
+
     setIsLoading(true);
 
-    user.user_status = isActive;
+    // Prepare the data for submission
+    const submitData = {
+      ...user,
+      user_status: isActive,
+      first_name: user.user_details?.first_name || '',
+      last_name: user.user_details?.last_name || '',
+    };
 
     const request = user.id
-      ? axiosClient.put(`/user-management/users/${user.id}`, user)
-      : axiosClient.post('/user-management/users', user);
+      ? axiosClient.put(`/user-management/users/${user.id}`, submitData)
+      : axiosClient.post('/user-management/users', submitData);
 
     request
       .then(() => {
@@ -83,8 +96,8 @@ export default function UserForm() {
   };
 
   return (
+    <>
     <div className="card">
-      <ToastMessage ref={toastAction} />
       <form onSubmit={onSubmit}>
         <div className="card-header">
           <h4>
@@ -132,8 +145,14 @@ export default function UserForm() {
               <input
                 className="form-control"
                 type="text"
-                value={user.first_name}
-                onChange={ev => setUser({ ...user, first_name: DOMPurify.sanitize(ev.target.value) })}
+                value={user.user_details?.first_name || ''}
+                onChange={ev => setUser({ 
+                  ...user, 
+                  user_details: {
+                    ...user.user_details,
+                    first_name: DOMPurify.sanitize(ev.target.value)
+                  }
+                })}
               />
             }
             labelClass="col-sm-12 col-md-3"
@@ -146,8 +165,14 @@ export default function UserForm() {
               <input
                 className="form-control"
                 type="text"
-                value={user.last_name}
-                onChange={ev => setUser({ ...user, last_name: DOMPurify.sanitize(ev.target.value) })}
+                value={user.user_details?.last_name || ''}
+                onChange={ev => setUser({ 
+                  ...user, 
+                  user_details: {
+                    ...user.user_details,
+                    last_name: DOMPurify.sanitize(ev.target.value)
+                  }
+                })}
               />
             }
             labelClass="col-sm-12 col-md-3"
@@ -161,17 +186,24 @@ export default function UserForm() {
             labelClass="col-sm-12 col-md-3"
             inputClass="col-sm-12 col-md-9"
           />
-          {/* Tags Field */}
+          {/* Role Field */}
           <Field
             label="Role"
             required={true}
             inputComponent={
-              <TreeDropdown
-                options={roles}
-                values={user?.user_details?.user_role || ''}
-                onChange={selectedRoles => setUser({ ...user, user_role: DOMPurify.sanitize(JSON.stringify(selectedRoles)) })}
-                placeholder="Select Role"
-              />
+              <select
+                className="form-select"
+                value={user?.user_role_id || ''}
+                onChange={ev => setUser({ ...user, user_role_id: ev.target.value })}
+                required
+              >
+                <option value="">Select Role</option>
+                {roles.map(role => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
             }
             labelClass="col-sm-12 col-md-3"
             inputClass="col-sm-12 col-md-9"
@@ -204,5 +236,7 @@ export default function UserForm() {
         </div>
       </form>
     </div>
+    <ToastMessage ref={toastAction} />
+    </>
   );
 }

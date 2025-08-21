@@ -40,12 +40,8 @@ class UserController extends BaseController
         'user_pass' => $password,
         'user_status' => 1,
         'user_activation_key' => $activation_key,
+        'user_role_id' => $data['user_role_id'],
       ];
-
-      // Handle user_role_id if provided
-      if (isset($data['user_role']['id'])) {
-        $userData['user_role_id'] = $data['user_role']['id'];
-      }
 
       $meta_details = [];
       if(isset($request->first_name))
@@ -75,12 +71,8 @@ class UserController extends BaseController
         'user_login' => $request->user_login,
         'user_email' => $request->user_email,
         'user_status' => $request->user_status,
+        'user_role_id' => $request->user_role_id,
       ];
-
-      // Handle user_role_id if provided
-      if (isset($data['user_role']['id'])) {
-        $upData['user_role_id'] = $data['user_role']['id'];
-      }
 
       if (isset($data['user_pass'])) {
         $salt = $user->user_salt;
@@ -94,11 +86,11 @@ class UserController extends BaseController
       if(isset($request->last_name))
         $meta_details['last_name'] = $request->last_name;
 
-      $user = $this->service->updateWithMeta($upData, $meta_details, $user);
+      $userResource = $this->service->updateWithMeta($upData, $meta_details, $user);
 
       $this->logUpdate("Updated user: {$user->user_login} ({$user->user_email})", $oldData, $user->toArray());
 
-      return response($user, 201);
+      return response($userResource, 201);
     } catch (\Exception $e) {
       return $this->messageService->responseError();
     }
@@ -181,13 +173,13 @@ class UserController extends BaseController
       if(isset($request->attachment_file))
         $meta_details['attachment_file'] = $request->attachment_file;
 
-      $user = $this->service->updateWithMeta($upData, $meta_details, $user);
+      $userResource = $this->service->updateWithMeta($upData, $meta_details, $user);
 
       $this->logUpdate("Updated own profile: {$user->user_login} ({$user->user_email})", $oldData, $user);
 
       return response([
         'message' => 'Profile has been updated successfully.',
-        'user' => $user
+        'user' => $userResource
       ], 200);
     } catch (\Exception $e) {
       return $this->messageService->responseError();

@@ -63,8 +63,8 @@ export default function DiscountForm() {
   };
 
   return (
+    <>
     <div className="card">
-      <ToastMessage ref={toastAction} />
       <form onSubmit={onSubmit}>
         <div className="card-header">
           <h4>
@@ -149,5 +149,7 @@ export default function DiscountForm() {
         </div>
       </form>
     </div>
+    <ToastMessage ref={toastAction} />
+    </>
   );
 } 

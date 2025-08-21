@@ -24,10 +24,7 @@ class StoreUserRequest extends FormRequest
 		return [
 			"user_login" => "required|string|unique:users,user_login",
 			"user_email" => "required|email|unique:users,user_email",
-			'user_role' => [
-				'required'
-			],
-			'user_role.id' => [
+			'user_role_id' => [
 				'required',
 				'integer',
 				'exists:roles,id',
@@ -64,10 +61,9 @@ class StoreUserRequest extends FormRequest
 			"user_pass.string" => "Password must be a valid text.",
 			"user_pass.min" => "Password must be at least 8 characters long.",
 			"user_pass.regex" => "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
-			"user_role.required" => "User role is required.",
-			"user_role.id.required" => "Please select a valid role.",
-			"user_role.id.integer" => "Role ID must be a valid number.",
-			"user_role.id.exists" => "The selected role does not exist.",
+			"user_role_id.required" => "User role is required.",
+			"user_role_id.integer" => "Role ID must be a valid number.",
+			"user_role_id.exists" => "The selected role does not exist.",
 		];
 	}
 
@@ -76,13 +72,6 @@ class StoreUserRequest extends FormRequest
 	 */
 	protected function prepareForValidation()
 	{
-		if (is_string($this->user_role)) {
-			$decoded = json_decode($this->user_role, true);
-			if (json_last_error() === JSON_ERROR_NONE) {
-				$this->merge([
-					'user_role' => $decoded
-				]);
-			}
-		}
+		// No longer needed since we're using user_role_id directly
 	}
 }
