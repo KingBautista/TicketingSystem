@@ -32,7 +32,7 @@ class SalesReportService extends BaseService
         if (request('search')) {
             $search = request('search');
             $query->where(function($q) use ($search) {
-                $q->where('cashier_transactions.transaction_id', 'like', "%{$search}%")
+                $q->where('cashier_transactions.id', 'like', "%{$search}%")
                   ->orWhere('users.user_login', 'like', "%{$search}%")
                   ->orWhere('rates.name', 'like', "%{$search}%")
                   ->orWhere('promoters.name', 'like', "%{$search}%");
@@ -42,7 +42,7 @@ class SalesReportService extends BaseService
         if (request('order')) {
             $query->orderBy(request('order'), request('sort'));
         } else {
-            $query->orderBy('cashier_transactions.created_at', 'desc');
+            $query->orderBy('cashier_transactions.id', 'desc');
         }
         
         return SalesReportResource::collection(

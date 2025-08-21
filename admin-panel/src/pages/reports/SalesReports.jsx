@@ -184,7 +184,7 @@ export default function SalesReports() {
     <>
       <div className="card mb-0">
         <div className="card-header d-flex justify-content-between align-items-center border-0 py-2">
-          <h5 className="mb-0">Sales Reports</h5>
+          <h5 className="mb-2 mt-2">Sales Reports</h5>
             <div className="d-flex gap-1">
              <button className="btn btn-primary btn-sm" onClick={toggleFilterModal}>
                <img src="/assets/new-icons/icons-bold/fi-br-filter.svg" alt="Filter" className="me-1" style={{ width: '14px', height: '14px', filter: 'brightness(0) invert(1)' }} />
@@ -206,12 +206,7 @@ export default function SalesReports() {
         </div>
         
         <div className="card-body pb-0 pt-1">
-          <DataTable 
-            options={options} 
-            params={params} 
-            ref={tableRef}
-            access={access}
-          />
+          <DataTable options={options} params={params} ref={tableRef} access={access} />
         </div>
       </div>
 
@@ -219,33 +214,23 @@ export default function SalesReports() {
       {showFilterModal && (
         <>
           <div className="modal-backdrop fade show" onClick={toggleFilterModal}></div>
-          <div 
-            className={`modal fade show ${showFilterModal ? 'd-block' : ''}`} 
-            style={{ zIndex: 1050 }}
-            onClick={toggleFilterModal}
-          >
-                         <div 
-               className="modal-dialog modal-dialog-centered" 
-               style={{ maxWidth: '350px', margin: '0 0 0 auto' }}
-               onClick={(e) => e.stopPropagation()}
-             >
+          <div className={`modal fade show ${showFilterModal ? 'd-block' : ''}`} style={{ zIndex: 1050 }} onClick={toggleFilterModal}>
+            <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '350px', margin: '0 0 0 auto' }} onClick={(e) => e.stopPropagation()}>
               <div className="modal-content h-100" style={{ height: '100vh', borderRadius: '0', border: 'none' }}>
-                                 <div className="modal-header border-0" style={{ backgroundColor: '#047857', color: 'white' }}>
-                   <h5 className="modal-title">Filters</h5>
-                   <button type="button" className="btn-close btn-close-white" onClick={toggleFilterModal}></button>
-                 </div>
-                                   <div className="modal-body p-4">
+                <div className="modal-header border-0" style={{ backgroundColor: '#047857', color: 'white' }}>
+                  <h5 className="modal-title" style={{ color: 'white' }}>Filters</h5>
+                  <button type="button" className="btn-close btn-close-white" onClick={toggleFilterModal}></button>
+                </div>
+                  <div className="modal-body p-4">
                     <p className="text-muted mb-4">Refine results using the filters below.</p>
-                    
-                                         {/* Date Range Filter */}
+                    {/* Date Range Filter */}
                      <div className="mb-4">
                        <div 
                          className="d-flex justify-content-between align-items-center cursor-pointer" 
                          onClick={() => toggleSection('dateRange')}
-                         style={{ cursor: 'pointer' }}
-                       >
+                         style={{ cursor: 'pointer' }}>
                          <h6 className="fw-bold text-primary mb-0">Date Range</h6>
-                                                   <span className="text-muted">
+                          <span className="text-muted">
                             <img 
                               src={collapsedSections.dateRange ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
                               alt="Toggle" 
@@ -278,16 +263,14 @@ export default function SalesReports() {
                          </div>
                        )}
                      </div>
-                    
-                                        {/* Cashier Filter */}
+                    {/* Cashier Filter */}
                     <div className="mb-4">
                       <div 
                         className="d-flex justify-content-between align-items-center cursor-pointer" 
                         onClick={() => toggleSection('cashier')}
-                        style={{ cursor: 'pointer' }}
-                      >
+                        style={{ cursor: 'pointer' }}>
                         <h6 className="fw-bold text-primary mb-0">Cashier</h6>
-                                                 <span className="text-muted">
+                          <span className="text-muted">
                            <img 
                              src={collapsedSections.cashier ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
                              alt="Toggle" 
@@ -318,16 +301,14 @@ export default function SalesReports() {
                         </div>
                       )}
                     </div>
-
-                                       {/* Promoter Filter */}
+                    {/* Promoter Filter */}
                     <div className="mb-4">
                       <div 
                         className="d-flex justify-content-between align-items-center cursor-pointer" 
                         onClick={() => toggleSection('promoter')}
-                        style={{ cursor: 'pointer' }}
-                      >
+                        style={{ cursor: 'pointer' }}>
                         <h6 className="fw-bold text-primary mb-0">Promoter</h6>
-                                                 <span className="text-muted">
+                          <span className="text-muted">
                            <img 
                              src={collapsedSections.promoter ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
                              alt="Toggle" 
@@ -358,16 +339,14 @@ export default function SalesReports() {
                         </div>
                       )}
                     </div>
-
-                                       {/* Rate Filter */}
+                    {/* Rate Filter */}
                     <div className="mb-4">
                       <div 
                         className="d-flex justify-content-between align-items-center cursor-pointer" 
                         onClick={() => toggleSection('rate')}
-                        style={{ cursor: 'pointer' }}
-                      >
+                        style={{ cursor: 'pointer' }}>
                         <h6 className="fw-bold text-primary mb-0">Rate</h6>
-                                                 <span className="text-muted">
+                          <span className="text-muted">
                            <img 
                              src={collapsedSections.rate ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
                              alt="Toggle" 
@@ -398,16 +377,14 @@ export default function SalesReports() {
                         </div>
                       )}
                     </div>
-
-                                                                               {/* Search Filter */}
+                    {/* Search Filter */}
                      <div className="mb-4">
                        <div 
                          className="d-flex justify-content-between align-items-center cursor-pointer" 
                          onClick={() => toggleSection('search')}
-                         style={{ cursor: 'pointer' }}
-                       >
+                         style={{ cursor: 'pointer' }}>
                          <h6 className="fw-bold text-primary mb-0">Search</h6>
-                                                   <span className="text-muted">
+                          <span className="text-muted">
                             <img 
                               src={collapsedSections.search ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
                               alt="Toggle" 

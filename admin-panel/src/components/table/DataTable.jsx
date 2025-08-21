@@ -43,6 +43,7 @@ const DataTable = forwardRef((props, ref) => {
   const [filters, setFilters] = useState({});
   const [modalDescription, setModalDescription] = useState("");
   const [perPage, setPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const theadRef = useRef();
   const tbodyRef = useRef();
@@ -130,18 +131,20 @@ const DataTable = forwardRef((props, ref) => {
   const handleResponse = (toastType) => (response) => {
     toastMessage.current.showToast(response.data.message, toastType);
     setNextPage(null);
+    setCurrentPage(1);
     getDataSource();
   };
 
   // Enhanced data fetching with filters
   const getDataSource = () => {
     setIsLoading(true);
-    let dataSource = nextPage || props.options.dataSource;
+    let dataSource = props.options.dataSource;
     const params = {
       ...props.params,
       ...sortParams,
       ...filters,
-      per_page: perPage
+      per_page: perPage,
+      page: currentPage
     };
 
     axiosClient.get(dataSource, { params })
@@ -170,10 +173,11 @@ const DataTable = forwardRef((props, ref) => {
   useEffect(() => {
     setColumnSize(Object.keys(tHeader).length);
     getDataSource();
-  }, [props.params, props.options.dataSource, sortParams, nextPage, filters, perPage]);
+  }, [props.params, props.options.dataSource, sortParams, currentPage, filters, perPage]);
 
   useEffect(() => {
     setNextPage(null);
+    setCurrentPage(1);
   }, [props.params, filters]);
 
   useImperativeHandle(ref, () => ({
@@ -182,6 +186,7 @@ const DataTable = forwardRef((props, ref) => {
     },
     clearPage() {
       setNextPage(null);
+      setCurrentPage(1);
     },
     reload() {
       setDataRows([]);
@@ -244,13 +249,14 @@ const DataTable = forwardRef((props, ref) => {
     });
 
     // Check if we have pagination data
-    if (!isLoading && metaData?.total > 0) {
+    const total = typeof metaData?.total === 'string' ? parseInt(metaData.total) : metaData?.total;
+    if (!isLoading && total > 0) {
       return <Pagination 
         metas={metaData} 
-        onClick={setNextPage} 
+        onClick={(page) => setCurrentPage(page)} 
         onPerPageChange={(newPerPage) => {
           setPerPage(newPerPage);
-          setNextPage(null); // Reset to first page when changing per_page
+          setCurrentPage(1); // Reset to first page when changing per_page
         }}
       />;
     }

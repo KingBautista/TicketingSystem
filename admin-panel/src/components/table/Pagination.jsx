@@ -1,12 +1,23 @@
-import React, { forwardRef, useState } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import { decode } from 'html-entities';
 import { Link } from "react-router-dom";
 
 const Pagination = forwardRef(({ metas, onClick, onPerPageChange, className = '' }, ref) => {
-  const { total: totalRows, per_page: perPage, current_page: currentPage, last_page: lastPage } = metas;
+  // Handle both old and new metadata structures
+  const totalRows = typeof metas.total === 'string' ? parseInt(metas.total) : metas.total;
+  const perPage = metas.per_page || 10;
+  const currentPage = metas.current_page || 1;
+  const lastPage = metas.last_page || 1;
   
   // State for rows per page selector
-  const [selectedPerPage, setSelectedPerPage] = useState(perPage || 10);
+  const [selectedPerPage, setSelectedPerPage] = useState(perPage);
+  
+  // Update selectedPerPage when perPage prop changes
+  useEffect(() => {
+    setSelectedPerPage(perPage);
+  }, [perPage]);
+  
+
   
   // Available rows per page options
   const perPageOptions = [10, 25, 50, 100];
@@ -14,10 +25,8 @@ const Pagination = forwardRef(({ metas, onClick, onPerPageChange, className = ''
   const goToPage = (event, page) => {
     event.preventDefault();
     if (page && page !== currentPage) {
-      // Create URL with updated page parameter
-      const url = new URL(window.location);
-      url.searchParams.set('page', page);
-      onClick(url.toString());
+      // Pass the page number directly instead of a URL
+      onClick(page);
     }
   };
 

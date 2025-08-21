@@ -1,27 +1,81 @@
-import { useState, useRef, useEffect } from "react";
-import ToastMessage from "../../components/ToastMessage";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { solidIconMap } from '../../utils/solidIcons';
 import axiosClient from '../../axios-client';
-import { format } from 'date-fns';
+import DataTable from '../../components/table/DataTable';
+import ToastMessage from '../../components/ToastMessage';
+import { useAccess } from '../../hooks/useAccess';
 
 export default function AuditTrail() {
-  const [filters, setFilters] = useState({ 
+  const accessHelper = useAccess();
+  const access = accessHelper.hasAccess();
+
+  const [options, setOptions] = useState({
+    dataSource: '/system-settings/audit-trail',
+    dataFields: {
+      created_at: { name: "Date/Time", withSort: true },
+      user: { 
+        name: "User", 
+        withSort: true,
+        render: (value) => value?.name || value?.user_login || 'Unknown'
+      },
+      module: { name: "Module", withSort: true },
+      action: { 
+        name: "Action", 
+        withSort: true,
+        badge: {
+          'CREATE': 'bg-success',
+          'UPDATE': 'bg-warning text-dark',
+          'DELETE': 'bg-danger',
+          'RESTORE': 'bg-info',
+          'LOGIN': 'bg-success',
+          'LOGOUT': 'bg-secondary'
+        },
+        badgeLabels: {
+          'CREATE': 'CREATE',
+          'UPDATE': 'UPDATE',
+          'DELETE': 'DELETE',
+          'RESTORE': 'RESTORE',
+          'LOGIN': 'LOGIN',
+          'LOGOUT': 'LOGOUT'
+        }
+      },
+      description: { name: "Description", withSort: false },
+      ip_address: { name: "IP Address", withSort: false },
+      user_agent: { name: "User Agent", withSort: false }
+    },
+    primaryKey: "id",
+    redirectUrl: '',
+    softDelete: false,
+    edit_link: false,
+    bulk_action: false,
+    hide_actions: true,
+  });
+
+  const [params, setParams] = useState({ 
+    search: '',
     module: '', 
     action: '', 
     user_id: '', 
     start_date: '', 
-    end_date: '', 
-    search: ''
+    end_date: ''
   });
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState(null);
 
+  const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [modules, setModules] = useState([]);
   const [actions, setActions] = useState([]);
   const [stats, setStats] = useState(null);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState({
+    dateRange: false,
+    module: false,
+    action: false,
+    user: false,
+    search: false
+  });
   const toastAction = useRef();
+  const tableRef = useRef();
 
   // Fetch audit trail data
   const fetchData = async () => {
@@ -132,7 +186,7 @@ export default function AuditTrail() {
     try {
       const response = await axiosClient.post('/system-settings/audit-trail/export', {
         format,
-        filters: filters
+        filters: params
       }, {
         responseType: 'blob'
       });
@@ -164,171 +218,299 @@ export default function AuditTrail() {
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setParams(prev => ({ ...prev, [key]: value }));
+    // Auto-trigger search for non-search fields
+    if (key !== 'search') {
+      setTimeout(() => handleSearch(), 100);
+    }
   };
 
   const clearFilters = () => {
-    setFilters({
+    setParams({
+      search: '',
       module: '', 
       action: '', 
       user_id: '', 
       start_date: '', 
-      end_date: '', 
-      search: ''
+      end_date: ''
     });
-    setData(null);
+    // Close modal after clearing
+    setShowFilterModal(false);
   };
 
-  const handleSearch = async () => {
-    try {
-      setLoading(true);
-      await fetchData(1);
-    } catch (error) {
-      toastAction.current.showToast('Failed to fetch audit trail data', 'error');
-    } finally {
-      setLoading(false);
-    }
+  const toggleFilterModal = () => {
+    setShowFilterModal(!showFilterModal);
+  };
+
+  const toggleSection = (section) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const handleSearch = () => {
+    // The DataTable will automatically reload when params change
   };
 
   return (
-    <div className="card">
-      <ToastMessage ref={toastAction} />
-      <div className="card-header d-flex justify-content-between align-items-center">
-        <h4>Audit Trail</h4>
-        <div>
-          <button className="btn btn-outline-primary me-2" onClick={() => exportData('pdf')}>
-            <FontAwesomeIcon icon={solidIconMap.filePdf} className="me-1" /> Export PDF
-          </button>
-          <button className="btn btn-outline-primary me-2" onClick={() => exportData('csv')}>
-            <FontAwesomeIcon icon={solidIconMap.fileCsv} className="me-1" /> Export CSV
-          </button>
-        </div>
-      </div>
-
-      <div className="card-header">
-        <div className="row g-2 align-items-end">
-          <div className="col-md-2">
-            <label className="form-label">Module</label>
-            <select className="form-select" value={filters.module} onChange={e => handleFilterChange('module', e.target.value)}>
-              {modules.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-            </select>
-          </div>
-          <div className="col-md-2">
-            <label className="form-label">Action</label>
-            <select className="form-select" value={filters.action} onChange={e => handleFilterChange('action', e.target.value)}>
-              {actions.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-            </select>
-          </div>
-          <div className="col-md-2">
-            <label className="form-label">User</label>
-            <select className="form-select" value={filters.user_id} onChange={e => handleFilterChange('user_id', e.target.value)}>
-              {users.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
-            </select>
-          </div>
-          <div className="col-md-2">
-            <label className="form-label">Start Date</label>
-            <input type="date" className="form-control" value={filters.start_date} onChange={e => handleFilterChange('start_date', e.target.value)} />
-          </div>
-          <div className="col-md-2">
-            <label className="form-label">End Date</label>
-            <input type="date" className="form-control" value={filters.end_date} onChange={e => handleFilterChange('end_date', e.target.value)} />
-          </div>
-          <div className="col-md-2">
-            <label className="form-label">Search</label>
-            <input type="text" className="form-control" placeholder="Search..." value={filters.search} onChange={e => handleFilterChange('search', e.target.value)} />
-          </div>
-        </div>
-        <div className="row mt-2">
-          <div className="col-12">
-            <button className="btn btn-primary me-2" onClick={handleSearch}>
-              <FontAwesomeIcon icon={solidIconMap.search} className="me-1" /> Search/Filter
+    <>
+      <div className="card mb-0">
+        <div className="card-header d-flex justify-content-between align-items-center border-0 py-2">
+          <h5 className="mb-2 mt-2">Audit Trail</h5>
+          <div className="d-flex gap-1">
+            <button className="btn btn-primary btn-sm" onClick={toggleFilterModal}>
+              <img src="/assets/new-icons/icons-bold/fi-br-filter.svg" alt="Filter" className="me-1" style={{ width: '14px', height: '14px', filter: 'brightness(0) invert(1)' }} />
+              Filters
             </button>
-            <button className="btn btn-outline-secondary" onClick={clearFilters}>
-              <FontAwesomeIcon icon={solidIconMap.times} className="me-1" /> Clear Filters
+            <button className="btn btn-secondary btn-sm" onClick={clearFilters}>
+              <img src="/assets/new-icons/icons-bold/fi-br-cross.svg" alt="Clear" className="me-1" style={{ width: '14px', height: '14px', filter: 'brightness(0) invert(1)' }} />
+              Clear
+            </button>
+            <button className="btn btn-primary btn-sm me-1" onClick={() => exportData('pdf')}>
+              <img src="/assets/new-icons/icons-bold/fi-br-file.svg" alt="Export PDF" className="me-1" style={{ width: '14px', height: '14px', filter: 'brightness(0) invert(1)' }} />
+              Export PDF
+            </button>
+            <button className="btn btn-primary btn-sm me-1" onClick={() => exportData('csv')}>
+              <img src="/assets/new-icons/icons-bold/fi-br-file.svg" alt="Export CSV" className="me-1" style={{ width: '14px', height: '14px', filter: 'brightness(0) invert(1)' }} />
+              Export CSV
             </button>
           </div>
         </div>
+        
+        <div className="card-body pb-0 pt-1">
+          <DataTable options={options} params={params} ref={tableRef} access={access} />
+        </div>
       </div>
 
-      <div className="card-body">
-        {(!data || data.length === 0) && !loading ? (
-          <div className="text-center py-4">
-            <FontAwesomeIcon icon={solidIconMap.search} className="me-2 text-muted" />
-            <p className="text-muted">Please use the filters above and click "Search/Filter" to display audit trail data.</p>
-          </div>
-        ) : loading ? (
-          <div className="text-center py-4">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="table-responsive">
-              <table className="table table-bordered table-hover">
-                <thead>
-                  <tr>
-                    <th>Date/Time</th>
-                    <th>User</th>
-                    <th>Module</th>
-                    <th>Action</th>
-                    <th>Description</th>
-                    <th>IP Address</th>
-                    <th>User Agent</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data && data.map(row => (
-                    <tr key={row.id}>
-                      <td>{format(new Date(row.created_at), 'yyyy-MM-dd HH:mm:ss')}</td>
-                      <td>{row.user?.name || row.user?.user_login || 'Unknown'}</td>
-                      <td>
-                        <span className="badge bg-primary">{row.module}</span>
-                      </td>
-                      <td>
-                        <span className={`badge ${
-                          row.action === 'CREATE' ? 'bg-success' :
-                          row.action === 'UPDATE' ? 'bg-warning' :
-                          row.action === 'DELETE' ? 'bg-danger' :
-                          row.action === 'RESTORE' ? 'bg-info' :
-                          row.action === 'LOGIN' ? 'bg-success' :
-                          row.action === 'LOGOUT' ? 'bg-secondary' :
-                          'bg-secondary'
-                        }`}>
-                          {row.action}
-                        </span>
-                      </td>
-                      <td style={{ maxWidth: '300px', wordWrap: 'break-word' }}>
-                        {row.description}
-                      </td>
-                      <td>
-                        <small className="text-muted">{row.ip_address}</small>
-                      </td>
-                      <td style={{ maxWidth: '200px', wordWrap: 'break-word' }}>
-                        <small className="text-muted">{row.user_agent}</small>
-                      </td>
-                    </tr>
-                  ))}
-                  {(!data || data.length === 0) && (
-                    <tr>
-                      <td colSpan={7} className="text-center py-4">
-                        <FontAwesomeIcon icon={solidIconMap.search} className="me-2 text-muted" />
-                        No audit trail data found for the specified filters.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <>
+          <div className="modal-backdrop fade show" onClick={toggleFilterModal}></div>
+          <div className={`modal fade show ${showFilterModal ? 'd-block' : ''}`} style={{ zIndex: 1050 }} onClick={toggleFilterModal}>
+            <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '350px', margin: '0 0 0 auto' }} onClick={(e) => e.stopPropagation()}>
+              <div className="modal-content h-100" style={{ height: '100vh', borderRadius: '0', border: 'none' }}>
+                <div className="modal-header border-0" style={{ backgroundColor: '#047857', color: 'white' }}>
+                  <h5 className="modal-title" style={{ color: 'white' }}>Filters</h5>
+                  <button type="button" className="btn-close btn-close-white" onClick={toggleFilterModal}></button>
+                </div>
+                <div className="modal-body p-4">
+                  <p className="text-muted mb-4">Refine results using the filters below.</p>
+                  
+                  {/* Date Range Filter */}
+                  <div className="mb-4">
+                    <div 
+                      className="d-flex justify-content-between align-items-center cursor-pointer" 
+                      onClick={() => toggleSection('dateRange')}
+                      style={{ cursor: 'pointer' }}>
+                      <h6 className="fw-bold text-primary mb-0">Date Range</h6>
+                      <span className="text-muted">
+                        <img 
+                          src={collapsedSections.dateRange ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
+                          alt="Toggle" 
+                          style={{ width: '12px', height: '12px' }} 
+                        />
+                      </span>
+                    </div>
+                    {!collapsedSections.dateRange && (
+                      <div className="mt-3">
+                        <div className="row g-2">
+                          <div className="col-6">
+                            <label className="form-label small">Start Date</label>
+                            <input 
+                              type="date" 
+                              className="form-control form-control-sm" 
+                                                             value={params.start_date} 
+                              onChange={e => handleFilterChange('start_date', e.target.value)} 
+                            />
+                          </div>
+                          <div className="col-6">
+                            <label className="form-label small">End Date</label>
+                            <input 
+                              type="date" 
+                              className="form-control form-control-sm" 
+                                                             value={params.end_date} 
+                              onChange={e => handleFilterChange('end_date', e.target.value)} 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-            <div className="d-flex justify-content-end align-items-center mt-3">
-              <div>
-                Total Entries: {data ? data.length : 0}
+                  {/* Module Filter */}
+                  <div className="mb-4">
+                    <div 
+                      className="d-flex justify-content-between align-items-center cursor-pointer" 
+                      onClick={() => toggleSection('module')}
+                      style={{ cursor: 'pointer' }}>
+                      <h6 className="fw-bold text-primary mb-0">Module</h6>
+                      <span className="text-muted">
+                        <img 
+                          src={collapsedSections.module ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
+                          alt="Toggle" 
+                          style={{ width: '12px', height: '12px' }} 
+                        />
+                      </span>
+                    </div>
+                    {!collapsedSections.module && (
+                      <div className="mt-3">
+                        <div className="border rounded p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                          {modules.map(m => (
+                            <div key={m.value} className="form-check">
+                              <input 
+                                className="form-check-input" 
+                                type="radio" 
+                                name="module" 
+                                id={`module-${m.value}`}
+                                value={m.value}
+                                                                 checked={params.module === m.value}
+                                onChange={e => handleFilterChange('module', e.target.value)}
+                              />
+                              <label className="form-check-label" htmlFor={`module-${m.value}`}>
+                                {m.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Filter */}
+                  <div className="mb-4">
+                    <div 
+                      className="d-flex justify-content-between align-items-center cursor-pointer" 
+                      onClick={() => toggleSection('action')}
+                      style={{ cursor: 'pointer' }}>
+                      <h6 className="fw-bold text-primary mb-0">Action</h6>
+                      <span className="text-muted">
+                        <img 
+                          src={collapsedSections.action ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
+                          alt="Toggle" 
+                          style={{ width: '12px', height: '12px' }} 
+                        />
+                      </span>
+                    </div>
+                    {!collapsedSections.action && (
+                      <div className="mt-3">
+                        <div className="border rounded p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                          {actions.map(a => (
+                            <div key={a.value} className="form-check">
+                              <input 
+                                className="form-check-input" 
+                                type="radio" 
+                                name="action" 
+                                id={`action-${a.value}`}
+                                value={a.value}
+                                                                 checked={params.action === a.value}
+                                onChange={e => handleFilterChange('action', e.target.value)}
+                              />
+                              <label className="form-check-label" htmlFor={`action-${a.value}`}>
+                                {a.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* User Filter */}
+                  <div className="mb-4">
+                    <div 
+                      className="d-flex justify-content-between align-items-center cursor-pointer" 
+                      onClick={() => toggleSection('user')}
+                      style={{ cursor: 'pointer' }}>
+                      <h6 className="fw-bold text-primary mb-0">User</h6>
+                      <span className="text-muted">
+                        <img 
+                          src={collapsedSections.user ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
+                          alt="Toggle" 
+                          style={{ width: '12px', height: '12px' }} 
+                        />
+                      </span>
+                    </div>
+                    {!collapsedSections.user && (
+                      <div className="mt-3">
+                        <div className="border rounded p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                          {users.map(u => (
+                            <div key={u.value} className="form-check">
+                              <input 
+                                className="form-check-input" 
+                                type="radio" 
+                                name="user" 
+                                id={`user-${u.value}`}
+                                value={u.value}
+                                                                 checked={params.user_id === u.value}
+                                onChange={e => handleFilterChange('user_id', e.target.value)}
+                              />
+                              <label className="form-check-label" htmlFor={`user-${u.value}`}>
+                                {u.label}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Search Filter */}
+                  <div className="mb-4">
+                    <div 
+                      className="d-flex justify-content-between align-items-center cursor-pointer" 
+                      onClick={() => toggleSection('search')}
+                      style={{ cursor: 'pointer' }}>
+                      <h6 className="fw-bold text-primary mb-0">Search</h6>
+                      <span className="text-muted">
+                        <img 
+                          src={collapsedSections.search ? "/assets/new-icons/icons-bold/fi-br-angle-small-down.svg" : "/assets/new-icons/icons-bold/fi-br-angle-small-up.svg"} 
+                          alt="Toggle" 
+                          style={{ width: '12px', height: '12px' }} 
+                        />
+                      </span>
+                    </div>
+                    {!collapsedSections.search && (
+                      <div className="mt-3">
+                        <div className="mb-3">
+                          <label className="form-label">Search</label>
+                          <div className="input-group">
+                            <input 
+                              type="text" 
+                              className="form-control" 
+                              placeholder="Search audit trail..."
+                                                             value={params.search}
+                              onChange={e => handleFilterChange('search', e.target.value)}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleSearch();
+                                }
+                              }}
+                            />
+                            <button 
+                              className="btn btn-primary" 
+                              type="button"
+                              onClick={handleSearch}
+                            >
+                              <img 
+                                src="/assets/new-icons/icons-bold/fi-br-search.svg" 
+                                alt="Search" 
+                                style={{ width: '14px', height: '14px', filter: 'brightness(0) invert(1)' }} 
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </>
-        )}
-      </div>
-    </div>
+          </div>
+        </>
+      )}
+
+      <ToastMessage ref={toastAction} />
+    </>
   );
 }

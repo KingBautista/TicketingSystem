@@ -94,19 +94,19 @@ export default function Promoters() {
       <div className="card mb-2">
         <div className="card-header d-flex justify-content-between align-items-center border-0">
           <h4>Promoters Management</h4>
-          {access?.can_create && 
-            <div className="d-flex gap-2">
-              <Link to="/promoter-management/promoters/create" className="btn btn-primary" type="button">
-                <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
-                Add New Promoter
-              </Link>
-            </div>
-          }
         </div>
         <div className="card-header pb-0 pt-0 border-0">
           <div className="row">
             <div className="col-md-5 col-12">
               <SearchBox ref={searchRef} onClick={handleSearch} />
+            </div>
+            <div className="col-md-7 col-12 d-flex justify-content-end align-items-center">
+              {access?.can_create && 
+                <Link to="/promoter-management/promoters/create" className="btn btn-primary" type="button">
+                  <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
+                  Add New Promoter
+                </Link>
+              }
             </div>
           </div>
         </div>

@@ -147,19 +147,19 @@ export default function Roles() {
       <div className="card mb-2">
         <div className="card-header d-flex justify-content-between align-items-center border-0">
           <h4>Roles</h4>
-          {access?.can_create && 
-            <div className="d-flex gap-2">
-              <Link to="/user-management/roles/create" className="btn btn-primary" type="button">
-                <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
-                Create New Role
-              </Link>
-            </div>
-          }
         </div>
         <div className="card-header pb-0 pt-0 border-0">
           <div className="row">
             <div className="col-md-5 col-12">
               <SearchBox ref={searchRef} onClick={handleSearch} />
+            </div>
+            <div className="col-md-7 col-12 d-flex justify-content-end align-items-center">
+              {access?.can_create && 
+                <Link to="/user-management/roles/create" className="btn btn-primary" type="button">
+                  <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
+                  Create New Role
+                </Link>
+              }
             </div>
           </div>
         </div>

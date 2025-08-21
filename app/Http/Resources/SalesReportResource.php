@@ -16,7 +16,7 @@ class SalesReportResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'transaction_id' => $this->id,
+            'transaction_id' => str_pad($this->id, 10, '0', STR_PAD_LEFT),
             'cashier' => $this->cashier_name ?? 'Unknown',
             'promoter' => $this->promoter_name ?? 'N/A',
             'rate' => $this->rate_name ?? 'N/A',
