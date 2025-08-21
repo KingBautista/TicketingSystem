@@ -44,11 +44,8 @@ export default function Sidebar() {
       <div className="nav-group-header">
         <Link to="/dashboard" className={`nav-link ${isPathActive('/dashboard') ? "active" : ""}`}>
           <div className="nav-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="3" y="3" width="7" height="7" rx="1" fill="currentColor"/>
-              <rect x="14" y="3" width="7" height="7" rx="1" fill="currentColor"/>
-              <rect x="3" y="14" width="7" height="7" rx="1" fill="currentColor"/>
-              <rect x="14" y="14" width="7" height="7" rx="1" fill="currentColor"/>
+            <svg className="nav-icon-svg">
+              <use xlinkHref="/assets/new-icons/icons-bold/fi-br-apps.svg" />
             </svg>
           </div>
           <span className="nav-text">Dashboard</span>
@@ -113,7 +110,20 @@ export default function Sidebar() {
         );
       }
       return null;
-    })
+    }),
+    // Add About page at the end
+    <li className="nav-group" key="about">
+      <div className="nav-group-header">
+        <Link to="/information" className={`nav-link ${isPathActive('/information') ? "active" : ""}`}>
+          <div className="nav-icon">
+            <svg className="nav-icon-svg">
+              <use xlinkHref="/assets/new-icons/icons-bold/fi-br-info.svg" />
+            </svg>
+          </div>
+          <span className="nav-text">About</span>
+        </Link>
+      </div>
+    </li>
   ];
 
   return (

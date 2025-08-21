@@ -24,6 +24,7 @@ class ProfileRequest extends FormRequest
 		return [
 			"user_email" => "required|email|unique:users,user_email,".$this->id,
 			"user_pass" => [
+				'nullable',
 				'string',
 				'min:8',              // must be at least 8 characters in length
 				'regex:/[a-z]/',      // must contain at least one lowercase letter
@@ -31,10 +32,12 @@ class ProfileRequest extends FormRequest
 				'regex:/[0-9]/',      // must contain at least one digit
 				'regex:/[@$!%*#?&]/', // must contain a special character
 			],
-			"first_name" => "nullable|regex:/^[a-zA-Z0-9,&-_\s]+$/",
-			"last_name" => "nullable|regex:/^[a-zA-Z0-9,&-_\s]+$/",
-			"nickname" => "nullable|regex:/^[a-zA-Z0-9,&-_\s]+$/",
-			"biography" => "nullable|regex:/^[a-zA-Z0-9,&-_\s]+$/",
+			"first_name" => "nullable|string|max:255",
+			"last_name" => "nullable|string|max:255",
+			"nickname" => "nullable|string|max:255",
+			"biography" => "nullable|string",
+			"theme" => "nullable|string|in:dark,light",
+			"attachment_file" => "nullable|string",
 		];
 	}
 
@@ -46,10 +49,10 @@ class ProfileRequest extends FormRequest
 			'user_email.unique' => 'This email address is already registered.',
 			'user_pass.min' => 'The password must be at least 8 characters.',
 			'user_pass.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
-			'first_name.regex' => 'The first name can only contain letters, numbers, and special characters (, & - _).',
-			'last_name.regex' => 'The last name can only contain letters, numbers, and special characters (, & - _).',
-			'nickname.regex' => 'The nickname can only contain letters, numbers, and special characters (, & - _).',
-			'biography.regex' => 'The biography can only contain letters, numbers, and special characters (, & - _).'
+			'first_name.max' => 'The first name may not be greater than 255 characters.',
+			'last_name.max' => 'The last name may not be greater than 255 characters.',
+			'nickname.max' => 'The nickname may not be greater than 255 characters.',
+			'theme.in' => 'The theme must be either dark or light.'
 		];
 	}
 }

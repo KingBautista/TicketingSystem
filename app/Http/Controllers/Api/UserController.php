@@ -157,7 +157,7 @@ class UserController extends BaseController
         'user_email' => $request->user_email,
       ];
 
-      if (isset($data['user_pass'])) {
+      if (isset($data['user_pass']) && !empty($data['user_pass'])) {
         $salt = $user->user_salt;
         $upData['user_pass'] = PasswordHelper::generatePassword($salt, request('user_pass'));
       }
@@ -168,6 +168,18 @@ class UserController extends BaseController
         
       if(isset($request->last_name))
         $meta_details['last_name'] = $request->last_name;
+
+      if(isset($request->nickname))
+        $meta_details['nickname'] = $request->nickname;
+
+      if(isset($request->biography))
+        $meta_details['biography'] = $request->biography;
+
+      if(isset($request->theme))
+        $meta_details['theme'] = $request->theme;
+
+      if(isset($request->attachment_file))
+        $meta_details['attachment_file'] = $request->attachment_file;
 
       $user = $this->service->updateWithMeta($upData, $meta_details, $user);
 
@@ -193,6 +205,13 @@ class UserController extends BaseController
         'user_status' => $user->user_status,
         'user_role' => $user->userRole,
         'user_details' => $user->user_details,
+        'first_name' => $user->user_details['first_name'] ?? '',
+        'last_name' => $user->user_details['last_name'] ?? '',
+        'nickname' => $user->user_details['nickname'] ?? '',
+        'biography' => $user->user_details['biography'] ?? '',
+        'theme' => $user->user_details['theme'] ?? '',
+        'attachment_file' => $user->user_details['attachment_file'] ?? '',
+        'attachment_metadata' => $user->user_details['attachment_file'] ?? '',
         'created_at' => $user->created_at,
         'updated_at' => $user->updated_at,
       ];

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 // Dynamically import pages
 const Dashboard = lazy(() => import('./Dashboard'));
+const About = lazy(() => import('./About'));
 
 const Users = lazy(() => import('./user-management/Users'));
 const UserForm = lazy(() => import('./user-management/UserForm'));
@@ -43,6 +44,7 @@ const CashierLayout = lazy(() => import('../layout/CashierLayout'));
 // Mapping paths to components
 const routeMap = {
   '/dashboard': Dashboard,
+  '/information': About,
   '/user-management/users': Users,
   '/user-management/users/create': UserForm,
   '/user-management/users/:id': UserForm,

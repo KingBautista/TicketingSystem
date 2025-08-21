@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DOMPurify from 'dompurify';
 
-const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-2', inputClass = 'col-4'}) => {
+const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-3', inputClass = 'col-9'}) => {
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -45,7 +45,7 @@ const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-2', inputCl
 
   return (
     <div className="mb-3 row">
-      <label className={`col-form-label ${labelClass}`}>{label}</label>
+      <label className={`col-form-label ${labelClass}`} style={{ whiteSpace: 'nowrap' }}>{label}</label>
       <div className={`has-validation ${inputClass}`}>
         {!showPassword ? (
           <button className="btn btn-secondary" type="button" onClick={handleShowPassword}>
@@ -65,12 +65,18 @@ const PasswordGenerator = ({ label, setUser, user, labelClass = 'col-2', inputCl
               autoComplete="new-password"
             />
             <button className="btn btn-primary" type="button" onClick={handleRegenPassword}>
-              <svg className="icon">
-                <use xlinkHref="/assets/vendors/@coreui/icons/svg/free.svg#cil-loop-circular"></use>
-              </svg>
+              <img 
+                src="/assets/new-icons/icons-bold/fi-br-arrow-right.svg" 
+                alt="Regenerate" 
+                style={{ width: '14px', height: '14px', filter: 'brightness(0) invert(1)' }} 
+              />
             </button>
             <button className="btn btn-primary" type="button" onClick={handleHidePassword}>
-              Cancel
+              <img 
+                src="/assets/new-icons/icons-bold/fi-br-cross-circle.svg" 
+                alt="Cancel" 
+                style={{ width: '14px', height: '14px', filter: 'brightness(0) invert(1)' }} 
+              />
             </button>
           </div>
         )}

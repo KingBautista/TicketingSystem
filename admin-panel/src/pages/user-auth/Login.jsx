@@ -88,64 +88,177 @@ export default function Login() {
   }, []);
 
 	return (
-		<div className="col-lg-5">
-			<div className="card-group d-block d-md-flex row">
-				<div className="card col-md-7 p-4 mb-0">
-					<div className="card-body">
-						<form onSubmit={onSubmit} className={isValidated}>
-							<h1>Sign In</h1>
-							<p className="text-body-secondary">Sign In to your account</p>
-							{sanitizedMessage && 
-								<div className="alert alert-success" role="alert">
-									<p>{sanitizedMessage}</p>
+		<div className="col-lg-9">
+			<div className="row g-0 rounded-4 overflow-hidden shadow-lg" style={{ backgroundColor: 'white' }}>
+				{/* Login Form - Left Side */}
+				<div className="col-lg-6">
+					<div className="h-100 d-flex flex-column justify-content-center">
+						<div className="p-4">
+							{/* Header Section */}
+							<div className="text-center mb-4">
+								<div className="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle mb-2" style={{ width: '50px', height: '50px' }}>
+									<FontAwesomeIcon icon={solidIconMap.user} className="text-primary fs-5" />
 								</div>
-							}
-							{Object.keys(sanitizedErrors).length > 0 && 
-								<div className="alert alert-danger" role="alert">
-									{Object.keys(sanitizedErrors).map(key => (
-										<div key={key}>{sanitizedErrors[key]}</div>
-									))}
+								<h1 className="fw-bold text-dark mb-1">Welcome Back</h1>
+								<p className="text-muted mb-0">Sign in to continue to your account</p>
+							</div>
+
+							<form onSubmit={onSubmit} className={isValidated}>
+								{/* Success Message */}
+								{sanitizedMessage && 
+									<div className="alert alert-success border-0 shadow-sm" role="alert">
+										<div className="d-flex align-items-center">
+											<FontAwesomeIcon icon={solidIconMap.check} className="text-success me-2" />
+											<p className="mb-0 fw-medium">{sanitizedMessage}</p>
+										</div>
+									</div>
+								}
+								
+								{/* Error Messages */}
+								{Object.keys(sanitizedErrors).length > 0 && 
+									<div className="alert alert-danger border-0 shadow-sm" role="alert">
+										<div className="d-flex align-items-center mb-2">
+											<FontAwesomeIcon icon={solidIconMap.exclamationTriangle} className="text-danger me-2" />
+											<span className="fw-medium">Please fix the following errors:</span>
+										</div>
+										{Object.keys(sanitizedErrors).map(key => (
+											<div key={key} className="ms-4">• {sanitizedErrors[key]}</div>
+										))}
+									</div>
+								}
+								
+								{/* Email Input */}
+								<div className="mb-3">
+									<label htmlFor="email" className="form-label fw-medium text-dark mb-1">Email Address</label>
+									<div className="input-group">
+										<span className="input-group-text bg-light border-end-0 border-2">
+											<FontAwesomeIcon icon={solidIconMap.user} className="text-muted" />
+										</span>
+										<input 
+											id="email"
+											ref={emailRef} 
+											className="form-control border-start-0 border-2" 
+											type="email" 
+											placeholder="Enter your email" 
+											required
+											style={{ fontSize: '1rem' }}
+										/>
+									</div>
 								</div>
-							}
-							<div className="input-group mb-3">
-								<span className="input-group-text">
-									<FontAwesomeIcon icon={solidIconMap.user} />
-								</span>
-								<input ref={emailRef} className="form-control" type="text" placeholder="Email" required/>
-							</div>
-							<div className="input-group mb-3">
-								<span className="input-group-text">
-									<FontAwesomeIcon icon={solidIconMap.lock} />
-								</span>
-								<input
-									ref={passwordRef}
-									className="form-control"
-									type={showPassword ? "text" : "password"}
-									placeholder="Password"
-									required
-								/>
-							</div>
-							<div className="mb-3 d-flex align-items-center" style={{marginTop: '-0.5rem'}}>
-								<input
-									type="checkbox"
-									id="showPassword"
-									checked={showPassword}
-									onChange={() => setShowPassword(!showPassword)}
-									style={{ accentColor: '#321fdb', width: '1.1em', height: '1.1em', verticalAlign: 'middle', marginTop: '-2px' }}
-								/>
-								<label htmlFor="showPassword" className="show-password-label ms-2 mb-0" style={{ fontSize: '0.97em', color: '#4f5d73', cursor: 'pointer', userSelect: 'none', verticalAlign: 'middle' }}>Show Password</label>
-							</div>
-							<div className="row">
-								<div className="col-6">
-									<button className="btn btn-block btn-primary" type="submit">Sign In &nbsp;
-										{isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
+								
+								{/* Password Input */}
+								<div className="mb-3">
+									<label htmlFor="password" className="form-label fw-medium text-dark mb-1">Password</label>
+									<div className="input-group">
+										<span className="input-group-text bg-light border-end-0 border-2">
+											<FontAwesomeIcon icon={solidIconMap.lock} className="text-muted" />
+										</span>
+										<input
+											id="password"
+											ref={passwordRef}
+											className="form-control border-start-0 border-2"
+											type={showPassword ? "text" : "password"}
+											placeholder="Enter your password"
+											required
+											style={{ fontSize: '1rem' }}
+										/>
+									</div>
+								</div>
+								
+								{/* Show Password Toggle */}
+								<div className="mb-3">
+									<div className="form-check">
+										<input
+											type="checkbox"
+											id="showPassword"
+											checked={showPassword}
+											onChange={() => setShowPassword(!showPassword)}
+											className="form-check-input"
+											style={{ 
+												width: '1.2em', 
+												height: '1.2em',
+												accentColor: '#321fdb'
+											}}
+										/>
+										<label htmlFor="showPassword" className="form-check-label text-muted fw-medium">
+											Show password
+										</label>
+									</div>
+								</div>
+								
+								{/* Submit Button */}
+								<div className="mb-3">
+									<button 
+										className="btn btn-primary w-100 fw-semibold" 
+										type="submit"
+										disabled={isLoading}
+										style={{ 
+											padding: '0.6rem 1.2rem',
+											fontSize: '1rem',
+											borderRadius: '0.5rem'
+										}}
+									>
+										{isLoading ? (
+											<>
+												<span className="spinner-border spinner-border-sm me-2" role="status"></span>
+												Signing In...
+											</>
+										) : (
+											<>
+												<FontAwesomeIcon icon={solidIconMap.signIn} className="me-2" />
+												Sign In
+											</>
+										)}
 									</button>
 								</div>
-								<div className="col-6 text-end">
-									<Link to="/forgot-password" className="btn btn-link px-0" type="button">Forgot password?</Link>
-								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+				
+				{/* Logo Section - Right Side */}
+				<div className="col-lg-6 position-relative">
+					<div 
+						className="h-100 d-flex align-items-center justify-content-center"
+						style={{ 
+							background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+							minHeight: '500px'
+						}}
+					>
+						{/* Background Pattern */}
+						<div 
+							className="position-absolute w-100 h-100"
+							style={{
+								backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 0%, transparent 50%)',
+								backgroundSize: '200px 200px'
+							}}
+						></div>
+						
+						{/* Content */}
+						<div className="text-center text-white position-relative">
+							{/* Logo */}
+							<div className="mb-3">
+								<img 
+									src="/assets/img/elid-logo-3.png" 
+									alt="ELID Logo" 
+									className="img-fluid"
+									style={{ 
+										maxWidth: '250px', 
+										height: 'auto',
+										filter: 'brightness(0) invert(1)'
+									}}
+								/>
 							</div>
-						</form>
+							
+							{/* Welcome Text */}
+							<h2 className="fw-bold mb-2 text-white" style={{ fontSize: '2.2rem' }}>
+								Welcome to ELID
+							</h2>
+							
+							<p className="fs-5 mb-3 text-white" style={{ maxWidth: '400px', margin: '0 auto' }}>
+								Your trusted partner in comprehensive IT solutions
+							</p>
+						</div>
 					</div>
 				</div>
 			</div>

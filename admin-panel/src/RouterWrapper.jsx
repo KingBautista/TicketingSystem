@@ -58,6 +58,7 @@ export default function RouterWrapper() {
         { path: '/dashboard', element: <Index /> },
         { path: '/cashier', element: <Index /> },
         ...dynamicRoutes,
+        { path: '/information', element: <Index /> },
         { path: '/profile', element: <Index /> },
       ],
     },

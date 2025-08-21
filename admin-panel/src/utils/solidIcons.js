@@ -31,7 +31,14 @@ import {
   faClock,
   faFileExport,
   faRotateLeft,
-  faRotateRight
+  faRotateRight,
+  faImage,
+  faSignInAlt,
+  faQuestionCircle,
+  faPhone,
+  faBuilding,
+  faGlobe,
+  faFax
 } from '@fortawesome/free-solid-svg-icons';
 
 export const solidIconMap = {
@@ -65,5 +72,11 @@ export const solidIconMap = {
   clock: faClock,
   fileexport: faFileExport,
   rotateLeft: faRotateLeft,
-  rotateRight: faRotateRight
+  rotateRight: faRotateRight,
+  image: faImage,
+  signIn: faSignInAlt,
+  questionCircle: faQuestionCircle,
+  phone: faPhone,
+  building: faBuilding,
+  globe: faGlobe
 };
