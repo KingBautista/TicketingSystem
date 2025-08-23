@@ -96,6 +96,15 @@ class CashierService
             ->get();
     }
 
+    public function getTodayTransactions($cashierId)
+    {
+        return CashierTransaction::with(['rate:id,name', 'promoter:id,name'])
+            ->where('cashier_id', $cashierId)
+            ->whereDate('created_at', Carbon::today())
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
     public function getSession($id)
     {
         return CashierSession::findOrFail($id);

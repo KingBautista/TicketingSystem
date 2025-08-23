@@ -38,7 +38,8 @@ import {
   faPhone,
   faBuilding,
   faGlobe,
-  faFax
+  faFax,
+  faList
 } from '@fortawesome/free-solid-svg-icons';
 
 export const solidIconMap = {
@@ -78,5 +79,6 @@ export const solidIconMap = {
   questionCircle: faQuestionCircle,
   phone: faPhone,
   building: faBuilding,
-  globe: faGlobe
+  globe: faGlobe,
+  list: faList
 };

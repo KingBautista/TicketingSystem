@@ -83,6 +83,24 @@ class CashierController extends Controller
     }
 
     /**
+     * Get today's transactions for current cashier (for TransactionList component)
+     */
+    public function getTodayTransactions(Request $request)
+    {
+        $cashierId = auth()->id();
+        $transactions = $this->service->getTodayTransactions($cashierId);
+        $total = $transactions->sum('total');
+        
+        $this->logAudit('VIEW', "Viewed today's transactions for cashier ID: {$cashierId}, total: ₱{$total}");
+        
+        return response()->json([
+            'transactions' => $transactions,
+            'total' => $total,
+            'date' => now()->format('Y-m-d')
+        ]);
+    }
+
+    /**
      * Get session details
      */
     public function getSession($id)

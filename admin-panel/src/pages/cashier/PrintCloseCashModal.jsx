@@ -23,8 +23,8 @@ export default function PrintCloseCashModal({
     <div className="modal d-block cashier-print-modal" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 400 }}>
         <div className="modal-content" style={modalStyle}>
-          <div className="modal-header bg-primary text-white" style={{ ...headerStyle }}>
-            <h5 className="modal-title mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16 }}>Close Cash Summary</h5>
+          <div className="modal-header profile-main-header" style={{ ...headerStyle }}>
+            <h5 className="modal-title mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16, color: 'white' }}>Close Cash Summary</h5>
           </div>
           
           <div className="modal-body p-0" style={{ maxHeight: '70vh', overflowY: 'auto' }}>

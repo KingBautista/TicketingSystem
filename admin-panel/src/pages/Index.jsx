@@ -38,8 +38,9 @@ const SalesReports = lazy(() => import('./reports/SalesReports'));
 // System Settings
 const AuditTrail = lazy(() => import('./system-settings/AuditTrail'));
 
-// Cashier Portal
-const CashierLayout = lazy(() => import('../layout/CashierLayout'));
+  // Cashier Portal
+  const CashierLayout = lazy(() => import('../layout/CashierLayout'));
+  const TransactionList = lazy(() => import('./cashier/TransactionList'));
 
 // Mapping paths to components
 const routeMap = {
@@ -75,6 +76,7 @@ const routeMap = {
   '/system-settings/audit-trail': AuditTrail,
   // Cashier Portal (nested layout)
   '/cashier': CashierLayout,
+  '/cashier/transactions': TransactionList,
   '/system-settings/navigation': Navigations,
   '/system-settings/navigation/create': NavigationForm,
   '/system-settings/navigation/:id': NavigationForm,

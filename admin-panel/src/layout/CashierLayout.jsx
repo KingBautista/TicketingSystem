@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route, useLocation } from 'react-router-dom';
 import ToastMessage from '../components/ToastMessage.jsx';
 import { useStateContext } from '../contexts/AuthProvider.jsx';
 import axiosClient from '../axios-client.js';
@@ -9,6 +9,8 @@ import TransactionCard from '../pages/cashier/TransactionCard.jsx';
 import ReceiptPreview from '../pages/cashier/ReceiptPreview.jsx';
 import CloseCashModal from '../pages/cashier/CloseCashModal.jsx';
 import PrintCloseCashModal from '../pages/cashier/PrintCloseCashModal.jsx';
+import CashierSidebar from '../pages/cashier/CashierSidebar.jsx';
+import TransactionList from '../pages/cashier/TransactionList.jsx';
 
 export default function CashierLayout() {
   // Check for cashier session token in localStorage to persist session
@@ -27,6 +29,7 @@ export default function CashierLayout() {
   const [rateId, setRateId] = useState(1);
   const toastRef = useRef();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, setUser, setToken } = useStateContext();
 
   const handleLogout = () => {
@@ -158,6 +161,7 @@ export default function CashierLayout() {
     setShowPrintOpen(false);
     setShowOpenCash(false);
     setShowTransaction(true);
+    navigate('/cashier');
   };
 
   // Transaction Handlers
@@ -286,7 +290,7 @@ export default function CashierLayout() {
     overflow: 'hidden',
   };
   const headerStyle = {
-    background: '#321fdb',
+    background: '#059669',
     color: '#fff',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
@@ -391,97 +395,108 @@ export default function CashierLayout() {
   `;
 
   return (
-    <div className="cashier-portal d-flex justify-content-center align-items-center" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8f9fa 60%, #e6e9ff 100%)' }}>
-      <style>{printStyles}</style>
-      <ToastMessage ref={toastRef} />
-      {/* Open Cash Modal */}
-      <OpenCashModal
-        show={showOpenCash}
-        cashOnHand={cashOnHand}
-        password={password}
-        setCashOnHand={setCashOnHand}
-        setPassword={setPassword}
-        handleOpenCash={handleOpenCash}
-        PROMOTER_NAME={promoter?.name || 'N/A'}
-        headerStyle={headerStyle}
-        modalStyle={modalStyle}
-      />
-      {/* Print Modal for Open Cash */}
-      <PrintOpenCashModal
-        show={showPrintOpen}
-        cashOnHand={cashOnHand}
-        onClose={handlePrintOpenClose}
-        promoterName={promoter?.name || 'N/A'}
-        headerStyle={headerStyle}
-        modalStyle={modalStyle}
-        divider={divider}
-        cashierName={user?.user_login || 'N/A'}
-        sessionId={sessionId ? String(sessionId) : 'N/A'}
-      />
-      {/* Transaction Page */}
-      {showTransaction && !showCloseCash && (
-        <div className="d-flex flex-row gap-4 w-100 justify-content-center align-items-start" style={{ maxWidth: 900 }}>
-          <TransactionCard
-            promoter={promoter}
-            rates={rates}
-            discounts={discounts}
-            appliedDiscounts={appliedDiscounts}
-            handleAddDiscount={handleAddDiscount}
-            handleRemoveDiscount={handleRemoveDiscount}
-            rateId={rateId}
-            setRateId={setRateId}
-            quantity={quantity}
-            setQuantity={setQuantity}
-            total={total}
-            paidAmount={paidAmount}
-            setPaidAmount={setPaidAmount}
-            changeDue={changeDue}
-            handleSaveTransaction={handleSaveTransaction}
-            handleShowCloseCash={handleShowCloseCash}
+    <div className="wrapper d-flex" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8f9fa 60%, #e6e9ff 100%)' }}>
+      <CashierSidebar />
+      <div className="wrapper-content flex-grow-1" style={{ marginLeft: '250px' }}>
+        <div className="container-fluid p-1">
+          <style>{printStyles}</style>
+          <ToastMessage ref={toastRef} />
+          
+          {/* Open Cash Modal */}
+          <OpenCashModal
+            show={showOpenCash}
+            cashOnHand={cashOnHand}
+            password={password}
+            setCashOnHand={setCashOnHand}
+            setPassword={setPassword}
+            handleOpenCash={handleOpenCash}
+            PROMOTER_NAME={promoter?.name || 'N/A'}
             headerStyle={headerStyle}
+            modalStyle={modalStyle}
           />
-          <ReceiptPreview
-            qrValues={qrValues}
-            tickets={tickets}
-            promoter={promoter}
-            rate={rate}
-            quantity={quantity}
-            total={total}
-            appliedDiscounts={appliedDiscounts}
-            handleRemoveDiscount={handleRemoveDiscount}
+          
+          {/* Print Modal for Open Cash */}
+          <PrintOpenCashModal
+            show={showPrintOpen}
+            cashOnHand={cashOnHand}
+            onClose={handlePrintOpenClose}
+            promoterName={promoter?.name || 'N/A'}
+            headerStyle={headerStyle}
+            modalStyle={modalStyle}
+            divider={divider}
+            cashierName={user?.user_login || 'N/A'}
+            sessionId={sessionId ? String(sessionId) : 'N/A'}
+          />
+          
+          {/* Main Content Area */}
+          {location.pathname === '/cashier' && showTransaction && !showCloseCash ? (
+            <div className="d-flex flex-row gap-0 w-100 justify-content-center align-items-start" style={{ maxWidth: 1000, margin: '0 auto' }}>
+              <TransactionCard
+                promoter={promoter}
+                rates={rates}
+                discounts={discounts}
+                appliedDiscounts={appliedDiscounts}
+                handleAddDiscount={handleAddDiscount}
+                handleRemoveDiscount={handleRemoveDiscount}
+                rateId={rateId}
+                setRateId={setRateId}
+                quantity={quantity}
+                setQuantity={setQuantity}
+                total={total}
+                paidAmount={paidAmount}
+                setPaidAmount={setPaidAmount}
+                changeDue={changeDue}
+                handleSaveTransaction={handleSaveTransaction}
+                handleShowCloseCash={handleShowCloseCash}
+                headerStyle={headerStyle}
+              />
+              <ReceiptPreview
+                qrValues={qrValues}
+                tickets={tickets}
+                promoter={promoter}
+                rate={rate}
+                quantity={quantity}
+                total={total}
+                appliedDiscounts={appliedDiscounts}
+                handleRemoveDiscount={handleRemoveDiscount}
+                thermalPrintStyles={thermalPrintStyles}
+              />
+            </div>
+          ) : location.pathname === '/cashier/transactions' ? (
+            <TransactionList />
+          ) : null}
+          
+          {/* Close Cash Modal */}
+          <CloseCashModal
+            show={showCloseCash}
+            cashOnHand={cashOnHand}
+            password={password}
+            setCashOnHand={setCashOnHand}
+            setPassword={setPassword}
+            handleCloseCash={handleCloseCash}
+            PROMOTER_NAME={promoter?.name || 'N/A'}
+            headerStyle={headerStyle}
+            modalStyle={modalStyle}
+          />
+          
+          {/* Print Modal for Close Cash */}
+          <PrintCloseCashModal
+            show={showPrintClose}
+            cashOnHand={cashOnHand}
+            closingCash={closingCash}
+            dailyTransactions={dailyTransactions}
+            dailyTotal={dailyTotal}
+            handleCloseAndLogout={handleLogout}
+            promoterName={promoter?.name || 'N/A'}
+            headerStyle={headerStyle}
+            modalStyle={modalStyle}
+            divider={divider}
+            cashierName={user?.user_login || 'N/A'}
+            sessionId={sessionId ? String(sessionId) : 'N/A'}
             thermalPrintStyles={thermalPrintStyles}
           />
         </div>
-      )}
-      
-      {/* Close Cash Modal */}
-      <CloseCashModal
-        show={showCloseCash}
-        cashOnHand={cashOnHand}
-        password={password}
-        setCashOnHand={setCashOnHand}
-        setPassword={setPassword}
-        handleCloseCash={handleCloseCash}
-        PROMOTER_NAME={promoter?.name || 'N/A'}
-        headerStyle={headerStyle}
-        modalStyle={modalStyle}
-      />
-      {/* Print Modal for Close Cash */}
-      <PrintCloseCashModal
-        show={showPrintClose}
-        cashOnHand={cashOnHand}
-        closingCash={closingCash}
-        dailyTransactions={dailyTransactions}
-        dailyTotal={dailyTotal}
-        handleCloseAndLogout={handleLogout}
-        promoterName={promoter?.name || 'N/A'}
-        headerStyle={headerStyle}
-        modalStyle={modalStyle}
-        divider={divider}
-        cashierName={user?.user_login || 'N/A'}
-        sessionId={sessionId ? String(sessionId) : 'N/A'}
-        thermalPrintStyles={thermalPrintStyles}
-      />
+      </div>
     </div>
   );
 } 

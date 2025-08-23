@@ -22,12 +22,12 @@ export default function TransactionCard({
   headerStyle
 }) {
   return (
-    <div className="card shadow-lg" style={{ width: 400, borderRadius: 18, border: 'none', background: '#fff', maxHeight: '98vh', overflow: 'hidden' }}>
+    <div className="card shadow-lg" style={{ width: 500, borderRadius: 18, border: 'none', background: '#fff', maxHeight: '98vh', overflow: 'hidden', margin: '0 auto' }}>
       <div style={{ background: '#f7f7fa', padding: '0.25rem 1rem', borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottom: '1px solid #eee', fontWeight: 600, fontSize: 13, color: '#ffb400', letterSpacing: 0.5, whiteSpace: 'nowrap', minHeight: 28 }}>
         Promoter of the Day: <span style={{ color: '#321fdb', fontWeight: 700, marginLeft: 8 }}>{promoter?.name || 'N/A'}</span>
       </div>
-      <div className="card-header d-flex align-items-center" style={{ ...headerStyle, flexDirection: 'row', justifyContent: 'space-between', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-        <h4 className="mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16 }}>Ticket Transaction</h4>
+      <div className="card-header d-flex align-items-center profile-main-header" style={{ ...headerStyle, flexDirection: 'row', justifyContent: 'space-between', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+        <h4 className="mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16, color: 'white' }}>Ticket Transaction</h4>
         <button className="btn btn-warning px-3" onClick={handleShowCloseCash} style={{ background: '#ffb400', border: 'none', color: '#321fdb', fontWeight: 600, whiteSpace: 'nowrap', height: 32, minHeight: 32, fontSize: 15 }}>
           <FontAwesomeIcon icon={solidIconMap.moneyBill} className="me-2" />
           Close Cash
