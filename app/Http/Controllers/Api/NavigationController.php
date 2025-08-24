@@ -19,7 +19,38 @@ class NavigationController extends BaseController
   }
 
   /**
-   * Store a newly created resource in storage.
+   * Store a newly created navigation in storage.
+   * 
+   * @OA\Post(
+   *     path="/api/system-settings/navigation",
+   *     summary="Create a new navigation item",
+   *     tags={"System Settings"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\RequestBody(
+   *         required=true,
+   *         @OA\JsonContent(
+   *             required={"name", "slug"},
+   *             @OA\Property(property="name", type="string", example="User Management", description="Navigation name"),
+   *             @OA\Property(property="slug", type="string", example="user-management", description="Navigation slug"),
+   *             @OA\Property(property="parent_id", type="integer", example=1, description="Parent navigation ID"),
+   *             @OA\Property(property="active", type="boolean", example=true, description="Navigation status"),
+   *             @OA\Property(property="show_in_menu", type="boolean", example=true, description="Show in menu")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=201,
+   *         description="Navigation created successfully",
+   *         @OA\JsonContent(type="object")
+   *     ),
+   *     @OA\Response(
+   *         response=422,
+   *         description="Validation error"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
    */
   public function store(NavigationRequest $request)
   {
@@ -53,6 +84,25 @@ class NavigationController extends BaseController
     }
   }
 
+  /**
+   * Get all navigations for dropdown selection.
+   * 
+   * @OA\Get(
+   *     path="/api/options/navigations",
+   *     summary="Get all navigations for dropdown",
+   *     tags={"Options"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Response(
+   *         response=200,
+   *         description="List of navigations",
+   *         @OA\JsonContent(type="array", @OA\Items(type="object"))
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
   public function getNavigations() 
   {
     try {

@@ -24,6 +24,212 @@ class UserController extends BaseController
     parent::__construct($userService, $messageService);
   }
 
+  /**
+   * Display a listing of users.
+   * 
+   * @OA\Get(
+   *     path="/api/user-management/users",
+   *     summary="Get list of users",
+   *     tags={"User Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="search",
+   *         in="query",
+   *         description="Search term",
+   *         required=false,
+   *         @OA\Schema(type="string")
+   *     ),
+   *     @OA\Parameter(
+   *         name="per_page",
+   *         in="query",
+   *         description="Number of items per page",
+   *         required=false,
+   *         @OA\Schema(type="integer", default=10)
+   *     ),
+   *     @OA\Parameter(
+   *         name="order",
+   *         in="query",
+   *         description="Order by field",
+   *         required=false,
+   *         @OA\Schema(type="string")
+   *     ),
+   *     @OA\Parameter(
+   *         name="sort",
+   *         in="query",
+   *         description="Sort direction (asc/desc)",
+   *         required=false,
+   *         @OA\Schema(type="string", enum={"asc", "desc"})
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Successful operation",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+   *             @OA\Property(property="meta", type="object")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     ),
+   *     @OA\Response(
+   *         response=500,
+   *         description="Server error"
+   *     )
+   * )
+   */
+  public function index()
+  {
+    return parent::index();
+  }
+
+  /**
+   * Display the specified user.
+   * 
+   * @OA\Get(
+   *     path="/api/user-management/users/{id}",
+   *     summary="Get a specific user",
+   *     tags={"User Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="id",
+   *         in="path",
+   *         description="User ID",
+   *         required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Successful operation",
+   *         @OA\JsonContent(type="object")
+   *     ),
+   *     @OA\Response(
+   *         response=404,
+   *         description="User not found"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
+  public function show($id)
+  {
+    return parent::show($id);
+  }
+
+  /**
+   * Remove the specified user from storage (soft delete).
+   * 
+   * @OA\Delete(
+   *     path="/api/user-management/users/{id}",
+   *     summary="Delete a user (soft delete)",
+   *     tags={"User Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="id",
+   *         in="path",
+   *         description="User ID",
+   *         required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="User moved to trash",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="message", type="string", example="User has been moved to trash.")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=404,
+   *         description="User not found"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
+  public function destroy($id)
+  {
+    return parent::destroy($id);
+  }
+
+  /**
+   * Get users for dropdown.
+   * 
+   * @OA\Get(
+   *     path="/api/options/users",
+   *     summary="Get users for dropdown",
+   *     tags={"User Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Response(
+   *         response=200,
+   *         description="List of users for dropdown",
+   *         @OA\JsonContent(
+   *             type="array",
+   *             @OA\Items(
+   *                 type="object",
+   *                 @OA\Property(property="id", type="integer", example=1),
+   *                 @OA\Property(property="user_login", type="string", example="john_doe"),
+   *                 @OA\Property(property="user_email", type="string", example="john@example.com"),
+   *                 @OA\Property(property="first_name", type="string", example="John"),
+   *                 @OA\Property(property="last_name", type="string", example="Doe")
+   *             )
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
+  public function getUsersForDropdown()
+  {
+    try {
+      $users = $this->service->getUsersForDropdown();
+      return response()->json($users);
+    } catch (\Exception $e) {
+      return $this->messageService->responseError();
+    }
+  }
+
+  /**
+   * Store a newly created user in storage.
+   * 
+   * @OA\Post(
+   *     path="/api/user-management/users",
+   *     summary="Create a new user",
+   *     tags={"Users"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\RequestBody(
+   *         required=true,
+   *         @OA\JsonContent(
+   *             required={"user_login", "user_email", "user_pass", "user_role_id"},
+   *             @OA\Property(property="user_login", type="string", example="john_doe", description="Username"),
+   *             @OA\Property(property="user_email", type="string", format="email", example="john@example.com", description="Email address"),
+   *             @OA\Property(property="user_pass", type="string", example="password123", description="Password"),
+   *             @OA\Property(property="user_role_id", type="integer", example=2, description="Role ID"),
+   *             @OA\Property(property="user_status", type="integer", example=1, description="User status (1=Active, 0=Inactive)"),
+   *             @OA\Property(property="first_name", type="string", example="John", description="First name"),
+   *             @OA\Property(property="last_name", type="string", example="Doe", description="Last name")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=201,
+   *         description="User created successfully",
+   *         @OA\JsonContent(type="object")
+   *     ),
+   *     @OA\Response(
+   *         response=422,
+   *         description="Validation error"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
   public function store(StoreUserRequest $request)
   {
     // try {
@@ -60,6 +266,53 @@ class UserController extends BaseController
     // }
   }
 
+  /**
+   * Update the specified user in storage.
+   * 
+   * @OA\Put(
+   *     path="/api/user-management/users/{id}",
+   *     summary="Update an existing user",
+   *     tags={"Users"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="id",
+   *         in="path",
+   *         description="User ID",
+   *         required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\RequestBody(
+   *         required=true,
+   *         @OA\JsonContent(
+   *             required={"user_login", "user_email", "user_role_id"},
+   *             @OA\Property(property="user_login", type="string", example="john_doe", description="Username"),
+   *             @OA\Property(property="user_email", type="string", format="email", example="john@example.com", description="Email address"),
+   *             @OA\Property(property="user_pass", type="string", example="newpassword123", description="New password (optional)"),
+   *             @OA\Property(property="user_role_id", type="integer", example=2, description="Role ID"),
+   *             @OA\Property(property="user_status", type="integer", example=1, description="User status (1=Active, 0=Inactive)"),
+   *             @OA\Property(property="first_name", type="string", example="John", description="First name"),
+   *             @OA\Property(property="last_name", type="string", example="Doe", description="Last name")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=201,
+   *         description="User updated successfully",
+   *         @OA\JsonContent(type="object")
+   *     ),
+   *     @OA\Response(
+   *         response=404,
+   *         description="User not found"
+   *     ),
+   *     @OA\Response(
+   *         response=422,
+   *         description="Validation error"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
   public function update(UpdateUserRequest $request, Int $id)
   {
     try {
@@ -216,17 +469,4 @@ class UserController extends BaseController
     }
   }
 
-  public function getUsersForDropdown()
-  {
-    try {
-      $users = User::select('id', 'user_login', 'user_email')
-        ->where('user_status', 1)
-        ->orderBy('user_login')
-        ->get();
-      
-      return response()->json($users);
-    } catch (\Exception $e) {
-      return response()->json(['error' => 'Failed to fetch users'], 500);
-    }
-  }
 }

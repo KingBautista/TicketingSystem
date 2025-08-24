@@ -1,0 +1,2529 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Ticketing System API",
+        "description": "API documentation for Ticketing System",
+        "contact": {
+            "email": "support@ticketingsystem.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/api/audit-trail/export": {
+            "post": {
+                "tags": [
+                    "Audit Trail"
+                ],
+                "summary": "Export audit trail data",
+                "description": "Export audit trail data.",
+                "operationId": "eeb3b722d63399e36ba542a38e572140",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "format": {
+                                        "description": "Export format (csv, excel, pdf)",
+                                        "type": "string",
+                                        "example": "csv"
+                                    },
+                                    "search": {
+                                        "description": "Search term",
+                                        "type": "string",
+                                        "example": "user login"
+                                    },
+                                    "module": {
+                                        "description": "Module filter",
+                                        "type": "string",
+                                        "example": "User Management"
+                                    },
+                                    "action": {
+                                        "description": "Action filter",
+                                        "type": "string",
+                                        "example": "CREATE"
+                                    },
+                                    "user_id": {
+                                        "description": "User ID filter",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "start_date": {
+                                        "description": "Start date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-01"
+                                    },
+                                    "end_date": {
+                                        "description": "End date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-31"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Audit trail exported successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/audit-trail/modules": {
+            "get": {
+                "tags": [
+                    "Audit Trail"
+                ],
+                "summary": "Get available audit trail modules",
+                "description": "Get available audit trail modules.",
+                "operationId": "f7c132256ef71157aaf94b0af033d5b6",
+                "responses": {
+                    "200": {
+                        "description": "List of available modules",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/signup": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new user",
+                "description": "Create a new user account.",
+                "operationId": "25b0603e5c64f3375576adc22300d89d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "username",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "description": "Username",
+                                        "type": "string",
+                                        "example": "john_doe"
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "description": "Password",
+                                        "type": "string",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "description": "Password confirmation",
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aww yeah, you have successfuly registered. Verification email has been sent to your registered email."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User login",
+                "description": "Login a user and generate authentication token.",
+                "operationId": "dd51a484b7fa0f97c7680fdbde14cf5f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "description": "Password",
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "user": {
+                                            "type": "object"
+                                        },
+                                        "token": {
+                                            "description": "Bearer token for authentication",
+                                            "type": "string",
+                                            "example": "1|abc123..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "User logout",
+                "description": "Logout a user and invalidate the current token.",
+                "operationId": "ad65cbbd4e9f201619eae184a5961a98",
+                "responses": {
+                    "204": {
+                        "description": "Logout successful"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/cashier/open-session": {
+            "post": {
+                "tags": [
+                    "Cashier Management"
+                ],
+                "summary": "Open a new cashier session",
+                "description": "Open a new cashier session.",
+                "operationId": "6c91528b613268ae4e9ef1d0b7e22663",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "cash_on_hand"
+                                ],
+                                "properties": {
+                                    "cash_on_hand": {
+                                        "description": "Starting cash amount",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1000
+                                    },
+                                    "notes": {
+                                        "description": "Session notes",
+                                        "type": "string",
+                                        "example": "Morning shift"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Cashier session opened successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/cashier/close-session": {
+            "post": {
+                "tags": [
+                    "Cashier Management"
+                ],
+                "summary": "Close the current cashier session",
+                "description": "Close the current cashier session.",
+                "operationId": "9b8f827b8086c83ca9b3350b7ffbf572",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "closing_cash"
+                                ],
+                                "properties": {
+                                    "closing_cash": {
+                                        "description": "Closing cash amount",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1500
+                                    },
+                                    "notes": {
+                                        "description": "Closing notes",
+                                        "type": "string",
+                                        "example": "End of shift"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cashier session closed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/cashier/transactions": {
+            "post": {
+                "tags": [
+                    "Cashier Management"
+                ],
+                "summary": "Create a new cashier transaction",
+                "description": "Create a new cashier transaction.",
+                "operationId": "10a734ca6375a0a887c33375781994d7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "quantity",
+                                    "rate_id",
+                                    "total"
+                                ],
+                                "properties": {
+                                    "quantity": {
+                                        "description": "Number of tickets",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "rate_id": {
+                                        "description": "Rate ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "discount_id": {
+                                        "description": "Discount ID (optional)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "promoter_id": {
+                                        "description": "Promoter ID (optional)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "total": {
+                                        "description": "Total amount",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1000
+                                    },
+                                    "payment_method": {
+                                        "description": "Payment method",
+                                        "type": "string",
+                                        "example": "cash"
+                                    },
+                                    "notes": {
+                                        "description": "Transaction notes",
+                                        "type": "string",
+                                        "example": "Customer request"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Transaction created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/cashier/transactions/{transactionId}/tickets": {
+            "get": {
+                "tags": [
+                    "Cashier Management"
+                ],
+                "summary": "Get tickets for a transaction",
+                "description": "Get tickets for a specific transaction.",
+                "operationId": "183e33a3cef3bf3bc8ed07efda48abf4",
+                "parameters": [
+                    {
+                        "name": "transactionId",
+                        "in": "path",
+                        "description": "Transaction ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of tickets for the transaction",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/dashboard/statistics": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get dashboard statistics",
+                "description": "Get dashboard statistics",
+                "operationId": "addf8c82a321a06898e953647b288fd4",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/rate-management/discounts": {
+            "post": {
+                "tags": [
+                    "Rate Management"
+                ],
+                "summary": "Create a new discount",
+                "description": "Store a newly created discount in storage.",
+                "operationId": "39a135e80366a94b861773dd49b9d6c1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "discount_name",
+                                    "discount_value",
+                                    "discount_value_type"
+                                ],
+                                "properties": {
+                                    "discount_name": {
+                                        "description": "Discount name",
+                                        "type": "string",
+                                        "example": "Student Discount"
+                                    },
+                                    "discount_value": {
+                                        "description": "Discount value",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20
+                                    },
+                                    "discount_value_type": {
+                                        "description": "Discount type",
+                                        "type": "string",
+                                        "enum": [
+                                            "percentage",
+                                            "fixed"
+                                        ],
+                                        "example": "percentage"
+                                    },
+                                    "description": {
+                                        "description": "Discount description",
+                                        "type": "string",
+                                        "example": "Discount for students"
+                                    },
+                                    "status": {
+                                        "description": "Discount status",
+                                        "type": "string",
+                                        "example": "Active"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Discount created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/content-management/media-library": {
+            "get": {
+                "tags": [
+                    "Content Management"
+                ],
+                "summary": "Get list of media files",
+                "description": "Display a listing of media files.",
+                "operationId": "19b6f25b2542f7be575adab740a95690",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of media files",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Content Management"
+                ],
+                "summary": "Upload media files",
+                "description": "Upload media files.",
+                "operationId": "7581d9a9a83f924a410bb09cbb391ef5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "files": {
+                                        "description": "Media files to upload",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Media files uploaded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/content-management/media-library/bulk/delete": {
+            "post": {
+                "tags": [
+                    "Content Management"
+                ],
+                "summary": "Bulk delete media files",
+                "description": "Bulk delete media files.",
+                "operationId": "384e3f407a6931e5da0186ea3bd928aa",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ids"
+                                ],
+                                "properties": {
+                                    "ids": {
+                                        "description": "Array of media file IDs to delete",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Media files deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Media/s has been deleted permanently."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/system-settings/navigation": {
+            "post": {
+                "tags": [
+                    "System Settings"
+                ],
+                "summary": "Create a new navigation item",
+                "description": "Store a newly created navigation in storage.",
+                "operationId": "03dc0b69fc82c4fc38082fc20a3c8c4b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "slug"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Navigation name",
+                                        "type": "string",
+                                        "example": "User Management"
+                                    },
+                                    "slug": {
+                                        "description": "Navigation slug",
+                                        "type": "string",
+                                        "example": "user-management"
+                                    },
+                                    "parent_id": {
+                                        "description": "Parent navigation ID",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "active": {
+                                        "description": "Navigation status",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "show_in_menu": {
+                                        "description": "Show in menu",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Navigation created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/options/navigations": {
+            "get": {
+                "tags": [
+                    "Options"
+                ],
+                "summary": "Get all navigations for dropdown",
+                "description": "Get all navigations for dropdown selection.",
+                "operationId": "7c7060780aa378c1fc385cd0c9b1965e",
+                "responses": {
+                    "200": {
+                        "description": "List of navigations",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/promoter-management/promoters": {
+            "post": {
+                "tags": [
+                    "Promoter Management"
+                ],
+                "summary": "Create a new promoter",
+                "description": "Store a newly created promoter in storage.",
+                "operationId": "89446a4c22a21111f9155a353eb198dd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Promoter name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "description": {
+                                        "description": "Promoter description",
+                                        "type": "string",
+                                        "example": "Event promoter"
+                                    },
+                                    "status": {
+                                        "description": "Promoter status",
+                                        "type": "string",
+                                        "example": "Active"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Promoter created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/options/promoters": {
+            "get": {
+                "tags": [
+                    "Options"
+                ],
+                "summary": "Get active promoters for dropdown",
+                "description": "Get promoters for dropdown selection.",
+                "operationId": "ff12f32e07b7202b2b23ef184cb6f8da",
+                "responses": {
+                    "200": {
+                        "description": "List of active promoters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "John Doe"
+                                            },
+                                            "label": {
+                                                "type": "string",
+                                                "example": "John Doe"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/rate-management/rates": {
+            "post": {
+                "tags": [
+                    "Rate Management"
+                ],
+                "summary": "Create a new rate",
+                "description": "Store a newly created rate in storage.",
+                "operationId": "ec213c09a0003a9956d0117dc58ba099",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Rate name",
+                                        "type": "string",
+                                        "example": "Regular Ticket"
+                                    },
+                                    "description": {
+                                        "description": "Rate description",
+                                        "type": "string",
+                                        "example": "Standard admission ticket"
+                                    },
+                                    "price": {
+                                        "description": "Rate price",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 500
+                                    },
+                                    "status": {
+                                        "description": "Rate status",
+                                        "type": "string",
+                                        "example": "Active"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Rate created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/options/rates": {
+            "get": {
+                "tags": [
+                    "Options"
+                ],
+                "summary": "Get active rates for dropdown",
+                "description": "Get rates for dropdown selection.",
+                "operationId": "bed32fc6795508299a63eb1329ffeadf",
+                "responses": {
+                    "200": {
+                        "description": "List of active rates",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Regular Ticket"
+                                            },
+                                            "price": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 500
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user-management/roles": {
+            "get": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Get list of roles",
+                "description": "Display a listing of roles.",
+                "operationId": "8666cbc208adced7cbeb541993ac72e6",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Order by field",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort direction (asc/desc)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Create a new role",
+                "description": "Store a newly created role in storage.",
+                "operationId": "b007f0902cd4eae58a5b3773e085eac3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "permissions"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Role name",
+                                        "type": "string",
+                                        "example": "Admin"
+                                    },
+                                    "active": {
+                                        "description": "Role status",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_super_admin": {
+                                        "description": "Super admin flag",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "permissions": {
+                                        "description": "Role permissions structure",
+                                        "type": "object",
+                                        "example": {
+                                            "1": {
+                                                "1": {
+                                                    "can_view": true,
+                                                    "can_create": true,
+                                                    "can_edit": true,
+                                                    "can_delete": true
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Role created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user-management/roles/{id}": {
+            "get": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Get a specific role",
+                "description": "Display the specified role.",
+                "operationId": "7545f08cb0105527c202691ccf53c51b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Role ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Role not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Update an existing role",
+                "description": "Update the specified role in storage.",
+                "operationId": "e05acb3bbb18486d842c65afcae64aae",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Role ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "permissions"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Role name",
+                                        "type": "string",
+                                        "example": "Admin"
+                                    },
+                                    "active": {
+                                        "description": "Role status",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_super_admin": {
+                                        "description": "Super admin flag",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "permissions": {
+                                        "description": "Role permissions structure",
+                                        "type": "object",
+                                        "example": {
+                                            "1": {
+                                                "1": {
+                                                    "can_view": true,
+                                                    "can_create": true,
+                                                    "can_edit": true,
+                                                    "can_delete": true
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Role not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Delete a role (soft delete)",
+                "description": "Remove the specified role from storage (soft delete).",
+                "operationId": "0a91d022ec5a4861f3e1dc5ac1689a15",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Role ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role moved to trash",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Role has been moved to trash."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Role not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/options/roles": {
+            "get": {
+                "tags": [
+                    "Role Management"
+                ],
+                "summary": "Get all active roles for dropdown",
+                "description": "Get all roles for dropdown selection.",
+                "operationId": "c386b3c5bcf0e97a95aff5038b8492bf",
+                "responses": {
+                    "200": {
+                        "description": "List of active roles",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Admin"
+                                            },
+                                            "label": {
+                                                "type": "string",
+                                                "example": "Admin"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-report/export": {
+            "post": {
+                "tags": [
+                    "Sales Report"
+                ],
+                "summary": "Export sales report data",
+                "description": "Export sales report data.",
+                "operationId": "70bedcacd87dd3250acc105933827b97",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "format": {
+                                        "description": "Export format (csv, excel, pdf)",
+                                        "type": "string",
+                                        "example": "csv"
+                                    },
+                                    "search": {
+                                        "description": "Search term",
+                                        "type": "string",
+                                        "example": "transaction"
+                                    },
+                                    "cashier": {
+                                        "description": "Cashier ID filter",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "startDate": {
+                                        "description": "Start date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-01"
+                                    },
+                                    "endDate": {
+                                        "description": "End date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-31"
+                                    },
+                                    "promoter": {
+                                        "description": "Promoter ID filter",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "rate": {
+                                        "description": "Rate ID filter",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sales report exported successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/sales-report/statistics": {
+            "get": {
+                "tags": [
+                    "Sales Report"
+                ],
+                "summary": "Get sales report statistics",
+                "description": "Get sales report statistics.",
+                "operationId": "bfc513dbced098cdc57ec8689834d241",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "cashier",
+                        "in": "query",
+                        "description": "Cashier ID filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "description": "Start date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "description": "End date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "promoter",
+                        "in": "query",
+                        "description": "Promoter ID filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "rate",
+                        "in": "query",
+                        "description": "Rate ID filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sales statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/scan": {
+            "post": {
+                "tags": [
+                    "Scan Management"
+                ],
+                "summary": "Store scan data from barcode scanner",
+                "description": "Store scan data from barcode scanner.",
+                "operationId": "e0781fbb9dcf44f5c10ebab712e04b96",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "vgdecoderesult": {
+                                        "description": "Hex encoded scan result",
+                                        "type": "string",
+                                        "example": "313233343536"
+                                    },
+                                    "devicenumber": {
+                                        "description": "Device number",
+                                        "type": "string",
+                                        "example": "001"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Scan data stored successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Scan received"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid scan data"
+                    }
+                }
+            }
+        },
+        "/api/scan/latest": {
+            "get": {
+                "tags": [
+                    "Scan Management"
+                ],
+                "summary": "Get the latest scan data",
+                "description": "Get the latest scan data.",
+                "operationId": "f2038ed05bc0faa12cc751525d69c1b4",
+                "responses": {
+                    "200": {
+                        "description": "Latest scan data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "description": "Decoded scan code",
+                                            "type": "string",
+                                            "example": "123456"
+                                        },
+                                        "device": {
+                                            "description": "Device number",
+                                            "type": "string",
+                                            "example": "001"
+                                        },
+                                        "timestamp": {
+                                            "description": "Scan timestamp",
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No scan data available"
+                    }
+                }
+            }
+        },
+        "/api/user-management/users": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get list of users",
+                "description": "Display a listing of users.",
+                "operationId": "742ade1b506fa66e6f20dc4bdf8f284b",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Search term",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of items per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Order by field",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort direction (asc/desc)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create a new user",
+                "description": "Store a newly created user in storage.",
+                "operationId": "00321d77ea7ed989f6a1c1933a775d2b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_login",
+                                    "user_email",
+                                    "user_pass",
+                                    "user_role_id"
+                                ],
+                                "properties": {
+                                    "user_login": {
+                                        "description": "Username",
+                                        "type": "string",
+                                        "example": "john_doe"
+                                    },
+                                    "user_email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "user_pass": {
+                                        "description": "Password",
+                                        "type": "string",
+                                        "example": "password123"
+                                    },
+                                    "user_role_id": {
+                                        "description": "Role ID",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "user_status": {
+                                        "description": "User status (1=Active, 0=Inactive)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "first_name": {
+                                        "description": "First name",
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "description": "Last name",
+                                        "type": "string",
+                                        "example": "Doe"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user-management/users/{id}": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get a specific user",
+                "description": "Display the specified user.",
+                "operationId": "db375f2b1d216112d9e340261336b84b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update an existing user",
+                "description": "Update the specified user in storage.",
+                "operationId": "3aa7bbe38291e5f438d5373f97c2d137",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_login",
+                                    "user_email",
+                                    "user_role_id"
+                                ],
+                                "properties": {
+                                    "user_login": {
+                                        "description": "Username",
+                                        "type": "string",
+                                        "example": "john_doe"
+                                    },
+                                    "user_email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "user_pass": {
+                                        "description": "New password (optional)",
+                                        "type": "string",
+                                        "example": "newpassword123"
+                                    },
+                                    "user_role_id": {
+                                        "description": "Role ID",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "user_status": {
+                                        "description": "User status (1=Active, 0=Inactive)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "first_name": {
+                                        "description": "First name",
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "description": "Last name",
+                                        "type": "string",
+                                        "example": "Doe"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Delete a user (soft delete)",
+                "description": "Remove the specified user from storage (soft delete).",
+                "operationId": "786896e4e60e99a6ad09cf8fd2202b2c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "User ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User moved to trash",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User has been moved to trash."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/options/users": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get users for dropdown",
+                "description": "Get users for dropdown.",
+                "operationId": "04e40000fc6d8e85298d61414a4da37f",
+                "responses": {
+                    "200": {
+                        "description": "List of users for dropdown",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "user_login": {
+                                                "type": "string",
+                                                "example": "john_doe"
+                                            },
+                                            "user_email": {
+                                                "type": "string",
+                                                "example": "john@example.com"
+                                            },
+                                            "first_name": {
+                                                "type": "string",
+                                                "example": "John"
+                                            },
+                                            "last_name": {
+                                                "type": "string",
+                                                "example": "Doe"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/vip-management/vips": {
+            "post": {
+                "tags": [
+                    "VIP Management"
+                ],
+                "summary": "Create a new VIP member",
+                "description": "Store a newly created VIP member in storage.",
+                "operationId": "a8ad9165353e8b51a1feb89b3510be70",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "card_number",
+                                    "name",
+                                    "validity_start",
+                                    "validity_end"
+                                ],
+                                "properties": {
+                                    "card_number": {
+                                        "description": "VIP card number (max 10 digits)",
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
+                                    "name": {
+                                        "description": "VIP member name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "validity_start": {
+                                        "description": "Validity start date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-01"
+                                    },
+                                    "validity_end": {
+                                        "description": "Validity end date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-31"
+                                    },
+                                    "status": {
+                                        "description": "VIP status",
+                                        "type": "string",
+                                        "example": "Active"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "VIP member created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/vip-management/vips/{id}": {
+            "put": {
+                "tags": [
+                    "VIP Management"
+                ],
+                "summary": "Update an existing VIP member",
+                "description": "Update the specified VIP member in storage.",
+                "operationId": "b27152c4be5b4f13c391be7c5a85a594",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "VIP member ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "card_number",
+                                    "name",
+                                    "validity_start",
+                                    "validity_end"
+                                ],
+                                "properties": {
+                                    "card_number": {
+                                        "description": "VIP card number (max 10 digits)",
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
+                                    "name": {
+                                        "description": "VIP member name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "validity_start": {
+                                        "description": "Validity start date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-01"
+                                    },
+                                    "validity_end": {
+                                        "description": "Validity end date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-31"
+                                    },
+                                    "status": {
+                                        "description": "VIP status",
+                                        "type": "string",
+                                        "example": "Active"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "VIP member updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "VIP member not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/vip-management/vips/expiring": {
+            "get": {
+                "tags": [
+                    "VIP Management"
+                ],
+                "summary": "Get VIP members expiring soon",
+                "description": "Get expiring VIP members.",
+                "operationId": "221406d35a5616b7d27bc8f8aa0f88e3",
+                "responses": {
+                    "200": {
+                        "description": "List of expiring VIP members",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Audit Trail",
+            "description": "Audit Trail"
+        },
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
+            "name": "Cashier Management",
+            "description": "Cashier Management"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Dashboard"
+        },
+        {
+            "name": "Rate Management",
+            "description": "Rate Management"
+        },
+        {
+            "name": "Content Management",
+            "description": "Content Management"
+        },
+        {
+            "name": "System Settings",
+            "description": "System Settings"
+        },
+        {
+            "name": "Options",
+            "description": "Options"
+        },
+        {
+            "name": "Promoter Management",
+            "description": "Promoter Management"
+        },
+        {
+            "name": "Role Management",
+            "description": "Role Management"
+        },
+        {
+            "name": "Roles",
+            "description": "Roles"
+        },
+        {
+            "name": "Sales Report",
+            "description": "Sales Report"
+        },
+        {
+            "name": "Scan Management",
+            "description": "Scan Management"
+        },
+        {
+            "name": "User Management",
+            "description": "User Management"
+        },
+        {
+            "name": "Users",
+            "description": "Users"
+        },
+        {
+            "name": "VIP Management",
+            "description": "VIP Management"
+        }
+    ]
+}

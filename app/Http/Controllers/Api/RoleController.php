@@ -15,14 +15,191 @@ class RoleController extends BaseController
 {
   use Auditable;
 
-  public function __construct(RoleService $roleService, MessageService $messageService)
+  	public function __construct(RoleService $roleService, MessageService $messageService)
   {
     // Call the parent constructor to initialize services
     parent::__construct($roleService, $messageService);
   }
 
   /**
-   * Store a newly created resource in storage.
+   * Display a listing of roles.
+   * 
+   * @OA\Get(
+   *     path="/api/user-management/roles",
+   *     summary="Get list of roles",
+   *     tags={"Role Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="search",
+   *         in="query",
+   *         description="Search term",
+   *         required=false,
+   *         @OA\Schema(type="string")
+   *     ),
+   *     @OA\Parameter(
+   *         name="per_page",
+   *         in="query",
+   *         description="Number of items per page",
+   *         required=false,
+   *         @OA\Schema(type="integer", default=10)
+   *     ),
+   *     @OA\Parameter(
+   *         name="order",
+   *         in="query",
+   *         description="Order by field",
+   *         required=false,
+   *         @OA\Schema(type="string")
+   *     ),
+   *     @OA\Parameter(
+   *         name="sort",
+   *         in="query",
+   *         description="Sort direction (asc/desc)",
+   *         required=false,
+   *         @OA\Schema(type="string", enum={"asc", "desc"})
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Successful operation",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+   *             @OA\Property(property="meta", type="object")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     ),
+   *     @OA\Response(
+   *         response=500,
+   *         description="Server error"
+   *     )
+   * )
+   */
+  public function index()
+  {
+    return parent::index();
+  }
+
+  /**
+   * Display the specified role.
+   * 
+   * @OA\Get(
+   *     path="/api/user-management/roles/{id}",
+   *     summary="Get a specific role",
+   *     tags={"Role Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="id",
+   *         in="path",
+   *         description="Role ID",
+   *         required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Successful operation",
+   *         @OA\JsonContent(type="object")
+   *     ),
+   *     @OA\Response(
+   *         response=404,
+   *         description="Role not found"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
+  public function show($id)
+  {
+    return parent::show($id);
+  }
+
+  /**
+   * Remove the specified role from storage (soft delete).
+   * 
+   * @OA\Delete(
+   *     path="/api/user-management/roles/{id}",
+   *     summary="Delete a role (soft delete)",
+   *     tags={"Role Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="id",
+   *         in="path",
+   *         description="Role ID",
+   *         required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Role moved to trash",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="message", type="string", example="Role has been moved to trash.")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=404,
+   *         description="Role not found"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
+  public function destroy($id)
+  {
+    return parent::destroy($id);
+  }
+
+
+
+  /**
+   * Store a newly created role in storage.
+   * 
+   * @OA\Post(
+   *     path="/api/user-management/roles",
+   *     summary="Create a new role",
+   *     tags={"Roles"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\RequestBody(
+   *         required=true,
+   *         @OA\JsonContent(
+   *             required={"name", "permissions"},
+   *             @OA\Property(property="name", type="string", example="Admin", description="Role name"),
+   *             @OA\Property(property="active", type="boolean", example=true, description="Role status"),
+   *             @OA\Property(property="is_super_admin", type="boolean", example=false, description="Super admin flag"),
+   *             @OA\Property(
+   *                 property="permissions",
+   *                 type="object",
+   *                 description="Role permissions structure",
+   *                 example={
+   *                     "1": {
+   *                         "1": {
+   *                             "can_view": true,
+   *                             "can_create": true,
+   *                             "can_edit": true,
+   *                             "can_delete": true
+   *                         }
+   *                     }
+   *                 }
+   *             )
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=201,
+   *         description="Role created successfully",
+   *         @OA\JsonContent(type="object")
+   *     ),
+   *     @OA\Response(
+   *         response=422,
+   *         description="Validation error"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
    */
   public function store(RoleRequest $request)
   {
@@ -77,7 +254,62 @@ class RoleController extends BaseController
   }
 
   /**
-   * Update a resource in storage.
+   * Update the specified role in storage.
+   * 
+   * @OA\Put(
+   *     path="/api/user-management/roles/{id}",
+   *     summary="Update an existing role",
+   *     tags={"Roles"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="id",
+   *         in="path",
+   *         description="Role ID",
+   *         required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\RequestBody(
+   *         required=true,
+   *         @OA\JsonContent(
+   *             required={"name", "permissions"},
+   *             @OA\Property(property="name", type="string", example="Admin", description="Role name"),
+   *             @OA\Property(property="active", type="boolean", example=true, description="Role status"),
+   *             @OA\Property(property="is_super_admin", type="boolean", example=false, description="Super admin flag"),
+   *             @OA\Property(
+   *                 property="permissions",
+   *                 type="object",
+   *                 description="Role permissions structure",
+   *                 example={
+   *                     "1": {
+   *                         "1": {
+   *                             "can_view": true,
+   *                             "can_create": true,
+   *                             "can_edit": true,
+   *                             "can_delete": true
+   *                         }
+   *                     }
+   *                 }
+   *             )
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Role updated successfully",
+   *         @OA\JsonContent(type="object")
+   *     ),
+   *     @OA\Response(
+   *         response=404,
+   *         description="Role not found"
+   *     ),
+   *     @OA\Response(
+   *         response=422,
+   *         description="Validation error"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
    */
   public function update(RoleRequest $request, $id)
   {
@@ -141,7 +373,30 @@ class RoleController extends BaseController
   }
 
   /**
-   * Get all roles resource.
+   * Get all roles for dropdown selection.
+   * 
+   * @OA\Get(
+   *     path="/api/options/roles",
+   *     summary="Get all active roles for dropdown",
+   *     tags={"Role Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Response(
+   *         response=200,
+   *         description="List of active roles",
+   *         @OA\JsonContent(
+   *             type="array",
+   *             @OA\Items(
+   *                 @OA\Property(property="id", type="integer", example=1),
+   *                 @OA\Property(property="name", type="string", example="Admin"),
+   *                 @OA\Property(property="label", type="string", example="Admin")
+   *             )
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
    */
   public function getRoles() 
   {

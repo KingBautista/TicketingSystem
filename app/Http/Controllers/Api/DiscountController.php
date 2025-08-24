@@ -24,6 +24,40 @@ class DiscountController extends BaseController
         $this->messageService = $messageService;
     }
 
+    /**
+     * Store a newly created discount in storage.
+     * 
+     * @OA\Post(
+     *     path="/api/rate-management/discounts",
+     *     summary="Create a new discount",
+     *     tags={"Rate Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"discount_name", "discount_value", "discount_value_type"},
+     *             @OA\Property(property="discount_name", type="string", example="Student Discount", description="Discount name"),
+     *             @OA\Property(property="discount_value", type="number", format="float", example=20.00, description="Discount value"),
+     *             @OA\Property(property="discount_value_type", type="string", enum={"percentage", "fixed"}, example="percentage", description="Discount type"),
+     *             @OA\Property(property="description", type="string", example="Discount for students", description="Discount description"),
+     *             @OA\Property(property="status", type="string", example="Active", description="Discount status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Discount created successfully",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function store(DiscountRequest $request)
     {
         try {

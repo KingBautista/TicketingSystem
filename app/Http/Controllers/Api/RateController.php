@@ -21,6 +21,39 @@ class RateController extends BaseController
         parent::__construct($rateService, $messageService);
     }
 
+    /**
+     * Store a newly created rate in storage.
+     * 
+     * @OA\Post(
+     *     path="/api/rate-management/rates",
+     *     summary="Create a new rate",
+     *     tags={"Rate Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "price"},
+     *             @OA\Property(property="name", type="string", example="Regular Ticket", description="Rate name"),
+     *             @OA\Property(property="description", type="string", example="Standard admission ticket", description="Rate description"),
+     *             @OA\Property(property="price", type="number", format="float", example=500.00, description="Rate price"),
+     *             @OA\Property(property="status", type="string", example="Active", description="Rate status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Rate created successfully",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function store(RateRequest $request)
     {
         try {
@@ -69,6 +102,32 @@ class RateController extends BaseController
         }
     }
 
+    /**
+     * Get rates for dropdown selection.
+     * 
+     * @OA\Get(
+     *     path="/api/options/rates",
+     *     summary="Get active rates for dropdown",
+     *     tags={"Options"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of active rates",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Regular Ticket"),
+     *                 @OA\Property(property="price", type="number", format="float", example=500.00)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function getRatesForDropdown()
     {
         try {

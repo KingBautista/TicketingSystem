@@ -22,6 +22,38 @@ class PromoterController extends BaseController
         parent::__construct($service, $messageService);
     }
 
+    /**
+     * Store a newly created promoter in storage.
+     * 
+     * @OA\Post(
+     *     path="/api/promoter-management/promoters",
+     *     summary="Create a new promoter",
+     *     tags={"Promoter Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="John Doe", description="Promoter name"),
+     *             @OA\Property(property="description", type="string", example="Event promoter", description="Promoter description"),
+     *             @OA\Property(property="status", type="string", example="Active", description="Promoter status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Promoter created successfully",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function store(PromoterRequest $request)
     {
         try {
@@ -97,6 +129,32 @@ class PromoterController extends BaseController
         }
     }
 
+    /**
+     * Get promoters for dropdown selection.
+     * 
+     * @OA\Get(
+     *     path="/api/options/promoters",
+     *     summary="Get active promoters for dropdown",
+     *     tags={"Options"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of active promoters",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="label", type="string", example="John Doe")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function getPromotersForDropdown()
     {
         try {

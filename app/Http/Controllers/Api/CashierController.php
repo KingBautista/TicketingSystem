@@ -24,6 +24,37 @@ class CashierController extends Controller
         $this->service = $service;
     }
 
+    /**
+     * Open a new cashier session.
+     * 
+     * @OA\Post(
+     *     path="/api/cashier/open-session",
+     *     summary="Open a new cashier session",
+     *     tags={"Cashier Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"cash_on_hand"},
+     *             @OA\Property(property="cash_on_hand", type="number", format="float", example=1000.00, description="Starting cash amount"),
+     *             @OA\Property(property="notes", type="string", example="Morning shift", description="Session notes")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Cashier session opened successfully",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function openSession(CashierOpenRequest $request)
     {
         $data = $request->validated();
@@ -34,6 +65,37 @@ class CashierController extends Controller
         return new CashierSessionResource($session);
     }
 
+    /**
+     * Close the current cashier session.
+     * 
+     * @OA\Post(
+     *     path="/api/cashier/close-session",
+     *     summary="Close the current cashier session",
+     *     tags={"Cashier Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"closing_cash"},
+     *             @OA\Property(property="closing_cash", type="number", format="float", example=1500.00, description="Closing cash amount"),
+     *             @OA\Property(property="notes", type="string", example="End of shift", description="Closing notes")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cashier session closed successfully",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function closeSession(CashierCloseRequest $request)
     {
         $data = $request->validated();
@@ -44,6 +106,42 @@ class CashierController extends Controller
         return new CashierSessionResource($session);
     }
 
+    /**
+     * Create a new cashier transaction.
+     * 
+     * @OA\Post(
+     *     path="/api/cashier/transactions",
+     *     summary="Create a new cashier transaction",
+     *     tags={"Cashier Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"quantity", "rate_id", "total"},
+     *             @OA\Property(property="quantity", type="integer", example=2, description="Number of tickets"),
+     *             @OA\Property(property="rate_id", type="integer", example=1, description="Rate ID"),
+     *             @OA\Property(property="discount_id", type="integer", example=1, description="Discount ID (optional)"),
+     *             @OA\Property(property="promoter_id", type="integer", example=1, description="Promoter ID (optional)"),
+     *             @OA\Property(property="total", type="number", format="float", example=1000.00, description="Total amount"),
+     *             @OA\Property(property="payment_method", type="string", example="cash", description="Payment method"),
+     *             @OA\Property(property="notes", type="string", example="Customer request", description="Transaction notes")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Transaction created successfully",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function storeTransaction(CashierTransactionRequest $request)
     {
         $data = $request->validated();
@@ -54,6 +152,39 @@ class CashierController extends Controller
         return new CashierTransactionResource($transaction);
     }
 
+    /**
+     * Get tickets for a specific transaction.
+     * 
+     * @OA\Get(
+     *     path="/api/cashier/transactions/{transactionId}/tickets",
+     *     summary="Get tickets for a transaction",
+     *     tags={"Cashier Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="transactionId",
+     *         in="path",
+     *         description="Transaction ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of tickets for the transaction",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Transaction not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function tickets($transactionId)
     {
         $tickets = $this->service->getTickets($transactionId);

@@ -18,6 +18,9 @@ use App\Http\Controllers\Api\CashierController;
 use App\Http\Controllers\Api\ScanController;
 use App\Http\Controllers\Api\DashboardController;
 
+// Note: Swagger documentation is available at /docs (handled by L5-Swagger)
+// API documentation JSON is available at /docs (L5-Swagger route)
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -28,6 +31,14 @@ use App\Http\Controllers\Api\DashboardController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+// Public Authentication Routes
+Route::prefix('auth')->group(function () {
+    Route::post('/signup', [AuthController::class, 'signup']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/activate', [AuthController::class, 'activateUser']);
+    Route::post('/forgot-password', [AuthController::class, 'genTempPassword']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
 	// Validate password for current authenticated user

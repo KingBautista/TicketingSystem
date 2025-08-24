@@ -19,6 +19,40 @@ class VIPController extends BaseController
         parent::__construct($vipService, $messageService);
     }
 
+    /**
+     * Store a newly created VIP member in storage.
+     * 
+     * @OA\Post(
+     *     path="/api/vip-management/vips",
+     *     summary="Create a new VIP member",
+     *     tags={"VIP Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"card_number", "name", "validity_start", "validity_end"},
+     *             @OA\Property(property="card_number", type="string", example="1234567890", description="VIP card number (max 10 digits)"),
+     *             @OA\Property(property="name", type="string", example="John Doe", description="VIP member name"),
+     *             @OA\Property(property="validity_start", type="string", format="date", example="2024-01-01", description="Validity start date"),
+     *             @OA\Property(property="validity_end", type="string", format="date", example="2024-12-31", description="Validity end date"),
+     *             @OA\Property(property="status", type="string", example="Active", description="VIP status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="VIP member created successfully",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function store(VIPRequest $request)
     {
         try {
@@ -33,6 +67,51 @@ class VIPController extends BaseController
         }
     }
 
+    /**
+     * Update the specified VIP member in storage.
+     * 
+     * @OA\Put(
+     *     path="/api/vip-management/vips/{id}",
+     *     summary="Update an existing VIP member",
+     *     tags={"VIP Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="VIP member ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"card_number", "name", "validity_start", "validity_end"},
+     *             @OA\Property(property="card_number", type="string", example="1234567890", description="VIP card number (max 10 digits)"),
+     *             @OA\Property(property="name", type="string", example="John Doe", description="VIP member name"),
+     *             @OA\Property(property="validity_start", type="string", format="date", example="2024-01-01", description="Validity start date"),
+     *             @OA\Property(property="validity_end", type="string", format="date", example="2024-12-31", description="Validity end date"),
+     *             @OA\Property(property="status", type="string", example="Active", description="VIP status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="VIP member updated successfully",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="VIP member not found"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function update(VIPRequest $request, $id)
     {
         try {
@@ -49,6 +128,28 @@ class VIPController extends BaseController
         }
     }
 
+    /**
+     * Get expiring VIP members.
+     * 
+     * @OA\Get(
+     *     path="/api/vip-management/vips/expiring",
+     *     summary="Get VIP members expiring soon",
+     *     tags={"VIP Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of expiring VIP members",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function expiring()
     {
         try {

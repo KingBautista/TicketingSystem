@@ -7,6 +7,29 @@ use App\Traits\Auditable;
 use Illuminate\Http\Request;
 use App\Services\MessageService;
 
+/**
+ * @OA\Info(
+ *     title="Ticketing System API",
+ *     version="1.0.0",
+ *     description="API documentation for Ticketing System",
+ *     @OA\Contact(
+ *         email="support@ticketingsystem.com"
+ *     )
+ * )
+ * 
+ * @OA\Server(
+ *     url=L5_SWAGGER_CONST_HOST,
+ *     description="API Server"
+ * )
+ * 
+ * @OA\SecurityScheme(
+ *     securityScheme="bearerAuth",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT"
+ * )
+ */
+
 class BaseController extends Controller
 {
   use Auditable;
@@ -35,7 +58,9 @@ class BaseController extends Controller
     // }
   }
 
-  // Common method to handle showing resources
+  /**
+   * Display the specified resource.
+   */
   public function show($id)
   {
     try {
@@ -47,7 +72,9 @@ class BaseController extends Controller
     }
   }
 
-  // Common method to handle destroying resources
+  /**
+   * Remove the specified resource from storage (soft delete).
+   */
   public function destroy($id)
   {
     try {

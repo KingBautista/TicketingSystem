@@ -21,6 +21,37 @@ class AuditTrailController extends BaseController
         parent::__construct($auditService, $messageService);
     }
 
+    /**
+     * Export audit trail data.
+     * 
+     * @OA\Post(
+     *     path="/api/audit-trail/export",
+     *     summary="Export audit trail data",
+     *     tags={"Audit Trail"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="format", type="string", example="csv", description="Export format (csv, excel, pdf)"),
+     *             @OA\Property(property="search", type="string", example="user login", description="Search term"),
+     *             @OA\Property(property="module", type="string", example="User Management", description="Module filter"),
+     *             @OA\Property(property="action", type="string", example="CREATE", description="Action filter"),
+     *             @OA\Property(property="user_id", type="integer", example=1, description="User ID filter"),
+     *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Start date"),
+     *             @OA\Property(property="end_date", type="string", format="date", example="2024-12-31", description="End date")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Audit trail exported successfully",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function export(Request $request)
     {
         try {
@@ -57,6 +88,28 @@ class AuditTrailController extends BaseController
         }
     }
 
+    /**
+     * Get available audit trail modules.
+     * 
+     * @OA\Get(
+     *     path="/api/audit-trail/modules",
+     *     summary="Get available audit trail modules",
+     *     tags={"Audit Trail"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of available modules",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
     public function getModules()
     {
         try {
