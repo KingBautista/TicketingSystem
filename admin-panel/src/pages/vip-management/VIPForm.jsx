@@ -11,6 +11,7 @@ export default function VIPForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toastAction = useRef();
+  const cardNumberRef = useRef();
   const [buttonText, setButtonText] = useState('Enroll VIP');
   const [vip, setVIP] = useState({
     id: null,
@@ -41,6 +42,13 @@ export default function VIPForm() {
           toastAction.current.showError(errors.response);
           setIsLoading(false);
         });
+    } else {
+      // Focus on card number field when creating new VIP
+      setTimeout(() => {
+        if (cardNumberRef.current) {
+          cardNumberRef.current.focus();
+        }
+      }, 100);
     }
   }, [id]);
 
@@ -65,10 +73,23 @@ export default function VIPForm() {
       });
   };
 
-  // Simulate card reader (for demo, replace with real reader logic)
-  const handleCardRead = () => {
-    // Simulate reading a card number
-    setVIP({ ...vip, card_number: 'CARD-' + Math.floor(Math.random() * 1000000) });
+  // Handle delete
+  const handleDelete = () => {
+    if (!vip.id) return;
+    
+    if (window.confirm('Are you sure you want to delete this VIP?')) {
+      setIsLoading(true);
+      axiosClient.delete(`/vip-management/vips/${vip.id}`)
+        .then(() => {
+          toastAction.current.showToast('VIP has been deleted.', 'success');
+          setIsLoading(false);
+          setTimeout(() => navigate('/vip-management/vips'), 2000);
+        })
+        .catch((errors) => {
+          toastAction.current.showError(errors.response);
+          setIsLoading(false);
+        });
+    }
   };
 
   return (
@@ -80,6 +101,60 @@ export default function VIPForm() {
           {!vip.id && <p className="tip-message">Enroll a new VIP using the MIFARE Card Reader.</p>}
         </div>
         <div className="card-body">
+          <Field
+            label="Card Number"
+            required={true}
+            inputComponent={
+              <input
+                ref={cardNumberRef}
+                className="form-control"
+                type="text"
+                value={vip.card_number}
+                onChange={ev => {
+                  const value = ev.target.value.replace(/\D/g, ''); // Remove non-digits
+                  if (value.length <= 10) { // Limit to 10 characters
+                    setVIP({ ...vip, card_number: value });
+                  }
+                }}
+                maxLength={10}
+                pattern="[0-9]*"
+                inputMode="numeric"
+                required
+              />
+            }
+            labelClass="col-sm-12 col-md-3"
+            inputClass="col-sm-12 col-md-9"
+          />
+          <Field
+            label="Validity Start"
+            required={true}
+            inputComponent={
+              <input
+                className="form-control"
+                type="date"
+                value={vip.validity_start}
+                onChange={ev => setVIP({ ...vip, validity_start: ev.target.value })}
+                required
+              />
+            }
+            labelClass="col-sm-12 col-md-3"
+            inputClass="col-sm-12 col-md-9"
+          />
+          <Field
+            label="Validity End"
+            required={true}
+            inputComponent={
+              <input
+                className="form-control"
+                type="date"
+                value={vip.validity_end}
+                onChange={ev => setVIP({ ...vip, validity_end: ev.target.value })}
+                required
+              />
+            }
+            labelClass="col-sm-12 col-md-3"
+            inputClass="col-sm-12 col-md-9"
+          />
           <Field
             label="Name"
             required={true}
@@ -135,57 +210,6 @@ export default function VIPForm() {
             inputClass="col-sm-12 col-md-9"
           />
           <Field
-            label="Card Number"
-            required={true}
-            inputComponent={
-              <div className="input-group">
-                <input
-                  className="form-control"
-                  type="text"
-                  value={vip.card_number}
-                  onChange={ev => setVIP({ ...vip, card_number: DOMPurify.sanitize(ev.target.value) })}
-                  required
-                  readOnly
-                />
-                <button type="button" className="btn btn-outline-secondary" onClick={handleCardRead}>
-                  <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />Read Card
-                </button>
-              </div>
-            }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
-          />
-          <Field
-            label="Validity Start"
-            required={true}
-            inputComponent={
-              <input
-                className="form-control"
-                type="date"
-                value={vip.validity_start}
-                onChange={ev => setVIP({ ...vip, validity_start: ev.target.value })}
-                required
-              />
-            }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
-          />
-          <Field
-            label="Validity End"
-            required={true}
-            inputComponent={
-              <input
-                className="form-control"
-                type="date"
-                value={vip.validity_end}
-                onChange={ev => setVIP({ ...vip, validity_end: ev.target.value })}
-                required
-              />
-            }
-            labelClass="col-sm-12 col-md-3"
-            inputClass="col-sm-12 col-md-9"
-          />
-          <Field
             label="Active"
             inputComponent={
               <input
@@ -199,16 +223,29 @@ export default function VIPForm() {
             inputClass="col-sm-12 col-md-9"
           />
         </div>
-        <div className="card-footer">
-          <Link type="button" to="/vip-management/vips" className="btn btn-secondary">
-            <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
-            Cancel
-          </Link> &nbsp;
-          <button type="submit" className="btn btn-primary">
-            <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
-            {buttonText} &nbsp;
-            {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
-          </button>
+        <div className="card-footer d-flex justify-content-between">
+          <div>
+            <Link type="button" to="/vip-management/vips" className="btn btn-secondary">
+              <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
+              Cancel
+            </Link> &nbsp;
+            <button type="submit" className="btn btn-primary">
+              <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
+              {buttonText} &nbsp;
+              {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
+            </button>
+          </div>
+          {vip.id && (
+            <button 
+              type="button" 
+              className="btn btn-danger" 
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              <FontAwesomeIcon icon={solidIconMap.trash} className="me-2" />
+              Delete
+            </button>
+          )}
         </div>
       </form>
     </div>

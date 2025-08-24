@@ -57,6 +57,25 @@ export default function NavigationForm() {
       });
   };
 
+  // Handle delete
+  const handleDelete = () => {
+    if (!navigation.id) return;
+    
+    if (window.confirm('Are you sure you want to delete this navigation?')) {
+      setIsLoading(true);
+      axiosClient.delete(`/system-settings/navigation/${navigation.id}`)
+        .then(() => {
+          toastAction.current.showToast('Navigation has been deleted.', 'success');
+          setIsLoading(false);
+          setTimeout(() => navigate('/system-settings/navigation'), 2000);
+        })
+        .catch((errors) => {
+          toastAction.current.showError(errors.response);
+          setIsLoading(false);
+        });
+    }
+  };
+
   useEffect(() => {
     if (id) {
       setButtonText('Save');
@@ -175,11 +194,23 @@ export default function NavigationForm() {
             inputClass="col-sm-12 col-md-9"
           />
         </div>
-        <div className="card-footer">
-          <Link type="button" to="/system-settings/navigation" className="btn btn-secondary">Cancel</Link>&nbsp;
-          <button type="submit" className="btn btn-primary">
-            {buttonText} {isLoading && <span className="spinner-border spinner-border-sm ml-1" />}
-          </button>
+        <div className="card-footer d-flex justify-content-between">
+          <div>
+            <Link type="button" to="/system-settings/navigation" className="btn btn-secondary">Cancel</Link>&nbsp;
+            <button type="submit" className="btn btn-primary">
+              {buttonText} {isLoading && <span className="spinner-border spinner-border-sm ml-1" />}
+            </button>
+          </div>
+          {navigation.id && (
+            <button 
+              type="button" 
+              className="btn btn-danger" 
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              Delete
+            </button>
+          )}
         </div>
       </form>
     </div>

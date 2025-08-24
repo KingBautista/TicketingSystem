@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { Link } from "react-router-dom";
 import axiosClient from "../../axios-client";
 import DataTable from "../../components/table/DataTable";
@@ -65,7 +65,11 @@ export default function Navigations() {
   const toastAction = useRef();
 
   const handleSearch = () => {
-    setParams({ ...params, search: searchRef.current.value });
+    const searchValue = searchRef.current.value;
+    setParams(prevParams => ({
+      ...prevParams,
+      search: searchValue,
+    }));
   };
 
   const handleFilterChange = (key, value) => {
@@ -76,12 +80,28 @@ export default function Navigations() {
     }
   };
 
+  // Sync search input with params
+  const syncSearchInput = () => {
+    if (searchRef.current && searchRef.current.value !== params.search) {
+      searchRef.current.value = params.search || '';
+    }
+  };
+
+  // Effect to sync search input when params change
+  useEffect(() => {
+    syncSearchInput();
+  }, [params.search]);
+
   const clearFilters = () => {
     setParams({
       search: '',
       active: '',
       show_in_menu: '',
     });
+    // Clear search input
+    if (searchRef.current) {
+      searchRef.current.value = '';
+    }
     // Close modal after clearing
     setShowFilterModal(false);
   };
@@ -305,8 +325,14 @@ export default function Navigations() {
                               type="text" 
                               className="form-control" 
                               placeholder="Search navigation..."
-                              value={params.search}
-                              onChange={e => handleFilterChange('search', e.target.value)}
+                              value={params.search || ''}
+                              onChange={e => {
+                                handleFilterChange('search', e.target.value);
+                                // Update the main search box as well
+                                if (searchRef.current) {
+                                  searchRef.current.value = e.target.value;
+                                }
+                              }}
                               onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
                                   handleSearch();

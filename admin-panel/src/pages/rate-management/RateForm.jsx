@@ -59,6 +59,25 @@ export default function RateForm() {
       });
   };
 
+  // Handle delete
+  const handleDelete = () => {
+    if (!rate.id) return;
+    
+    if (window.confirm('Are you sure you want to delete this rate?')) {
+      setIsLoading(true);
+      axiosClient.delete(`/rate-management/rates/${rate.id}`)
+        .then(() => {
+          toastAction.current.showToast('Rate has been deleted.', 'success');
+          setIsLoading(false);
+          setTimeout(() => navigate('/rate-management/rates'), 2000);
+        })
+        .catch((errors) => {
+          toastAction.current.showError(errors.response);
+          setIsLoading(false);
+        });
+    }
+  };
+
   return (
     <>
     <div className="card">
@@ -128,16 +147,29 @@ export default function RateForm() {
             inputClass="col-12 col-md-9"
           />
         </div>
-        <div className="card-footer">
-          <Link type="button" to="/rate-management/rates" className="btn btn-secondary">
-            <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
-            Cancel
-          </Link> &nbsp;
-          <button type="submit" className="btn btn-primary">
-            <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
-            {buttonText} &nbsp;
-            {isLoading && <span className="spinner-border ml-1" role="status"></span>}
-          </button>
+        <div className="card-footer d-flex justify-content-between">
+          <div>
+            <Link type="button" to="/rate-management/rates" className="btn btn-secondary">
+              <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
+              Cancel
+            </Link> &nbsp;
+            <button type="submit" className="btn btn-primary">
+              <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
+              {buttonText} &nbsp;
+              {isLoading && <span className="spinner-border ml-1" role="status"></span>}
+            </button>
+          </div>
+          {rate.id && (
+            <button 
+              type="button" 
+              className="btn btn-danger" 
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              <FontAwesomeIcon icon={solidIconMap.trash} className="me-2" />
+              Delete
+            </button>
+          )}
         </div>
       </form>
     </div>

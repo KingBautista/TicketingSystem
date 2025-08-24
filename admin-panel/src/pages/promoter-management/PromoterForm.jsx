@@ -66,6 +66,25 @@ export default function PromoterForm() {
       });
   };
 
+  // Handle delete
+  const handleDelete = () => {
+    if (!promoter.id) return;
+    
+    if (window.confirm('Are you sure you want to delete this promoter?')) {
+      setIsLoading(true);
+      axiosClient.delete(`/promoter-management/promoters/${promoter.id}`)
+        .then(() => {
+          toastAction.current.showToast('Promoter has been deleted.', 'success');
+          setIsLoading(false);
+          setTimeout(() => navigate('/promoter-management/promoters'), 2000);
+        })
+        .catch((errors) => {
+          toastAction.current.showError(errors.response);
+          setIsLoading(false);
+        });
+    }
+  };
+
   // Add schedule date
   const addSchedule = () => {
     if (!scheduleDate) return;
@@ -187,16 +206,29 @@ export default function PromoterForm() {
             </ul>
           </div>
         </div>
-        <div className="card-footer">
-          <Link type="button" to="/promoter-management/promoters" className="btn btn-secondary">
-            <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
-            Cancel
-          </Link> &nbsp;
-          <button type="submit" className="btn btn-primary">
-            <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
-            {buttonText} &nbsp;
-            {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
-          </button>
+        <div className="card-footer d-flex justify-content-between">
+          <div>
+            <Link type="button" to="/promoter-management/promoters" className="btn btn-secondary">
+              <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
+              Cancel
+            </Link> &nbsp;
+            <button type="submit" className="btn btn-primary">
+              <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
+              {buttonText} &nbsp;
+              {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
+            </button>
+          </div>
+          {promoter.id && (
+            <button 
+              type="button" 
+              className="btn btn-danger" 
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              <FontAwesomeIcon icon={solidIconMap.trash} className="me-2" />
+              Delete
+            </button>
+          )}
         </div>
       </form>
     </div>

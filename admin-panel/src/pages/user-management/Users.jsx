@@ -103,9 +103,10 @@ export default function Users() {
 
   // Handle search action
   const handleSearch = () => {
+    const searchValue = searchRef.current.value;
     setParams(prevParams => ({
       ...prevParams,
-      search: searchRef.current.value,
+      search: searchValue,
     }));
   };
 
@@ -117,12 +118,28 @@ export default function Users() {
     }
   };
 
+  // Sync search input with params
+  const syncSearchInput = () => {
+    if (searchRef.current && searchRef.current.value !== params.search) {
+      searchRef.current.value = params.search || '';
+    }
+  };
+
+  // Effect to sync search input when params change
+  useEffect(() => {
+    syncSearchInput();
+  }, [params.search]);
+
   const clearFilters = () => {
     setParams({
       search: '',
       user_role: '',
       user_status: '',
     });
+    // Clear search input
+    if (searchRef.current) {
+      searchRef.current.value = '';
+    }
     // Close modal after clearing
     setShowFilterModal(false);
   };
@@ -431,8 +448,14 @@ export default function Users() {
                               type="text" 
                               className="form-control" 
                               placeholder="Search users..."
-                              value={params.search}
-                              onChange={e => handleFilterChange('search', e.target.value)}
+                              value={params.search || ''}
+                              onChange={e => {
+                                handleFilterChange('search', e.target.value);
+                                // Update the main search box as well
+                                if (searchRef.current) {
+                                  searchRef.current.value = e.target.value;
+                                }
+                              }}
                               onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
                                   handleSearch();

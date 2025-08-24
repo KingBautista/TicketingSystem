@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { Link } from "react-router-dom";
 import axiosClient from "../../axios-client";
 import DataTable from "../../components/table/DataTable";
@@ -68,15 +68,20 @@ export default function Roles() {
 
     const url = tab === 'trash' ? '/user-management/archived/roles' : '/user-management/roles';
 
-    searchRef.current.value = '';
+    // Clear search and params when switching tabs
+    setParams({ search: '', active: '' });
+    if (searchRef.current) {
+      searchRef.current.value = '';
+    }
     tableRef.current.clearPage();
     setOptions(prevOptions => ({ ...prevOptions, dataSource: url }));
   };
 
   const handleSearch = () => {
+    const searchValue = searchRef.current.value;
     setParams(prevParams => ({
       ...prevParams,
-      search: searchRef.current.value,
+      search: searchValue,
     }));
   };
 
@@ -85,6 +90,13 @@ export default function Roles() {
     // Auto-trigger search for non-search fields
     if (key !== 'search') {
       setTimeout(() => handleSearch(), 100);
+    }
+  };
+
+  // Sync search input with params
+  const syncSearchInput = () => {
+    if (searchRef.current && searchRef.current.value !== params.search) {
+      searchRef.current.value = params.search || '';
     }
   };
 
@@ -100,6 +112,23 @@ export default function Roles() {
     // Close modal after clearing
     setShowFilterModal(false);
   };
+
+  // Effect to sync search input when params change
+  useEffect(() => {
+    syncSearchInput();
+  }, [params.search]);
+
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (params.search !== undefined) {
+        // Trigger search when search param changes
+        tableRef.current?.reload();
+      }
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [params.search]);
 
   const toggleFilterModal = () => {
     setShowFilterModal(!showFilterModal);
@@ -322,7 +351,13 @@ export default function Roles() {
                               className="form-control" 
                               placeholder="Search roles..."
                               value={params.search || ''}
-                              onChange={e => handleFilterChange('search', e.target.value)}
+                              onChange={e => {
+                                handleFilterChange('search', e.target.value);
+                                // Update the main search box as well
+                                if (searchRef.current) {
+                                  searchRef.current.value = e.target.value;
+                                }
+                              }}
                               onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
                                   handleSearch();

@@ -272,6 +272,25 @@ export default function RoleForm() {
     });
   };
 
+  // Handle delete
+  const handleDelete = () => {
+    if (!role.id) return;
+    
+    if (window.confirm('Are you sure you want to delete this role?')) {
+      setIsLoading(true);
+      axiosClient.delete(`/user-management/roles/${role.id}`)
+        .then(() => {
+          toastAction.current.showToast('Role has been deleted.', 'success');
+          setIsLoading(false);
+          setTimeout(() => navigate('/user-management/roles'), 2000);
+        })
+        .catch((errors) => {
+          toastAction.current.showError(errors.response);
+          setIsLoading(false);
+        });
+    }
+  };
+
   useEffect(() => {
     // Get navigations
     axiosClient.get(`/options/routes`)
@@ -366,16 +385,29 @@ export default function RoleForm() {
             inputClass="col-sm-12 col-md-9"
           />
         </div>
-        <div className="card-footer">
-          <Link type="button" to="/user-management/roles" className="btn btn-secondary">
-            <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
-            Cancel
-          </Link> &nbsp;
-          <button type="submit" className="btn btn-primary">
-            <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
-            {buttonText} &nbsp;
-            {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
-          </button>
+        <div className="card-footer d-flex justify-content-between">
+          <div>
+            <Link type="button" to="/user-management/roles" className="btn btn-secondary">
+              <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
+              Cancel
+            </Link> &nbsp;
+            <button type="submit" className="btn btn-primary">
+              <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
+              {buttonText} &nbsp;
+              {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
+            </button>
+          </div>
+          {role.id && (
+            <button 
+              type="button" 
+              className="btn btn-danger" 
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              <FontAwesomeIcon icon={solidIconMap.trash} className="me-2" />
+              Delete
+            </button>
+          )}
         </div>
       </form>
     </div>

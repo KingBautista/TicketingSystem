@@ -95,6 +95,25 @@ export default function UserForm() {
       });
   };
 
+  // Handle delete
+  const handleDelete = () => {
+    if (!user.id) return;
+    
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      setIsLoading(true);
+      axiosClient.delete(`/user-management/users/${user.id}`)
+        .then(() => {
+          toastAction.current.showToast('User has been deleted.', 'success');
+          setIsLoading(false);
+          setTimeout(() => navigate('/user-management/users'), 2000);
+        })
+        .catch((errors) => {
+          toastAction.current.showError(errors.response);
+          setIsLoading(false);
+        });
+    }
+  };
+
   return (
     <>
     <div className="card">
@@ -223,16 +242,29 @@ export default function UserForm() {
             inputClass="col-sm-12 col-md-9"
           />
         </div>
-        <div className="card-footer">
-          <Link type="button" to="/user-management/users" className="btn btn-secondary">
-            <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
-            Cancel
-          </Link> &nbsp;
-          <button type="submit" className="btn btn-primary">
-            <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
-            {buttonText} &nbsp;
-            {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
-          </button>
+        <div className="card-footer d-flex justify-content-between">
+          <div>
+            <Link type="button" to="/user-management/users" className="btn btn-secondary">
+              <FontAwesomeIcon icon={solidIconMap.arrowleft} className="me-2" />
+              Cancel
+            </Link> &nbsp;
+            <button type="submit" className="btn btn-primary">
+              <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
+              {buttonText} &nbsp;
+              {isLoading && <span className="spinner-border spinner-border-sm ml-1" role="status"></span>}
+            </button>
+          </div>
+          {user.id && (
+            <button 
+              type="button" 
+              className="btn btn-danger" 
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              <FontAwesomeIcon icon={solidIconMap.trash} className="me-2" />
+              Delete
+            </button>
+          )}
         </div>
       </form>
     </div>
