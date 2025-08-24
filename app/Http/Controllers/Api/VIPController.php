@@ -14,9 +14,140 @@ class VIPController extends BaseController
 {
     use Auditable;
 
-    public function __construct(VIPService $vipService, MessageService $messageService)
+    	public function __construct(VIPService $vipService, MessageService $messageService)
     {
         parent::__construct($vipService, $messageService);
+    }
+
+    /**
+     * Display a listing of VIP members.
+     * 
+     * @OA\Get(
+     *     path="/api/vip-management/vips",
+     *     summary="Get list of VIP members",
+     *     tags={"VIP Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search term",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="query",
+     *         description="Order by field",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         description="Sort direction (asc/desc)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error"
+     *     )
+     * )
+     */
+    public function index()
+    {
+        return parent::index();
+    }
+
+    /**
+     * Display the specified VIP member.
+     * 
+     * @OA\Get(
+     *     path="/api/vip-management/vips/{id}",
+     *     summary="Get a specific VIP member",
+     *     tags={"VIP Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="VIP member ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="VIP member not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function show($id)
+    {
+        return parent::show($id);
+    }
+
+    /**
+     * Remove the specified VIP member from storage (soft delete).
+     * 
+     * @OA\Delete(
+     *     path="/api/vip-management/vips/{id}",
+     *     summary="Delete a VIP member (soft delete)",
+     *     tags={"VIP Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="VIP member ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="VIP member moved to trash",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="VIP member has been moved to trash.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="VIP member not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function destroy($id)
+    {
+        return parent::destroy($id);
     }
 
     /**

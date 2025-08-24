@@ -18,10 +18,141 @@ class DiscountController extends BaseController
     protected $service;
     protected $messageService;
 
-    public function __construct(DiscountService $service, MessageService $messageService)
+    	public function __construct(DiscountService $service, MessageService $messageService)
     {
         $this->service = $service;
         $this->messageService = $messageService;
+    }
+
+    /**
+     * Display a listing of discounts.
+     * 
+     * @OA\Get(
+     *     path="/api/rate-management/discounts",
+     *     summary="Get list of discounts",
+     *     tags={"Rate Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search term",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="query",
+     *         description="Order by field",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         description="Sort direction (asc/desc)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error"
+     *     )
+     * )
+     */
+    public function index()
+    {
+        return parent::index();
+    }
+
+    /**
+     * Display the specified discount.
+     * 
+     * @OA\Get(
+     *     path="/api/rate-management/discounts/{id}",
+     *     summary="Get a specific discount",
+     *     tags={"Rate Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Discount ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Discount not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function show($id)
+    {
+        return parent::show($id);
+    }
+
+    /**
+     * Remove the specified discount from storage (soft delete).
+     * 
+     * @OA\Delete(
+     *     path="/api/rate-management/discounts/{id}",
+     *     summary="Delete a discount (soft delete)",
+     *     tags={"Rate Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Discount ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Discount moved to trash",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Discount has been moved to trash.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Discount not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function destroy($id)
+    {
+        return parent::destroy($id);
     }
 
     /**

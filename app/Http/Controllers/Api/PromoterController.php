@@ -17,9 +17,140 @@ class PromoterController extends BaseController
 {
     use Auditable;
 
-    public function __construct(PromoterService $service, MessageService $messageService)
+    	public function __construct(PromoterService $service, MessageService $messageService)
     {
         parent::__construct($service, $messageService);
+    }
+
+    /**
+     * Display a listing of promoters.
+     * 
+     * @OA\Get(
+     *     path="/api/promoter-management/promoters",
+     *     summary="Get list of promoters",
+     *     tags={"Promoter Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search term",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="query",
+     *         description="Order by field",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         description="Sort direction (asc/desc)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error"
+     *     )
+     * )
+     */
+    public function index()
+    {
+        return parent::index();
+    }
+
+    /**
+     * Display the specified promoter.
+     * 
+     * @OA\Get(
+     *     path="/api/promoter-management/promoters/{id}",
+     *     summary="Get a specific promoter",
+     *     tags={"Promoter Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Promoter ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Promoter not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function show($id)
+    {
+        return parent::show($id);
+    }
+
+    /**
+     * Remove the specified promoter from storage (soft delete).
+     * 
+     * @OA\Delete(
+     *     path="/api/promoter-management/promoters/{id}",
+     *     summary="Delete a promoter (soft delete)",
+     *     tags={"Promoter Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Promoter ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Promoter moved to trash",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Promoter has been moved to trash.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Promoter not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function destroy($id)
+    {
+        return parent::destroy($id);
     }
 
     /**
@@ -129,32 +260,32 @@ class PromoterController extends BaseController
         }
     }
 
-    /**
-     * Get promoters for dropdown selection.
-     * 
-     * @OA\Get(
-     *     path="/api/options/promoters",
-     *     summary="Get active promoters for dropdown",
-     *     tags={"Options"},
-     *     security={{"bearerAuth": {}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="List of active promoters",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="John Doe"),
-     *                 @OA\Property(property="label", type="string", example="John Doe")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthenticated"
-     *     )
-     * )
-     */
+      /**
+   * Get promoters for dropdown selection.
+   * 
+   * @OA\Get(
+   *     path="/api/options/promoters",
+   *     summary="Get active promoters for dropdown",
+   *     tags={"Promoter Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Response(
+   *         response=200,
+   *         description="List of active promoters",
+   *         @OA\JsonContent(
+   *             type="array",
+   *             @OA\Items(
+   *                 @OA\Property(property="id", type="integer", example=1),
+   *                 @OA\Property(property="name", type="string", example="John Doe"),
+   *                 @OA\Property(property="label", type="string", example="John Doe")
+   *             )
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
     public function getPromotersForDropdown()
     {
         try {

@@ -130,7 +130,7 @@ The API uses **Bearer Token Authentication** with Laravel Sanctum. All protected
 - `GET /api/vip-management/vips/{id}` - Get VIP member details
 - `POST /api/vip-management/vips` - Create VIP member
 - `PUT /api/vip-management/vips/{id}` - Update VIP member
-- `DELETE /api/vip-management/vips/{id}` - Delete VIP member
+- `DELETE /api/vip-management/vips/{id}` - Delete VIP member (soft delete)
 - `GET /api/vip-management/vips/expiring` - Get expiring VIP members
 
 ### Rate Management
@@ -138,7 +138,7 @@ The API uses **Bearer Token Authentication** with Laravel Sanctum. All protected
 - `GET /api/rate-management/rates/{id}` - Get rate details
 - `POST /api/rate-management/rates` - Create rate
 - `PUT /api/rate-management/rates/{id}` - Update rate
-- `DELETE /api/rate-management/rates/{id}` - Delete rate
+- `DELETE /api/rate-management/rates/{id}` - Delete rate (soft delete)
 
 **Resources:**
 - `GET /api/options/rates` - Get rates for dropdown
@@ -148,14 +148,14 @@ The API uses **Bearer Token Authentication** with Laravel Sanctum. All protected
 - `GET /api/rate-management/discounts/{id}` - Get discount details
 - `POST /api/rate-management/discounts` - Create discount
 - `PUT /api/rate-management/discounts/{id}` - Update discount
-- `DELETE /api/rate-management/discounts/{id}` - Delete discount
+- `DELETE /api/rate-management/discounts/{id}` - Delete discount (soft delete)
 
 ### Promoter Management
 - `GET /api/promoter-management/promoters` - List promoters
 - `GET /api/promoter-management/promoters/{id}` - Get promoter details
 - `POST /api/promoter-management/promoters` - Create promoter
 - `PUT /api/promoter-management/promoters/{id}` - Update promoter
-- `DELETE /api/promoter-management/promoters/{id}` - Delete promoter
+- `DELETE /api/promoter-management/promoters/{id}` - Delete promoter (soft delete)
 
 **Resources:**
 - `GET /api/options/promoters` - Get promoters for dropdown
@@ -165,7 +165,7 @@ The API uses **Bearer Token Authentication** with Laravel Sanctum. All protected
 - `GET /api/system-settings/navigation/{id}` - Get navigation details
 - `POST /api/system-settings/navigation` - Create navigation item
 - `PUT /api/system-settings/navigation/{id}` - Update navigation item
-- `DELETE /api/system-settings/navigation/{id}` - Delete navigation item
+- `DELETE /api/system-settings/navigation/{id}` - Delete navigation item (soft delete)
 
 **Resources:**
 - `GET /api/options/navigations` - Get navigations for dropdown
@@ -199,17 +199,6 @@ The API uses **Bearer Token Authentication** with Laravel Sanctum. All protected
 ### Scan Management
 - `POST /api/scan` - Store scan data
 - `GET /api/scan/latest` - Get latest scan data
-
-### Content Management
-- `GET /api/content-management/media-library` - List media files
-- `POST /api/content-management/media-library` - Upload media files
-- `GET /api/content-management/media-library/{id}` - Get media file details
-- `PUT /api/content-management/media-library/{id}` - Update media file
-- `DELETE /api/content-management/media-library/{id}` - Delete media file
-- `POST /api/content-management/media-library/bulk/delete` - Bulk delete media files
-
-**Resources:**
-- `GET /api/options/dates` - Get media date folders
 
 ### Global Resources
 - `GET /api/options/routes` - Get system routes

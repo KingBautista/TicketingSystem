@@ -16,9 +16,140 @@ class RateController extends BaseController
 {
     use Auditable;
 
-    public function __construct(RateService $rateService, MessageService $messageService)
+    	public function __construct(RateService $rateService, MessageService $messageService)
     {
         parent::__construct($rateService, $messageService);
+    }
+
+    /**
+     * Display a listing of rates.
+     * 
+     * @OA\Get(
+     *     path="/api/rate-management/rates",
+     *     summary="Get list of rates",
+     *     tags={"Rate Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search term",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=10)
+     *     ),
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="query",
+     *         description="Order by field",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort",
+     *         in="query",
+     *         description="Sort direction (asc/desc)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Server error"
+     *     )
+     * )
+     */
+    public function index()
+    {
+        return parent::index();
+    }
+
+    /**
+     * Display the specified rate.
+     * 
+     * @OA\Get(
+     *     path="/api/rate-management/rates/{id}",
+     *     summary="Get a specific rate",
+     *     tags={"Rate Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Rate ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(type="object")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Rate not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function show($id)
+    {
+        return parent::show($id);
+    }
+
+    /**
+     * Remove the specified rate from storage (soft delete).
+     * 
+     * @OA\Delete(
+     *     path="/api/rate-management/rates/{id}",
+     *     summary="Delete a rate (soft delete)",
+     *     tags={"Rate Management"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Rate ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Rate moved to trash",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Rate has been moved to trash.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Rate not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function destroy($id)
+    {
+        return parent::destroy($id);
     }
 
     /**
@@ -102,32 +233,32 @@ class RateController extends BaseController
         }
     }
 
-    /**
-     * Get rates for dropdown selection.
-     * 
-     * @OA\Get(
-     *     path="/api/options/rates",
-     *     summary="Get active rates for dropdown",
-     *     tags={"Options"},
-     *     security={{"bearerAuth": {}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="List of active rates",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="Regular Ticket"),
-     *                 @OA\Property(property="price", type="number", format="float", example=500.00)
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthenticated"
-     *     )
-     * )
-     */
+      /**
+   * Get rates for dropdown selection.
+   * 
+   * @OA\Get(
+   *     path="/api/options/rates",
+   *     summary="Get active rates for dropdown",
+   *     tags={"Rate Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Response(
+   *         response=200,
+   *         description="List of active rates",
+   *         @OA\JsonContent(
+   *             type="array",
+   *             @OA\Items(
+   *                 @OA\Property(property="id", type="integer", example=1),
+   *                 @OA\Property(property="name", type="string", example="Regular Ticket"),
+   *                 @OA\Property(property="price", type="number", format="float", example=500.00)
+   *             )
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
     public function getRatesForDropdown()
     {
         try {

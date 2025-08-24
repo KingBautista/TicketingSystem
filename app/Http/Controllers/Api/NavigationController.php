@@ -12,10 +12,141 @@ class NavigationController extends BaseController
 {
   use Auditable;
 
-  public function __construct(NavigationService $navigationService, MessageService $messageService)
+  	public function __construct(NavigationService $navigationService, MessageService $messageService)
   {
     // Call the parent constructor to initialize services
     parent::__construct($navigationService, $messageService);
+  }
+
+  /**
+   * Display a listing of navigation items.
+   * 
+   * @OA\Get(
+   *     path="/api/system-settings/navigation",
+   *     summary="Get list of navigation items",
+   *     tags={"System Settings"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="search",
+   *         in="query",
+   *         description="Search term",
+   *         required=false,
+   *         @OA\Schema(type="string")
+   *     ),
+   *     @OA\Parameter(
+   *         name="per_page",
+   *         in="query",
+   *         description="Number of items per page",
+   *         required=false,
+   *         @OA\Schema(type="integer", default=10)
+   *     ),
+   *     @OA\Parameter(
+   *         name="order",
+   *         in="query",
+   *         description="Order by field",
+   *         required=false,
+   *         @OA\Schema(type="string")
+   *     ),
+   *     @OA\Parameter(
+   *         name="sort",
+   *         in="query",
+   *         description="Sort direction (asc/desc)",
+   *         required=false,
+   *         @OA\Schema(type="string", enum={"asc", "desc"})
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Successful operation",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+   *             @OA\Property(property="meta", type="object")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     ),
+   *     @OA\Response(
+   *         response=500,
+   *         description="Server error"
+   *     )
+   * )
+   */
+  public function index()
+  {
+    return parent::index();
+  }
+
+  /**
+   * Display the specified navigation item.
+   * 
+   * @OA\Get(
+   *     path="/api/system-settings/navigation/{id}",
+   *     summary="Get a specific navigation item",
+   *     tags={"System Settings"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="id",
+   *         in="path",
+   *         description="Navigation ID",
+   *         required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Successful operation",
+   *         @OA\JsonContent(type="object")
+   *     ),
+   *     @OA\Response(
+   *         response=404,
+   *         description="Navigation item not found"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
+  public function show($id)
+  {
+    return parent::show($id);
+  }
+
+  /**
+   * Remove the specified navigation item from storage (soft delete).
+   * 
+   * @OA\Delete(
+   *     path="/api/system-settings/navigation/{id}",
+   *     summary="Delete a navigation item (soft delete)",
+   *     tags={"System Settings"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Parameter(
+   *         name="id",
+   *         in="path",
+   *         description="Navigation ID",
+   *         required=true,
+   *         @OA\Schema(type="integer")
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Navigation item moved to trash",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="message", type="string", example="Navigation item has been moved to trash.")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=404,
+   *         description="Navigation item not found"
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     )
+   * )
+   */
+  public function destroy($id)
+  {
+    return parent::destroy($id);
   }
 
   /**
@@ -90,7 +221,7 @@ class NavigationController extends BaseController
    * @OA\Get(
    *     path="/api/options/navigations",
    *     summary="Get all navigations for dropdown",
-   *     tags={"Options"},
+   *     tags={"System Settings"},
    *     security={{"bearerAuth": {}}},
    *     @OA\Response(
    *         response=200,
