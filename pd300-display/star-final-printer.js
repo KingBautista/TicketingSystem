@@ -75,7 +75,7 @@ class StarBSC10Printer {
   }
 
   // -------------------------
-  // QR code using ESC/POS commands
+  // QR code using ESC/POS commands (bigger size)
   // -------------------------
   printQRCode(data) {
     // ESC/POS QR code commands
@@ -83,8 +83,8 @@ class StarBSC10Printer {
       Buffer.from([0x1B, 0x40]),         // init
       Buffer.from([0x1B, 0x61, 0x01]),   // center align
       
-      // QR code setup
-      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x08]), // QR code: model 2, size 8
+      // QR code setup - bigger size (size 10 instead of 8)
+      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x0A]), // QR code: model 2, size 10
       Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30]), // QR code: error correction level L
       
       // QR code data
@@ -97,7 +97,7 @@ class StarBSC10Printer {
     ]);
     
     this.printRaw(buffer);
-    console.log(`🖨️ Printing QR code: ${data}`);
+    console.log(`🖨️ Printing QR code (size 10): ${data}`);
   }
 
   // -------------------------
@@ -151,13 +151,75 @@ class StarBSC10Printer {
   }
 
   // -------------------------
-  // Complete receipt sample (single ESC/POS job)
+  // Print single QR code receipt
+  // -------------------------
+  async printSingleQRReceipt(qrData, qrNumber) {
+    // Print QR code first, then the receipt format
+    console.log(`🖨️ Printing QR code ${qrNumber} first...`);
+    this.printQRCode(qrData);
+    
+    // Wait a moment, then print receipt format
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const buffer = Buffer.concat([
+      Buffer.from([0x1B, 0x40]),         // init
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      
+      // Promoter name
+      Buffer.from('Promoter 24\n', 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Date and time
+      Buffer.from('8/27/2025, 11:55:04 PM\n', 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Code in text
+      Buffer.from(`Code: ${qrData}\n`, 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Single use only label
+      Buffer.from('Single use only\n', 'ascii'),
+      Buffer.from('\n\n', 'ascii'),
+      
+      // Feed and cut
+      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+      Buffer.from([0x1D, 0x56, 0x00])    // full cut
+    ]);
+    
+    // Print the receipt format
+    this.printRaw(buffer);
+    
+    console.log(`✅ QR receipt ${qrNumber} completed`);
+  }
+
+  // -------------------------
+  // Complete receipt sample (3 QR receipts + main receipt)
   // -------------------------
   async printReceiptSample() {
     console.log('🖨️ Printing complete receipt sample...');
     
     try {
-      // Create complete receipt as single ESC/POS buffer
+      // Helper function to add delay
+      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+      
+      // Print 3 separate QR code receipts
+      console.log('🖨️ Printing QR code receipts...');
+      
+      // QR Receipt 1
+      await this.printSingleQRReceipt('PROMOTER24-2025-08-27-235115-1', 1);
+      await delay(500);
+      
+      // QR Receipt 2
+      await this.printSingleQRReceipt('PROMOTER24-2025-08-27-235115-2', 2);
+      await delay(500);
+      
+      // QR Receipt 3
+      await this.printSingleQRReceipt('PROMOTER24-2025-08-27-235115-3', 3);
+      await delay(500);
+      
+      // Now print the main receipt information
+      console.log('🖨️ Printing main receipt information...');
+      
       const buffer = Buffer.concat([
         Buffer.from([0x1B, 0x40]),         // init
         Buffer.from([0x1B, 0x61, 0x01]),   // center align
@@ -171,9 +233,6 @@ class StarBSC10Printer {
         
         // Promoter
         Buffer.from('Promoter: Promoter 24\n', 'ascii'),
-        Buffer.from('\n', 'ascii'),
-        
-        // QR Code placeholder (will be printed separately)
         Buffer.from('\n', 'ascii'),
         
         // Date and time
@@ -207,18 +266,34 @@ class StarBSC10Printer {
         Buffer.from([0x1D, 0x56, 0x00])    // full cut
       ]);
       
-      // Send the main receipt
+      // Send the main receipt information
       this.printRaw(buffer);
       
-      // Wait a moment, then print QR code
-      await new Promise(resolve => setTimeout(resolve, 500));
-      this.printQRCode('PROMOTER24-2025-08-27-235115');
-      
-      console.log('✅ Receipt sample completed');
+      console.log('✅ Complete receipt sample finished');
       
     } catch (error) {
       console.error('❌ Error printing receipt:', error);
     }
+  }
+
+  // -------------------------
+  // Print multiple QR codes
+  // -------------------------
+  async printMultipleQRCodes(qrDataArray) {
+    console.log(`🖨️ Printing ${qrDataArray.length} QR codes...`);
+    
+    for (let i = 0; i < qrDataArray.length; i++) {
+      const data = qrDataArray[i];
+      console.log(`🖨️ Printing QR code ${i + 1}: ${data}`);
+      this.printQRCode(data);
+      
+      // Add delay between QR codes (except for the last one)
+      if (i < qrDataArray.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    }
+    
+    console.log('✅ Multiple QR codes completed');
   }
 
   // -------------------------
@@ -261,6 +336,13 @@ switch (command) {
   case 'qrimg':
     printer.printQRCodeAsImage(data || 'TEST123');
     break;
+  case 'qrreceipt':
+    printer.printSingleQRReceipt(data || 'TEST123', 1);
+    break;
+  case 'multiqr':
+    const qrDataArray = data ? data.split(',') : ['TEST1', 'TEST2', 'TEST3'];
+    printer.printMultipleQRCodes(qrDataArray);
+    break;
   case 'receipt':
     printer.printReceiptSample();
     break;
@@ -270,6 +352,8 @@ switch (command) {
     console.log('  node star-final-printer.js bold "YOUR TEXT"');
     console.log('  node star-final-printer.js qr "YOUR DATA"');
     console.log('  node star-final-printer.js qrimg "YOUR DATA"');
+    console.log('  node star-final-printer.js qrreceipt "YOUR DATA"');
+    console.log('  node star-final-printer.js multiqr "DATA1,DATA2,DATA3"');
     console.log('  node star-final-printer.js receipt');
     break;
 }
