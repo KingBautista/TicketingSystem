@@ -116,6 +116,101 @@ class PrintController extends Controller
     }
 
     /**
+     * Execute printer command using star-final-printer.js
+     */
+    public function execute(Request $request)
+    {
+        try {
+            $request->validate([
+                'command' => 'required|string',
+                'data' => 'required|string'
+            ]);
+
+            $command = $request->input('command');
+            $data = $request->input('data');
+
+            // Path to the printer script
+            $printerScript = base_path('pd300-display/star-final-printer.js');
+            
+            if (!file_exists($printerScript)) {
+                Log::error('Printer script not found', ['path' => $printerScript]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Printer script not found',
+                    'error' => 'Printer script not found at: ' . $printerScript
+                ], 500);
+            }
+            
+            // Try to use Node.js from PATH first, then fallback to full path
+            $nodePath = 'node';
+            $fullNodePath = 'C:\Program Files\nodejs\node.exe';
+            
+            // Test if node is available in PATH
+            $testOutput = shell_exec('node --version 2>&1');
+            if ($testOutput === null || strpos($testOutput, 'not recognized') !== false) {
+                // Node.js not in PATH, use full path
+                if (!file_exists($fullNodePath)) {
+                    Log::error('Node.js not found at expected path', ['path' => $fullNodePath]);
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Node.js not found',
+                        'error' => 'Node.js not found at: ' . $fullNodePath
+                    ], 500);
+                }
+                $nodePath = $fullNodePath;
+            }
+
+            // Build the command
+            $nodeCommand = "{$nodePath} \"{$printerScript}\" {$command} \"{$data}\"";
+            
+            Log::info('Executing printer command', [
+                'command' => $nodeCommand,
+                'originalCommand' => $command,
+                'data' => $data
+            ]);
+            
+            // Execute the command
+            $output = shell_exec($nodeCommand . ' 2>&1');
+            
+            if ($output !== null) {
+                Log::info('Printer command executed successfully', [
+                    'command' => $command,
+                    'output' => $output
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Printer command executed successfully',
+                    'output' => $output
+                ]);
+            } else {
+                Log::error('Failed to execute printer command', [
+                    'command' => $command,
+                    'output' => $output
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to execute printer command',
+                    'error' => 'No output from printer script'
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Exception while executing printer command', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error executing printer command',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Print Transaction Receipt
      */
     public function printTransaction(Request $request)

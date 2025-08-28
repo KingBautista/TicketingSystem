@@ -248,6 +248,7 @@ Route::middleware('auth:sanctum')->group(function () {
 	Route::prefix('print')->group(function () {
 		Route::post('/open-cash', [PrintController::class, 'printOpenCash']);
 		Route::post('/transaction', [PrintController::class, 'printTransaction']);
+		Route::post('/execute', [PrintController::class, 'execute']);
 	});
 });
 

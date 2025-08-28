@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { solidIconMap } from '../../utils/solidIcons.js';
-import axiosClient from '../../axios-client.js';
+import { clientPrinter } from '../../utils/printerUtils.js';
 
 export default function PrintOpenCashModal({
   show = false,
@@ -26,24 +26,21 @@ export default function PrintOpenCashModal({
     const tempSessionId = sessionId !== 'N/A' ? sessionId : 'TEMP-' + Date.now();
 
     try {
-      // Call the printer script via API using axios-client
-      const { data } = await axiosClient.post('/print/open-cash', {
-        cashierName: cashierName,
-        cashOnHand: cashOnHand,
-        sessionId: tempSessionId
-      });
+      console.log('🖨️ Testing frontend printing with open cash receipt...');
+      
+      // Use the frontend printer utility to call star-final-printer.js
+      const printSuccess = await clientPrinter.printOpenCash(cashierName, cashOnHand, tempSessionId);
 
-      if (data.success) {
-        console.log('Open cash receipt printed successfully');
+      if (printSuccess) {
+        console.log('✅ Open cash receipt printed successfully from frontend!');
         alert('Open cash receipt printed successfully!');
       } else {
-        console.error('Failed to print open cash receipt:', data.message);
-        alert(`Failed to print: ${data.message}`);
+        console.error('❌ Frontend printing failed');
+        alert('Failed to print open cash receipt. Check printer connection.');
       }
     } catch (error) {
-      console.error('Error printing open cash receipt:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Error printing receipt. Please try again.';
-      alert(errorMessage);
+      console.error('❌ Error printing open cash receipt:', error);
+      alert('Error printing receipt. Please try again.');
     }
   };
   if (!show) return null;
