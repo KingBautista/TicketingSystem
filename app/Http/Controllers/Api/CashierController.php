@@ -149,6 +149,128 @@ class CashierController extends Controller
         
         $this->logCreate("Created transaction: ₱{$data['total']} for {$data['quantity']} tickets", $transaction);
         
+        // Automatically print the transaction
+        \Illuminate\Support\Facades\Log::info('Starting auto-print process', [
+            'transactionId' => $transaction->id
+        ]);
+        
+        try {
+            // Get transaction with all related data for printing
+            $transactionForPrint = \App\Models\CashierTransaction::with([
+                'cashier:id,user_login',
+                'promoter:id,name',
+                'rate:id,name',
+                'discounts'
+            ])->find($transaction->id);
+
+            \Illuminate\Support\Facades\Log::info('Transaction data retrieved', [
+                'transactionId' => $transaction->id,
+                'transactionForPrint' => $transactionForPrint ? 'found' : 'not found',
+                'hasCashier' => $transactionForPrint && $transactionForPrint->cashier ? 'yes' : 'no',
+                'hasPromoter' => $transactionForPrint && $transactionForPrint->promoter ? 'yes' : 'no',
+                'hasRate' => $transactionForPrint && $transactionForPrint->rate ? 'yes' : 'no',
+                'hasSession' => $transactionForPrint && $transactionForPrint->session ? 'yes' : 'no'
+            ]);
+
+            // Get tickets for this transaction
+            $tickets = \App\Models\CashierTicket::where('transaction_id', $transaction->id)
+                ->pluck('qr_code')
+                ->toArray();
+
+            \Illuminate\Support\Facades\Log::info('Tickets retrieved', [
+                'transactionId' => $transaction->id,
+                'ticketCount' => count($tickets),
+                'tickets' => $tickets
+            ]);
+
+            // Prepare transaction data for printing
+            $transactionData = [
+                'transactionId' => $transactionForPrint->id,
+                'promoterName' => $transactionForPrint->promoter->name ?? 'N/A',
+                'rateName' => $transactionForPrint->rate->name ?? 'N/A',
+                'quantity' => $transactionForPrint->quantity,
+                'total' => $transactionForPrint->total,
+                'paidAmount' => $transactionForPrint->paid_amount,
+                'change' => $transactionForPrint->change,
+                'cashierName' => $transactionForPrint->cashier->user_login ?? 'N/A',
+                'sessionId' => $transactionForPrint->session_id ?? 'N/A',
+                'discounts' => $transactionForPrint->discounts->map(function($discount) {
+                    return [
+                        'discount_name' => $discount->discount_name,
+                        'discount_value' => $discount->pivot->discount_value,
+                        'discount_value_type' => $discount->discount_value_type ?? 'fixed'
+                    ];
+                })->toArray(),
+                'tickets' => $tickets,
+                'createdAt' => $transactionForPrint->created_at->toISOString()
+            ];
+
+            // Path to the printer script
+            $printerScript = base_path('pd300-display/star-final-printer.js');
+            
+            if (file_exists($printerScript)) {
+                // Try to use Node.js from PATH first, then fallback to full path
+                $nodePath = 'node';
+                $fullNodePath = 'C:\Program Files\nodejs\node.exe';
+                
+                // Test if node is available in PATH
+                $testOutput = shell_exec('node --version 2>&1');
+                if ($testOutput === null || strpos($testOutput, 'not recognized') !== false) {
+                    // Node.js not in PATH, use full path
+                    if (file_exists($fullNodePath)) {
+                        $nodePath = $fullNodePath;
+                    }
+                }
+                
+                // Write JSON data to a temporary file to avoid command line parsing issues
+                $tempJsonFile = base_path('pd300-display/temp_transaction.json');
+                file_put_contents($tempJsonFile, json_encode($transactionData));
+                
+                // Build the command using the temp file
+                $command = "{$nodePath} \"{$printerScript}\" transactionfile \"{$tempJsonFile}\"";
+                
+                \Illuminate\Support\Facades\Log::info('Auto-printing transaction', [
+                    'transactionId' => $transaction->id,
+                    'command' => $command,
+                    'transactionData' => $transactionData,
+                    'printerScriptExists' => file_exists($printerScript),
+                    'nodePath' => $nodePath
+                ]);
+                
+                // Execute the command
+                \Illuminate\Support\Facades\Log::info('Executing printer command', [
+                    'transactionId' => $transaction->id,
+                    'command' => $command
+                ]);
+                
+                $output = shell_exec($command . ' 2>&1');
+                
+                \Illuminate\Support\Facades\Log::info('Printer command executed', [
+                    'transactionId' => $transaction->id,
+                    'output' => $output,
+                    'outputLength' => strlen($output ?? '')
+                ]);
+                
+                if ($output !== null) {
+                    \Illuminate\Support\Facades\Log::info('Transaction auto-printed successfully', [
+                        'transactionId' => $transaction->id,
+                        'output' => $output
+                    ]);
+                } else {
+                    \Illuminate\Support\Facades\Log::error('Failed to auto-print transaction', [
+                        'transactionId' => $transaction->id,
+                        'output' => $output
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            // Log print error but don't fail the transaction
+            \Illuminate\Support\Facades\Log::error('Failed to auto-print transaction', [
+                'transactionId' => $transaction->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+        
         return new CashierTransactionResource($transaction);
     }
 

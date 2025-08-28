@@ -78,7 +78,7 @@ export default function TransactionCard({
           <div className="d-flex justify-content-end">
             <button className="btn btn-success px-3" type="submit" style={{ background: '#00c292', border: 'none', fontSize: 15, height: 32, minHeight: 32 }}>
               <FontAwesomeIcon icon={solidIconMap.save} className="me-2" />
-              Save & Print
+              Save Transaction
             </button>
           </div>
         </form>

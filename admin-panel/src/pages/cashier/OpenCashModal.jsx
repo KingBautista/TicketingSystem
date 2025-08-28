@@ -11,8 +11,12 @@ export default function OpenCashModal({
   handleOpenCash,
   PROMOTER_NAME,
   headerStyle,
-  modalStyle
+  modalStyle,
+  cashierName,
+  sessionId
 }) {
+
+
   if (!show) return null;
   return (
     <div className="modal d-block" tabIndex="-1" style={{ background: 'rgba(50,31,219,0.10)' }}>

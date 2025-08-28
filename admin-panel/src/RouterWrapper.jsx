@@ -31,14 +31,18 @@ const generateUserRoutes = (routes) => {
 const LayoutProvider = ({ children }) => {
   const userRoleId = localStorage.getItem('user_role_id');
   const Layout = userRoleId === '4' ? CashierLayout : DefaultLayout;
+  
   return <Layout>{children}</Layout>;
 };
 
 const RedirectTo = () => {
   const userRoleId = localStorage.getItem('user_role_id');
-  return userRoleId === '4'
-    ? <Navigate to="/cashier" />
-    : <Navigate to="/dashboard" />;
+  
+  if (userRoleId === '4') {
+    return <Navigate to="/cashier" replace />;
+  } else {
+    return <Navigate to="/dashboard" replace />;
+  }
 };
 
 export default function RouterWrapper() {
@@ -50,26 +54,53 @@ export default function RouterWrapper() {
   }
 
   const routes = [
+    // Guest routes (no token required)
     {
-      path: '/',
-      element: token ? <LayoutProvider /> : <Navigate to="/login" />,
-      children: [
-        { path: '/', element: <RedirectTo /> },
-        { path: '/dashboard', element: <Index /> },
-        { path: '/cashier', element: <Index /> },
-        { path: '/cashier/transactions', element: <Index /> },
-        ...dynamicRoutes,
-        { path: '/information', element: <Index /> },
-        { path: '/profile', element: <Index /> },
-      ],
-    },
-    {
-      path: '/',
+      path: '/login',
       element: <GuestLayout />,
       children: [
         { path: '/login', element: <Login /> },
+      ],
+    },
+    {
+      path: '/sign-up',
+      element: <GuestLayout />,
+      children: [
         { path: '/sign-up', element: <Register /> },
+      ],
+    },
+    {
+      path: '/forgot-password',
+      element: <GuestLayout />,
+      children: [
         { path: '/forgot-password', element: <ForgotPassword /> },
+      ],
+    },
+    // Cashier routes (role ID 4)
+    ...(token && localStorage.getItem('user_role_id') === '4' ? [
+      {
+        path: '/cashier',
+        element: <CashierLayout />,
+      },
+      {
+        path: '/cashier/transactions',
+        element: <CashierLayout />,
+      },
+      {
+        path: '*',
+        element: <Navigate to="/cashier" replace />,
+      },
+    ] : []),
+    // Protected routes (token required) - for non-cashier users
+    {
+      path: '/',
+      element: token ? <LayoutProvider /> : <Navigate to="/login" replace />,
+      children: [
+        { path: '/', element: <RedirectTo /> },
+        { path: '/dashboard', element: <Index /> },
+        ...dynamicRoutes,
+        { path: '/information', element: <Index /> },
+        { path: '/profile', element: <Index /> },
       ],
     },
   ];

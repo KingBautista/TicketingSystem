@@ -9,7 +9,7 @@ import QRCode from 'qrcode';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-class StarBSC10Printer {
+export class StarBSC10Printer {
   constructor() {
     this.printerName = 'StarBSC10';
     console.log('🔍 Creating Final Star BSC10 Printer (RAW mode)...');
@@ -297,6 +297,193 @@ class StarBSC10Printer {
   }
 
   // -------------------------
+  // Print Transaction Tickets (Official)
+  // -------------------------
+  async printTransactionTickets(transactionData) {
+    console.log('🖨️ Printing transaction tickets...');
+    console.log('📄 Received data:', transactionData);
+    
+    try {
+      // Parse transaction data
+      const data = JSON.parse(transactionData);
+      const {
+        transactionId,
+        promoterName,
+        rateName,
+        quantity,
+        total,
+        paidAmount,
+        change,
+        cashierName,
+        sessionId,
+        discounts,
+        tickets, // Array of QR codes
+        createdAt
+      } = data;
+      
+      // Helper function to add delay
+      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+      
+      // Print individual QR code tickets first
+      console.log(`🖨️ Printing ${tickets.length} QR code tickets...`);
+      
+      for (let i = 0; i < tickets.length; i++) {
+        const qrCode = tickets[i];
+        console.log(`🖨️ Printing QR ticket ${i + 1}: ${qrCode}`);
+        
+        // Print QR code first
+        this.printQRCode(qrCode);
+        await delay(500);
+        
+        // Print ticket format
+        const ticketBuffer = Buffer.concat([
+          Buffer.from([0x1B, 0x40]),         // init
+          Buffer.from([0x1B, 0x61, 0x01]),   // center align
+          
+          // Promoter name
+          Buffer.from(`${promoterName}\n`, 'ascii'),
+          Buffer.from('\n', 'ascii'),
+          
+          // Date and time
+          Buffer.from(`${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
+          Buffer.from('\n', 'ascii'),
+          
+          // Code in text
+          Buffer.from(`Code: ${qrCode}\n`, 'ascii'),
+          Buffer.from('\n', 'ascii'),
+          
+          // Single use only label
+          Buffer.from('Single use only\n', 'ascii'),
+          Buffer.from('\n\n', 'ascii'),
+          
+          // Feed and cut
+          Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+          Buffer.from([0x1D, 0x56, 0x00])    // full cut
+        ]);
+        
+        this.printRaw(ticketBuffer);
+        await delay(500);
+      }
+      
+      // Now print the main receipt information
+      console.log('🖨️ Printing main transaction receipt...');
+      
+      const receiptBuffer = Buffer.concat([
+        Buffer.from([0x1B, 0x40]),         // init
+        Buffer.from([0x1B, 0x61, 0x01]),   // center align
+        
+        // Header
+        Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
+        Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
+        Buffer.from('RECEIPT\n', 'ascii'),
+        Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
+        Buffer.from([0x1D, 0x21, 0x00]),   // normal size
+        
+        // Promoter
+        Buffer.from(`Promoter: ${promoterName}\n`, 'ascii'),
+        Buffer.from('\n', 'ascii'),
+        
+        // Date and time
+        Buffer.from(`${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
+        Buffer.from('Single use only\n', 'ascii'),
+        Buffer.from('\n', 'ascii'),
+        
+        // Separator
+        Buffer.from('----------------------------------------\n', 'ascii'),
+        
+        // Details (left align)
+        Buffer.from([0x1B, 0x61, 0x00]),   // left align
+        Buffer.from(`PROMOTER: ${promoterName}\n`, 'ascii'),
+        Buffer.from(`DATE: ${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
+        Buffer.from(`RATE: ${rateName}\n`, 'ascii'),
+        Buffer.from(`QTY: ${quantity}\n`, 'ascii'),
+        Buffer.from(`TOTAL: ₱${parseFloat(total).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`PAID: ₱${parseFloat(paidAmount).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`CHANGE: ₱${parseFloat(change).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`CASHIER: ${cashierName}\n`, 'ascii'),
+        Buffer.from(`SESSION: #${sessionId}\n`, 'ascii'),
+        Buffer.from(`TXN ID: #${transactionId}\n`, 'ascii'),
+        
+        // Discounts section
+        Buffer.from('DISCOUNTS:\n', 'ascii'),
+        ...(discounts && discounts.length > 0 
+          ? discounts.map(discount => 
+              Buffer.from(`${discount.discount_name}: ${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `₱${discount.discount_value}`}\n`, 'ascii')
+            )
+          : [Buffer.from('None\n', 'ascii')]
+        ),
+        
+        // Separator
+        Buffer.from('----------------------------------------\n', 'ascii'),
+        
+        // Footer (center align)
+        Buffer.from([0x1B, 0x61, 0x01]),   // center align
+        Buffer.from('Thank you!\n', 'ascii'),
+        Buffer.from('\n\n', 'ascii'),
+        
+        // Feed and cut
+        Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+        Buffer.from([0x1D, 0x56, 0x00])    // full cut
+      ]);
+      
+      this.printRaw(receiptBuffer);
+      
+      console.log('✅ Transaction tickets printing completed');
+      
+    } catch (error) {
+      console.error('❌ Error printing transaction tickets:', error);
+    }
+  }
+
+  // -------------------------
+  // Open Cash Receipt
+  // -------------------------
+  printOpenCashReceipt(cashierName, cashOnHand, sessionId) {
+    const buffer = Buffer.concat([
+      Buffer.from([0x1B, 0x40]),         // init
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      
+      // Header - Bold and Double Size
+      Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
+      Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
+      Buffer.from('OPEN CASH RECEIPT\n', 'ascii'),
+      Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
+      Buffer.from([0x1D, 0x21, 0x00]),   // normal size
+      Buffer.from('\n', 'ascii'),
+      
+      // Cashier name
+      Buffer.from(`Cashier: ${cashierName}\n`, 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Date and time
+      Buffer.from(`Date: ${new Date().toLocaleString()}\n`, 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Cash on Hand
+      Buffer.from(`Cash on Hand: ₱${parseFloat(cashOnHand).toFixed(2)}\n`, 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Session ID
+      Buffer.from(`Session ID: #${sessionId}\n`, 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Separator
+      Buffer.from('----------------------------------------\n', 'ascii'),
+      
+      // End of Receipt
+      Buffer.from('--- End of Receipt ---\n', 'ascii'),
+      Buffer.from('\n\n', 'ascii'),
+      
+      // Feed and cut
+      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+      Buffer.from([0x1D, 0x56, 0x00])    // full cut
+    ]);
+    
+    this.printRaw(buffer);
+    console.log(`🖨️ Printing Open Cash Receipt - Cashier: ${cashierName}, Amount: ₱${cashOnHand}, Session: #${sessionId}`);
+  }
+
+  // -------------------------
   // Final cut command
   // -------------------------
   printCut() {
@@ -346,6 +533,48 @@ switch (command) {
   case 'receipt':
     printer.printReceiptSample();
     break;
+  case 'opencash':
+    const openCashData = data ? data.split(',') : ['sales', '5000.00', '16'];
+    printer.printOpenCashReceipt(openCashData[0], openCashData[1], openCashData[2]);
+    break;
+  case 'transaction':
+    // Reconstruct the JSON from the remaining arguments
+    const jsonData = process.argv.slice(3).join(' ');
+    console.log('📄 Raw JSON data received:', jsonData);
+    
+    // Try to fix common JSON issues
+    let fixedJson = jsonData;
+    
+    // Add quotes around property names if missing
+    fixedJson = fixedJson.replace(/(\w+):/g, '"$1":');
+    
+    // Add quotes around string values if missing
+    fixedJson = fixedJson.replace(/:\s*([^",\{\}\[\]\d][^,\{\}\[\]]*[^",\{\}\[\]\d\s])/g, ':"$1"');
+    
+    console.log('📄 Fixed JSON data:', fixedJson);
+    
+    try {
+      printer.printTransactionTickets(fixedJson);
+    } catch (error) {
+      console.error('❌ Error in transaction printing:', error);
+    }
+    break;
+  case 'transactionfile':
+    // Read JSON from file
+    const jsonFilePath = process.argv[3];
+    console.log('📄 Reading JSON from file:', jsonFilePath);
+    
+    try {
+      const fileContent = fs.readFileSync(jsonFilePath, 'utf8');
+      console.log('📄 File content:', fileContent);
+      printer.printTransactionTickets(fileContent);
+      
+      // Clean up temp file
+      try { fs.unlinkSync(jsonFilePath); } catch {}
+    } catch (error) {
+      console.error('❌ Error reading transaction file:', error);
+    }
+    break;
   default:
     console.log('Usage:');
     console.log('  node star-final-printer.js test');
@@ -355,5 +584,8 @@ switch (command) {
     console.log('  node star-final-printer.js qrreceipt "YOUR DATA"');
     console.log('  node star-final-printer.js multiqr "DATA1,DATA2,DATA3"');
     console.log('  node star-final-printer.js receipt');
+    console.log('  node star-final-printer.js opencash "CASHIER_NAME,AMOUNT,SESSION_ID"');
+    console.log('  node star-final-printer.js transaction "JSON_TRANSACTION_DATA"');
+    console.log('  node star-final-printer.js transactionfile "JSON_FILE_PATH"');
     break;
 }

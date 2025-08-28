@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\CashierTransactionController;
 use App\Http\Controllers\Api\CashierController;
 use App\Http\Controllers\Api\ScanController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\PrintController;
 
 // Note: Swagger documentation is available at /docs (handled by L5-Swagger)
 // API documentation JSON is available at /docs (L5-Swagger route)
@@ -241,6 +242,12 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/statistics', [DashboardController::class, 'statistics']);
 		Route::get('/cashier-performance', [DashboardController::class, 'cashierPerformance']);
 		Route::get('/today-summary', [DashboardController::class, 'todaySummary']);
+	});
+
+	// Print Routes
+	Route::prefix('print')->group(function () {
+		Route::post('/open-cash', [PrintController::class, 'printOpenCash']);
+		Route::post('/transaction', [PrintController::class, 'printTransaction']);
 	});
 });
 

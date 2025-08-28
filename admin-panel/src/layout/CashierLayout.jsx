@@ -27,6 +27,7 @@ export default function CashierLayout() {
   const [appliedDiscounts, setAppliedDiscounts] = useState([]);
   const [quantity, setQuantity] = useState(1);
   const [rateId, setRateId] = useState(1);
+
   const toastRef = useRef();
   const navigate = useNavigate();
   const location = useLocation();
@@ -208,7 +209,7 @@ export default function CashierLayout() {
           setRateId(rates[0].id);
         }
 
-        toastRef.current.showToast('Transaction saved!', 'success');
+        toastRef.current.showToast('Transaction saved and printed!', 'success');
       })
       .catch(() => {
         toastRef.current.showToast('Failed to save transaction.', 'danger');
@@ -413,6 +414,8 @@ export default function CashierLayout() {
             PROMOTER_NAME={promoter?.name || 'N/A'}
             headerStyle={headerStyle}
             modalStyle={modalStyle}
+            cashierName={user?.user_login || 'N/A'}
+            sessionId={sessionId ? String(sessionId) : 'N/A'}
           />
           
           {/* Print Modal for Open Cash */}
@@ -431,25 +434,25 @@ export default function CashierLayout() {
           {/* Main Content Area */}
           {location.pathname === '/cashier' && showTransaction && !showCloseCash ? (
             <div className="d-flex flex-row gap-0 w-100 justify-content-center align-items-start" style={{ maxWidth: 1000, margin: '0 auto' }}>
-              <TransactionCard
-                promoter={promoter}
-                rates={rates}
-                discounts={discounts}
-                appliedDiscounts={appliedDiscounts}
-                handleAddDiscount={handleAddDiscount}
-                handleRemoveDiscount={handleRemoveDiscount}
-                rateId={rateId}
-                setRateId={setRateId}
-                quantity={quantity}
-                setQuantity={setQuantity}
-                total={total}
-                paidAmount={paidAmount}
-                setPaidAmount={setPaidAmount}
-                changeDue={changeDue}
-                handleSaveTransaction={handleSaveTransaction}
-                handleShowCloseCash={handleShowCloseCash}
-                headerStyle={headerStyle}
-              />
+                        <TransactionCard
+            promoter={promoter}
+            rates={rates}
+            discounts={discounts}
+            appliedDiscounts={appliedDiscounts}
+            handleAddDiscount={handleAddDiscount}
+            handleRemoveDiscount={handleRemoveDiscount}
+            rateId={rateId}
+            setRateId={setRateId}
+            quantity={quantity}
+            setQuantity={setQuantity}
+            total={total}
+            paidAmount={paidAmount}
+            setPaidAmount={setPaidAmount}
+            changeDue={changeDue}
+            handleSaveTransaction={handleSaveTransaction}
+            handleShowCloseCash={handleShowCloseCash}
+            headerStyle={headerStyle}
+          />
               <ReceiptPreview
                 qrValues={qrValues}
                 tickets={tickets}
