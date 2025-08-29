@@ -57,6 +57,11 @@ export default function Dashboard() {
 				axiosClient.get('/dashboard/today-summary')
 			]);
 
+			// Debug: Log the responses
+			console.log('Dashboard Stats Response:', statsResponse.data);
+			console.log('Dashboard Performance Response:', performanceResponse.data);
+			console.log('Dashboard Summary Response:', summaryResponse.data);
+
 			setDashboardData({
 				statistics: statsResponse.data.data,
 				cashier_performance: performanceResponse.data.data,
@@ -152,13 +157,19 @@ export default function Dashboard() {
 											</tr>
 										</thead>
 										<tbody>
-											{dashboardData.cashier_performance.map((cashier, i) => (
-												<tr key={i}>
-													<td>{cashier.name}</td>
-													<td>{cashier.total_transactions}</td>
-													<td>₱{parseFloat(cashier.total_sales || 0).toLocaleString()}</td>
+											{dashboardData.cashier_performance && dashboardData.cashier_performance.length > 0 ? (
+												dashboardData.cashier_performance.map((cashier, i) => (
+													<tr key={i}>
+														<td>{cashier.name}</td>
+														<td>{cashier.total_transactions}</td>
+														<td>₱{parseFloat(cashier.total_sales || 0).toLocaleString()}</td>
+													</tr>
+												))
+											) : (
+												<tr>
+													<td colSpan="3" className="text-center text-muted">No cashier data available</td>
 												</tr>
-											))}
+											)}
 										</tbody>
 									</table>
 								</div>
@@ -178,12 +189,18 @@ export default function Dashboard() {
 											</tr>
 										</thead>
 										<tbody>
-											{dashboardData.cashier_performance.map((cashier, i) => (
-												<tr key={i}>
-													<td>{cashier.name}</td>
-													<td>{cashier.today_transactions}</td>
+											{dashboardData.cashier_performance && dashboardData.cashier_performance.length > 0 ? (
+												dashboardData.cashier_performance.map((cashier, i) => (
+													<tr key={i}>
+														<td>{cashier.name}</td>
+														<td>{cashier.today_transactions}</td>
+													</tr>
+												))
+											) : (
+												<tr>
+													<td colSpan="2" className="text-center text-muted">No cashier data available</td>
 												</tr>
-											))}
+											)}
 										</tbody>
 									</table>
 									<div className="mt-2 text-end">

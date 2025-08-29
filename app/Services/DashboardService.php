@@ -36,16 +36,17 @@ class DashboardService
         $today = Carbon::today();
         
         $cashiers = User::whereHas('userRole', function($query) {
-            $query->where('name', 'cashier');
-        })->with(['transactions' => function($query) use ($today) {
-            $query->whereDate('created_at', $today);
-        }])->get();
-
+            $query->where('name', 'Cashier');
+        })->get();
+        
         $performance = [];
         
         foreach ($cashiers as $cashier) {
-            $todayTransactions = $cashier->transactions->count();
-            $todaySales = $cashier->transactions->sum('total');
+            // Get today's transactions
+            $todayTransactions = $cashier->transactions()->whereDate('created_at', $today)->count();
+            $todaySales = $cashier->transactions()->whereDate('created_at', $today)->sum('total');
+            
+            // Get all-time transactions
             $totalTransactions = $cashier->transactions()->count();
             $totalSales = $cashier->transactions()->sum('total');
 
