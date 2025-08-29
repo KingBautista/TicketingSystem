@@ -20,7 +20,11 @@ export default function ReceiptPreview({
   total,
   appliedDiscounts,
   handleRemoveDiscount,
-  thermalPrintStyles
+  thermalPrintStyles,
+  user,
+  sessionId,
+  paidAmount,
+  changeDue
 }) {
   return (
     <div style={{
@@ -84,7 +88,7 @@ export default function ReceiptPreview({
           );
         })}
         
-        {/* Section 2: Main Receipt (matching printReceiptSample main receipt) */}
+        {/* Section 2: Main Receipt (matching printTransactionTickets main receipt) */}
         <div style={{ 
           padding: '12px',
           marginTop: '20px'
@@ -125,6 +129,11 @@ export default function ReceiptPreview({
             <div><span style={{ fontWeight: 'bold' }}>RATE:</span> {rate.name}</div>
             <div><span style={{ fontWeight: 'bold' }}>QTY:</span> {quantity}</div>
             <div><span style={{ fontWeight: 'bold' }}>TOTAL:</span> ₱{total.toFixed(2)}</div>
+            <div><span style={{ fontWeight: 'bold' }}>PAID:</span> ₱{paidAmount || total.toFixed(2)}</div>
+            <div><span style={{ fontWeight: 'bold' }}>CHANGE:</span> ₱{changeDue || '0.00'}</div>
+            <div><span style={{ fontWeight: 'bold' }}>CASHIER:</span> {user?.user_login || 'N/A'}</div>
+            <div><span style={{ fontWeight: 'bold' }}>SESSION:</span> #{sessionId || 'N/A'}</div>
+            <div><span style={{ fontWeight: 'bold' }}>TXN ID:</span> #{Math.floor(Math.random() * 10000)}</div>
             
             {/* Discounts Section */}
             <div style={{ fontWeight: 'bold', marginTop: '8px' }}>DISCOUNTS:</div>

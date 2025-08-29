@@ -1,6 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { solidIconMap } from '../../utils/solidIcons.js';
+import { clientPrinter } from '../../utils/printerUtils.js';
 
 export default function PrintCloseCashModal({
   show,
@@ -117,7 +118,41 @@ export default function PrintCloseCashModal({
               Close & Logout
             </button>
             <button 
-              className="btn btn-primary">
+              className="btn btn-primary"
+              onClick={async () => {
+                if (!cashierName || !sessionId) {
+                  alert('Please ensure all cashier data is available before printing.');
+                  return;
+                }
+
+                try {
+                  console.log('🖨️ Testing frontend printing with close cash report...');
+                  
+                  // Prepare close cash data
+                  const closeCashData = {
+                    cashierName: cashierName,
+                    sessionId: sessionId,
+                    openingCash: cashOnHand,
+                    closingCash: closingCash,
+                    dailyTransactions: dailyTransactions,
+                    dailyTotal: dailyTotal
+                  };
+                  
+                  // Use the frontend printer utility to call star-final-printer.js
+                  const printSuccess = await clientPrinter.printCloseCash(closeCashData);
+
+                  if (printSuccess) {
+                    console.log('✅ Close cash report printed successfully from frontend!');
+                    alert('Close cash report printed successfully!');
+                  } else {
+                    console.error('❌ Frontend printing failed');
+                    alert('Failed to print close cash report. Check printer connection.');
+                  }
+                } catch (error) {
+                  console.error('❌ Error printing close cash report:', error);
+                  alert('Error printing report. Please try again.');
+                }
+              }}>
               <FontAwesomeIcon icon={solidIconMap.fileexport} className="me-2" />
               Print
             </button>

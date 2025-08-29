@@ -484,6 +484,155 @@ export class StarBSC10Printer {
   }
 
   // -------------------------
+  // Close Cash Receipt
+  // -------------------------
+  printCloseCashReceipt(cashierName, sessionId, openingCash, closingCash, dailyTransactions, dailyTotal) {
+    const buffer = Buffer.concat([
+      Buffer.from([0x1B, 0x40]),         // init
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      
+      // Header - Bold and Double Size
+      Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
+      Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
+      Buffer.from('CLOSE CASH REPORT\n', 'ascii'),
+      Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
+      Buffer.from([0x1D, 0x21, 0x00]),   // normal size
+      Buffer.from('\n', 'ascii'),
+      
+      // Separator line (matching actual print - equal signs)
+      Buffer.from('==============================\n', 'ascii'),
+      
+      // Date and time
+      Buffer.from(`Date: ${new Date().toLocaleString()}\n`, 'ascii'),
+      Buffer.from(`Cashier: ${cashierName}\n`, 'ascii'),
+      Buffer.from(`Session: #${sessionId}\n`, 'ascii'),
+      Buffer.from('==============================\n', 'ascii'),
+      Buffer.from('------------------------------\n', 'ascii'),
+      
+      // Daily Transactions Section
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      Buffer.from('*** DAILY TRANSACTIONS ***\n', 'ascii'),
+      Buffer.from([0x1B, 0x61, 0x00]),   // left align
+      Buffer.from('\n', 'ascii'),
+      
+      // Print each transaction (matching actual print format)
+      ...dailyTransactions.map((transaction, idx) => [
+        Buffer.from(`Transaction #${transaction.id}\n`, 'ascii'),
+        Buffer.from(`Time: ${new Date(transaction.created_at).toLocaleTimeString()}\n`, 'ascii'),
+        Buffer.from(`${transaction.rate?.name || 'N/A'}                    x${transaction.quantity}\n`, 'ascii'),
+        ...(transaction.discounts?.length > 0 
+          ? transaction.discounts.map(discount => 
+              Buffer.from(`- ${discount.discount_name}               ₱${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `${discount.discount_value}`}\n`, 'ascii')
+            )
+          : []
+        ),
+        Buffer.from(`Total:                        ₱${parseFloat(transaction.total).toFixed(2)}\n`, 'ascii'),
+        ...(idx < dailyTransactions.length - 1 ? [Buffer.from('--------------------------------\n', 'ascii')] : [])
+      ]).flat(),
+      
+      // Summary Section
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      Buffer.from('*** SUMMARY ***\n', 'ascii'),
+      Buffer.from([0x1B, 0x61, 0x00]),   // left align
+      Buffer.from('\n', 'ascii'),
+      
+      Buffer.from(`Opening Cash:                 ₱${parseFloat(openingCash).toFixed(2)}\n`, 'ascii'),
+      Buffer.from(`Total Transactions:            ${dailyTransactions.length}\n`, 'ascii'),
+      Buffer.from(`Total Sales:                  ₱${parseFloat(dailyTotal).toFixed(2)}\n`, 'ascii'),
+      Buffer.from(`Closing Cash:                 ₱${parseFloat(closingCash).toFixed(2)}\n`, 'ascii'),
+      Buffer.from('--------------------------------\n', 'ascii'),
+      
+      // End of Report
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      Buffer.from('--- End of Report ---\n', 'ascii'),
+      Buffer.from('\n\n', 'ascii'),
+      
+      // Feed and cut
+      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+      Buffer.from([0x1D, 0x56, 0x00])    // full cut
+    ]);
+    
+    this.printRaw(buffer);
+    console.log(`🖨️ Printing Close Cash Report - Cashier: ${cashierName}, Session: #${sessionId}, Closing Cash: ₱${closingCash}`);
+  }
+
+  // -------------------------
+  // Close Cash Sample (like receipt sample)
+  // -------------------------
+  printCloseCashSample() {
+    console.log('🖨️ Printing close cash sample...');
+    
+    const buffer = Buffer.concat([
+      Buffer.from([0x1B, 0x40]),         // init
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      
+      // Header - Bold and Double Size
+      Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
+      Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
+      Buffer.from('CLOSE CASH REPORT\n', 'ascii'),
+      Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
+      Buffer.from([0x1D, 0x21, 0x00]),   // normal size
+      Buffer.from('\n', 'ascii'),
+      
+      // Separator line (matching actual print - equal signs)
+      Buffer.from('==============================\n', 'ascii'),
+      
+      // Date and time
+      Buffer.from(`Date: ${new Date().toLocaleString()}\n`, 'ascii'),
+      Buffer.from(`Cashier: sales\n`, 'ascii'),
+      Buffer.from(`Session: #23\n`, 'ascii'),
+      Buffer.from('==============================\n', 'ascii'),
+      Buffer.from('------------------------------\n', 'ascii'),
+      
+      // Daily Transactions Section
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      Buffer.from('*** DAILY TRANSACTIONS ***\n', 'ascii'),
+      Buffer.from([0x1B, 0x61, 0x00]),   // left align
+      Buffer.from('\n', 'ascii'),
+      
+      // Sample transaction 1 (matching actual print)
+      Buffer.from(`Transaction #164\n`, 'ascii'),
+      Buffer.from(`Time: 11:34:43 PM\n`, 'ascii'),
+      Buffer.from(`VIP Ticket                    x2\n`, 'ascii'),
+      Buffer.from(`- VIP Discount                ₱25.00\n`, 'ascii'),
+      Buffer.from(`Total:                        ₱475.00\n`, 'ascii'),
+      Buffer.from('--------------------------------\n', 'ascii'),
+      
+      // Sample transaction 2 (matching actual print)
+      Buffer.from(`Transaction #165\n`, 'ascii'),
+      Buffer.from(`Time: 11:35:12 PM\n`, 'ascii'),
+      Buffer.from(`Regular Ticket                x4\n`, 'ascii'),
+      Buffer.from(`- Senior Discount             ₱30.00\n`, 'ascii'),
+      Buffer.from(`Total:                        ₱370.00\n`, 'ascii'),
+      Buffer.from('--------------------------------\n', 'ascii'),
+      
+      // Summary Section
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      Buffer.from('*** SUMMARY ***\n', 'ascii'),
+      Buffer.from([0x1B, 0x61, 0x00]),   // left align
+      Buffer.from('\n', 'ascii'),
+      
+      Buffer.from(`Opening Cash:                 ₱2,000.00\n`, 'ascii'),
+      Buffer.from(`Total Transactions:           2\n`, 'ascii'),
+      Buffer.from(`Total Sales:                  ₱845.00\n`, 'ascii'),
+      Buffer.from(`Closing Cash:                 ₱6,000.00\n`, 'ascii'),
+      Buffer.from('--------------------------------\n', 'ascii'),
+      
+      // End of Report
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      Buffer.from('--- End of Report ---\n', 'ascii'),
+      Buffer.from('\n\n', 'ascii'),
+      
+      // Feed and cut
+      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+      Buffer.from([0x1D, 0x56, 0x00])    // full cut
+    ]);
+    
+    this.printRaw(buffer);
+    console.log('✅ Close cash sample printed successfully');
+  }
+
+  // -------------------------
   // Final cut command
   // -------------------------
   printCut() {
@@ -537,6 +686,39 @@ switch (command) {
     const openCashData = data ? data.split(',') : ['sales', '5000.00', '16'];
     printer.printOpenCashReceipt(openCashData[0], openCashData[1], openCashData[2]);
     break;
+  case 'closecash':
+    // For close cash, we need to pass JSON data with all the details
+    try {
+      let closeCashData;
+      
+      // If no data provided, use sample data
+      if (!data || data.trim() === '') {
+        printer.printCloseCashSample();
+        break;
+      }
+      
+      // Check if data is a file path
+      if (data.endsWith('.json')) {
+        const fs = await import('fs');
+        const fileData = fs.readFileSync(data, 'utf8');
+        closeCashData = JSON.parse(fileData);
+      } else {
+        closeCashData = JSON.parse(data);
+      }
+      
+      printer.printCloseCashReceipt(
+        closeCashData.cashierName,
+        closeCashData.sessionId,
+        closeCashData.openingCash,
+        closeCashData.closingCash,
+        closeCashData.dailyTransactions,
+        closeCashData.dailyTotal
+      );
+    } catch (error) {
+      console.error('❌ Error parsing close cash data:', error);
+      console.log('📄 Expected format: JSON with cashierName, sessionId, openingCash, closingCash, dailyTransactions, dailyTotal');
+    }
+    break;
   case 'transaction':
     // Reconstruct the JSON from the remaining arguments
     const jsonData = process.argv.slice(3).join(' ');
@@ -584,6 +766,7 @@ switch (command) {
     console.log('  node star-final-printer.js qrreceipt "YOUR DATA"');
     console.log('  node star-final-printer.js multiqr "DATA1,DATA2,DATA3"');
     console.log('  node star-final-printer.js receipt');
+    console.log('  node star-final-printer.js closecash "JSON_CLOSE_CASH_DATA"');
     console.log('  node star-final-printer.js opencash "CASHIER_NAME,AMOUNT,SESSION_ID"');
     console.log('  node star-final-printer.js transaction "JSON_TRANSACTION_DATA"');
     console.log('  node star-final-printer.js transactionfile "JSON_FILE_PATH"');

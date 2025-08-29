@@ -96,6 +96,21 @@ export class ClientPrinter {
     }
 
     /**
+     * Print close cash report using existing printCloseCashReceipt method
+     */
+    async printCloseCash(closeCashData) {
+        try {
+            console.log('🖨️ Frontend printing close cash report:', closeCashData);
+            
+            // Pass the actual close cash data to the printer
+            return await this.executePrinterCommand('closecash', closeCashData);
+        } catch (error) {
+            console.error('❌ Frontend close cash printing error:', error);
+            return false;
+        }
+    }
+
+    /**
      * Test printer connection
      */
     async testPrinter() {

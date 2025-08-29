@@ -41,6 +41,27 @@ export default function CashierLayout() {
     navigate('/login');
   };
 
+  // Frontend printing handler
+  const handleFrontendPrinting = async (printData) => {
+    try {
+      // Import the client printer utility
+      const { clientPrinter } = await import('../utils/printerUtils.js');
+      
+      // Print the transaction using client printer service
+      const printSuccess = await clientPrinter.printTransaction(printData);
+      
+      if (printSuccess) {
+        console.log('Transaction printed successfully via client printer service');
+      } else {
+        console.error('Failed to print transaction via client printer service');
+        toastRef.current.showToast('Transaction saved but printing failed.', 'warning');
+      }
+    } catch (error) {
+      console.error('Error during frontend printing:', error);
+      toastRef.current.showToast('Transaction saved but printing failed.', 'warning');
+    }
+  };
+
   // State for backend data
   const [rates, setRates] = useState([]);
   const [discounts, setDiscounts] = useState([]);
@@ -207,6 +228,11 @@ export default function CashierLayout() {
         setAppliedDiscounts([]);
         if ((rates || []).length > 0) {
           setRateId(rates[0].id);
+        }
+
+        // Handle frontend printing if printData is available
+        if (data.printData) {
+          handleFrontendPrinting(data.printData);
         }
 
         toastRef.current.showToast('Transaction saved and printed!', 'success');
@@ -463,6 +489,10 @@ export default function CashierLayout() {
                 appliedDiscounts={appliedDiscounts}
                 handleRemoveDiscount={handleRemoveDiscount}
                 thermalPrintStyles={thermalPrintStyles}
+                user={user}
+                sessionId={sessionId}
+                paidAmount={paidAmount}
+                changeDue={changeDue}
               />
             </div>
           ) : location.pathname === '/cashier/transactions' ? (

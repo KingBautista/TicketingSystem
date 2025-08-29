@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { exec } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = 3001;
@@ -17,10 +18,24 @@ app.post('/print', async (req, res) => {
         const { command, data } = req.body;
         
         console.log(`🖨️ Client printer service: Executing ${command}`);
-        console.log(`📄 Data: ${data}`);
+        console.log(`📄 Data type: ${typeof data}`);
         
-        const nodeCommand = `node "${printerScript}" ${command} "${data}"`;
-        console.log(`🎯 Command: ${nodeCommand}`);
+        let nodeCommand;
+        
+        // Handle complex data (objects) by writing to temp file
+        if ((command === 'transactionfile' || command === 'closecash') && typeof data === 'object') {
+            // Write data to temporary file
+            const tempJsonFile = path.join(__dirname, '..', 'pd300-display', `temp_${command}.json`);
+            fs.writeFileSync(tempJsonFile, JSON.stringify(data));
+            
+            nodeCommand = `node "${printerScript}" ${command} "${tempJsonFile}"`;
+            console.log(`🎯 Command with temp file: ${nodeCommand}`);
+        } else {
+            // Handle simple string data
+            const dataString = typeof data === 'object' ? JSON.stringify(data) : String(data);
+            nodeCommand = `node "${printerScript}" ${command} "${dataString}"`;
+            console.log(`🎯 Command: ${nodeCommand}`);
+        }
         
         exec(nodeCommand, (error, stdout, stderr) => {
             if (error) {
