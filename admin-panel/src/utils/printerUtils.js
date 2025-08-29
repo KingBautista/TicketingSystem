@@ -122,6 +122,8 @@ export class ClientPrinter {
             return false;
         }
     }
+
+
 }
 
 // Export singleton instance

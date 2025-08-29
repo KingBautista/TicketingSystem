@@ -57,6 +57,48 @@ app.post('/print', async (req, res) => {
     }
 });
 
+// Display endpoint for PD-300 display
+app.post('/display', async (req, res) => {
+    try {
+        const { data } = req.body;
+        
+        console.log(`📺 Client display service: Sending to PD-300 display`);
+        console.log(`📄 Display data:`, data);
+        
+        if (!data || !data.line1) {
+            return res.json({ success: false, error: 'Display data is required' });
+        }
+        
+        // Path to the display batch script (same as PHP version)
+        const displayScript = path.join(__dirname, '..', 'pd300-display', 'send-display.bat');
+        
+        // Prepare command with line1 and line2
+        const line1 = data.line1 || '';
+        const line2 = data.line2 || '';
+        
+        const nodeCommand = `"${displayScript}" "${line1}" "${line2}"`;
+        console.log(`🎯 Display command: ${nodeCommand}`);
+        
+        exec(nodeCommand, (error, stdout, stderr) => {
+            if (error) {
+                console.error('❌ Display error:', error);
+                return res.json({ success: false, error: error.message });
+            }
+            
+            if (stderr) {
+                console.error('❌ Display stderr:', stderr);
+            }
+            
+            console.log('✅ Display message sent:', stdout);
+            res.json({ success: true, output: stdout });
+        });
+        
+    } catch (error) {
+        console.error('❌ Display service error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Client printer service running' });
 });

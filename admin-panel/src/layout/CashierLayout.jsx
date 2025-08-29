@@ -11,6 +11,7 @@ import CloseCashModal from '../pages/cashier/CloseCashModal.jsx';
 import PrintCloseCashModal from '../pages/cashier/PrintCloseCashModal.jsx';
 import CashierSidebar from '../pages/cashier/CashierSidebar.jsx';
 import TransactionList from '../pages/cashier/TransactionList.jsx';
+import { clientDisplay } from '../utils/displayUtils.js';
 
 export default function CashierLayout() {
   // Check for cashier session token in localStorage to persist session
@@ -26,7 +27,7 @@ export default function CashierLayout() {
   const [showPrintClose, setShowPrintClose] = useState(false);
   const [appliedDiscounts, setAppliedDiscounts] = useState([]);
   const [quantity, setQuantity] = useState(1);
-  const [rateId, setRateId] = useState(1);
+  const [rateId, setRateId] = useState('');
 
   const toastRef = useRef();
   const navigate = useNavigate();
@@ -101,10 +102,7 @@ export default function CashierLayout() {
       .then(({ data }) => {
         setRates(data.rates || []);
         setDiscounts(data.discounts || []);
-        // Set default rateId to first rate if not set
-        if ((data.rates || []).length > 0) {
-          setRateId(data.rates[0].id);
-        }
+        // Don't auto-select first rate - let user choose
       });
     axiosClient.get('/promoter-management/promoters/of-the-day')
       .then(({ data }) => {
@@ -113,8 +111,8 @@ export default function CashierLayout() {
   }, []);
 
   // Transaction logic
-  const rate = rates.find(r => r.id === rateId) || rates[0] || { price: 0, name: '' };
-  const baseTotal = Number(rate.price || 0) * Number(quantity || 0);
+  const rate = rates.find(r => r.id === rateId) || null;
+  const baseTotal = rate ? Number(rate.price || 0) * Number(quantity || 0) : 0;
   let discountTotal = 0;
   appliedDiscounts.forEach(d => {
     if (d.discount_value_type === 'percentage') {
@@ -127,19 +125,20 @@ export default function CashierLayout() {
   const changeDue = paidAmount ? Math.max(0, paidAmount - total) : 0;
 
   useEffect(() => {
-    if (total === 0 || !promoter?.name) return;
+    if (total === 0 || !promoter?.name || !rateId) return;
     console.log(total, promoter);
     const timeout = setTimeout(() => {
-      axiosClient.post('/cashier/send-to-display', {
-        line1: `Promoter: ${promoter.name}`.substring(0, 20),
-        line2: `Total: ₱${total.toFixed(2)}`.substring(0, 20),
-      }).catch(err => {
+      // Use frontend display utilities instead of Laravel backend
+      clientDisplay.showCustomMessage(
+        `Promoter: ${promoter.name}`.substring(0, 20),
+        `Total: ₱${total.toFixed(2)}`.substring(0, 20)
+      ).catch(err => {
         console.error('PD-300 display error:', err);
       });
     }, 400);
   
     return () => clearTimeout(timeout);
-  }, [total, promoter]);
+  }, [total, promoter, rateId]);
 
   // Open Cash Handlers
   // Integrate handleOpenCash with backend
@@ -197,6 +196,10 @@ export default function CashierLayout() {
   };
   const handleSaveTransaction = (e) => {
     e.preventDefault();
+    if (!rateId) {
+      toastRef.current.showToast('Please select a rate.', 'warning');
+      return;
+    }
     if (!paidAmount || paidAmount < total) {
       toastRef.current.showToast('Paid amount is less than total.', 'warning');
       return;
@@ -226,9 +229,7 @@ export default function CashierLayout() {
         setPaidAmount('');
         setQuantity(1);
         setAppliedDiscounts([]);
-        if ((rates || []).length > 0) {
-          setRateId(rates[0].id);
-        }
+        setRateId(''); // Reset to empty to show "Select Rate"
 
         // Handle frontend printing if printData is available
         if (data.printData) {
@@ -300,7 +301,7 @@ export default function CashierLayout() {
     promoter: promoter?.name || 'Default Promoter',
     date: now,
     note: 'Single use only',
-    rate: rate.name,
+    rate: rate?.name || 'No Rate Selected',
     ticketNumber: i + 1,
   }));
 

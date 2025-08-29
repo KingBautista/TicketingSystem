@@ -126,7 +126,7 @@ export default function ReceiptPreview({
           <div style={{ textAlign: 'left' }}>
             <div><span style={{ fontWeight: 'bold' }}>PROMOTER:</span> {promoter?.name || 'N/A'}</div>
             <div><span style={{ fontWeight: 'bold' }}>DATE:</span> {new Date().toLocaleString()}</div>
-            <div><span style={{ fontWeight: 'bold' }}>RATE:</span> {rate.name}</div>
+            <div><span style={{ fontWeight: 'bold' }}>RATE:</span> {rate?.name || 'No Rate Selected'}</div>
             <div><span style={{ fontWeight: 'bold' }}>QTY:</span> {quantity}</div>
             <div><span style={{ fontWeight: 'bold' }}>TOTAL:</span> ₱{total.toFixed(2)}</div>
             <div><span style={{ fontWeight: 'bold' }}>PAID:</span> ₱{paidAmount || total.toFixed(2)}</div>

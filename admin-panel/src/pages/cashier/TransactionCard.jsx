@@ -41,7 +41,8 @@ export default function TransactionCard({
           </div>
           <div className="mb-3">
             <label className="form-label">Select Rate</label>
-            <select className="form-select form-select-lg" value={rateId} onChange={e => setRateId(Number(e.target.value))}>
+            <select className="form-select form-select-lg" value={rateId} onChange={e => setRateId(e.target.value ? Number(e.target.value) : '')} required>
+              <option value="">Select Rate</option>
               {rates.map(r => <option key={r.id} value={r.id}>{r.name} (₱{r.price})</option>)}
             </select>
           </div>
@@ -65,7 +66,7 @@ export default function TransactionCard({
           </div>
           <div className="mb-3">
             <label className="form-label">Total Amount</label>
-            <div className="h4">₱{total.toFixed(2)}</div>
+            <div className="h4">{rateId ? `₱${total.toFixed(2)}` : '₱0.00'}</div>
           </div>
           <div className="mb-3">
             <label className="form-label">Paid Amount</label>
