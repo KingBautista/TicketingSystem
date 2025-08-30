@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Role extends Model
 {
-	use SoftDeletes;
+	use HasFactory, SoftDeletes;
   /**
 	 * The attributes that are mass assignable.
 	 *
