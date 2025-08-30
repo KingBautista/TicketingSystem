@@ -258,3 +258,8 @@ Route::post('/generate-password', [AuthController::class, 'genTempPassword']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/access/validate', [ScanController::class, 'store']);
 Route::get('/access/latest', [ScanController::class, 'showLatest']);
+Route::get('/access/stream', [ScanController::class, 'stream']);
+Route::get('/access/poll', [ScanController::class, 'poll']);
+Route::get('/access/stream-test', [ScanController::class, 'streamTest']);
+Route::post('/access/check', [ScanController::class, 'checkCode']);
+Route::post('/access/test-scan', [ScanController::class, 'testScan']);

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Live Scan Viewer</title>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Live Scan Viewer</title>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="csrf-token" content="{{ csrf_token() }}">
   <style>
     * {
       margin: 0;
@@ -54,6 +55,96 @@
        align-items: center;
        flex-wrap: wrap;
        gap: 10px;
+     }
+
+     .tabs {
+       display: flex;
+       background: #f8f9fa;
+       border-bottom: 1px solid #e9ecef;
+     }
+
+     .tab {
+       flex: 1;
+       padding: 15px 20px;
+       background: #e9ecef;
+       border: none;
+       cursor: pointer;
+       font-weight: 600;
+       transition: all 0.3s ease;
+       border-bottom: 3px solid transparent;
+     }
+
+     .tab.active {
+       background: white;
+       border-bottom-color: #667eea;
+       color: #667eea;
+     }
+
+     .tab:hover {
+       background: #dee2e6;
+     }
+
+     .tab-content {
+       display: none;
+     }
+
+     .tab-content.active {
+       display: block;
+     }
+
+     .check-form {
+       padding: 20px;
+       background: white;
+     }
+
+     .form-group {
+       margin-bottom: 15px;
+     }
+
+     .form-label {
+       display: block;
+       margin-bottom: 5px;
+       font-weight: 600;
+       color: #495057;
+     }
+
+     .form-input {
+       width: 100%;
+       padding: 10px;
+       border: 1px solid #ced4da;
+       border-radius: 4px;
+       font-size: 1rem;
+       font-family: 'Courier New', monospace;
+     }
+
+     .form-input:focus {
+       outline: none;
+       border-color: #667eea;
+       box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
+     }
+
+     .check-result {
+       margin-top: 20px;
+       padding: 15px;
+       border-radius: 8px;
+       border-left: 4px solid #28a745;
+       background: #f8f9fa;
+       display: none;
+     }
+
+     .check-result.error {
+       border-left-color: #dc3545;
+       background: #f8d7da;
+     }
+
+     .check-result.warning {
+       border-left-color: #ffc107;
+       background: #fff3cd;
+     }
+
+     .check-result.success {
+       border-left-color: #28a745;
+       background: #d4edda;
      }
 
          .stats {
@@ -282,9 +373,10 @@
     }
   </style>
   <script>
-    let scanHistory = [];
-    let lastScanCode = null;
-    let scanCount = 0;
+         let scanHistory = [];
+     let lastScanCode = null;
+     let scanCount = 0;
+     let eventSource = null;
 
     function formatTime(timestamp) {
       const date = new Date(timestamp);
@@ -377,57 +469,268 @@
       }).length;
     }
 
-    async function pollScan() {
-      try {
-        const res = await fetch("api/access/latest");
-        const data = await res.json();
-        
-        if (data && data.timestamp && data.timestamp !== lastScanCode) {
-          lastScanCode = data.timestamp;
-          
-          // Add new scan to the beginning of the array
-          const newScan = {
-            data: data,
-            html: createScanItem(data, true)
-          };
-          
-          scanHistory.unshift(newScan);
-          
-          // Keep only the last 50 scans to prevent memory issues
-          if (scanHistory.length > 50) {
-            scanHistory = scanHistory.slice(0, 50);
-          }
-          
-          // Update the display
-          updateScanHistory();
-          updateStats();
-          
-          // Update last scan time
-          if (data.timestamp) {
-            document.getElementById('last-scan-time').textContent = formatTime(data.timestamp);
-          }
-          
-          // Remove the 'new' class after animation
-          setTimeout(() => {
-            const newItems = document.querySelectorAll('.scan-item.new');
-            newItems.forEach(item => item.classList.remove('new'));
-          }, 1000);
+                     function startEventStream() {
+        if (eventSource) {
+          eventSource.close();
         }
-      } catch (e) {
-        console.error("Error fetching scan", e);
-        document.getElementById('status').textContent = '❌ Connection Error';
-        document.getElementById('status').style.color = '#dc3545';
-      }
-    }
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
-      updateScanHistory();
-      updateStats();
+        // Try the main stream first
+        eventSource = new EventSource('http://10.60.216.20:8000/api/access/stream');
+        
+        eventSource.onopen = function(event) {
+          console.log('Event stream connected');
+          document.getElementById('status').textContent = '🟢 Live Streaming Connected';
+          document.getElementById('status').style.color = '#28a745';
+        };
+
+        eventSource.onmessage = function(event) {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('Received event:', data.type);
+            
+            if (data.type === 'connected') {
+              console.log('Stream connected:', data.message);
+            } else if (data.type === 'scan_update' && data.data) {
+              const scanData = data.data;
+              
+              if (scanData.timestamp && scanData.timestamp !== lastScanCode) {
+                lastScanCode = scanData.timestamp;
+                
+                // Add new scan to the beginning of the array
+                const newScan = {
+                  data: scanData,
+                  html: createScanItem(scanData, true)
+                };
+                
+                scanHistory.unshift(newScan);
+                
+                // Keep only the last 50 scans to prevent memory issues
+                if (scanHistory.length > 50) {
+                  scanHistory = scanHistory.slice(0, 50);
+                }
+                
+                // Update the display
+                updateScanHistory();
+                updateStats();
+                
+                // Update last scan time
+                if (scanData.timestamp) {
+                  document.getElementById('last-scan-time').textContent = formatTime(scanData.timestamp);
+                }
+                
+                // Remove the 'new' class after animation
+                setTimeout(() => {
+                  const newItems = document.querySelectorAll('.scan-item.new');
+                  newItems.forEach(item => item.classList.remove('new'));
+                }, 1000);
+              }
+            } else if (data.type === 'ping') {
+              // Keep-alive ping received
+              console.log('Ping received:', data.timestamp);
+            } else if (data.type === 'error') {
+              console.error('Stream error:', data.message);
+              document.getElementById('status').textContent = '⚠️ Stream Error: ' + data.message;
+              document.getElementById('status').style.color = '#ffc107';
+            } else if (data.type === 'disconnected') {
+              console.log('Stream disconnected:', data.message);
+              document.getElementById('status').textContent = '🔴 Stream Disconnected';
+              document.getElementById('status').style.color = '#dc3545';
+            }
+          } catch (error) {
+            console.error('Error parsing event data:', error);
+          }
+        };
+
+        eventSource.onerror = function(event) {
+          console.error('Event stream error:', event);
+          document.getElementById('status').textContent = '❌ Stream Error - Falling back to polling...';
+          document.getElementById('status').style.color = '#dc3545';
+          
+          // Close the event source
+          eventSource.close();
+          eventSource = null;
+          
+          // Fall back to polling after 2 seconds
+          setTimeout(() => {
+            startPolling();
+          }, 2000);
+        };
+      }
+
+           function stopEventStream() {
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+      }
+
+      let pollingInterval = null;
+
+             function startPolling() {
+         if (pollingInterval) {
+           clearInterval(pollingInterval);
+         }
+         
+         document.getElementById('status').textContent = '🔄 Polling Mode Active';
+         document.getElementById('status').style.color = '#ffc107';
+         
+         // Start polling every 2 seconds
+         pollingInterval = setInterval(async function() {
+           try {
+             const res = await fetch("http://10.60.216.20:8000/api/access/poll");
+             const response = await res.json();
+             
+             if (response.success && response.data && response.data.timestamp && response.data.timestamp !== lastScanCode) {
+               lastScanCode = response.data.timestamp;
+               
+               // Add new scan to the beginning of the array
+               const newScan = {
+                 data: response.data,
+                 html: createScanItem(response.data, true)
+               };
+               
+               scanHistory.unshift(newScan);
+               
+               // Keep only the last 50 scans to prevent memory issues
+               if (scanHistory.length > 50) {
+                 scanHistory = scanHistory.slice(0, 50);
+               }
+               
+               // Update the display
+               updateScanHistory();
+               updateStats();
+               
+               // Update last scan time
+               if (response.data.timestamp) {
+                 document.getElementById('last-scan-time').textContent = formatTime(response.data.timestamp);
+               }
+               
+               // Remove the 'new' class after animation
+               setTimeout(() => {
+                 const newItems = document.querySelectorAll('.scan-item.new');
+                 newItems.forEach(item => item.classList.remove('new'));
+               }, 1000);
+             }
+           } catch (e) {
+             console.error("Error fetching scan", e);
+             document.getElementById('status').textContent = '❌ Polling Error';
+             document.getElementById('status').style.color = '#dc3545';
+           }
+         }, 2000);
+       }
+
+      function stopPolling() {
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+          pollingInterval = null;
+        }
+      }
+
       
-      // Start polling
-      setInterval(pollScan, 1000);
-    });
+
+           function restartStream() {
+        document.getElementById('status').textContent = '🔄 Restarting Stream...';
+        document.getElementById('status').style.color = '#ffc107';
+        stopEventStream();
+        stopPolling();
+        setTimeout(() => {
+          startEventStream();
+        }, 1000);
+      }
+
+      async function testScan() {
+        try {
+                     const response = await fetch('http://10.60.216.20:8000/api/access/test-scan', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+            }
+          });
+          
+          const data = await response.json();
+          console.log('Test scan created:', data);
+          
+          // Show a brief success message
+          const originalStatus = document.getElementById('status').textContent;
+          document.getElementById('status').textContent = '✅ Test scan sent!';
+          document.getElementById('status').style.color = '#28a745';
+          
+          setTimeout(() => {
+            document.getElementById('status').textContent = originalStatus;
+            document.getElementById('status').style.color = originalStatus.includes('🟢') ? '#28a745' : 
+                                                          originalStatus.includes('🔄') ? '#ffc107' : '#dc3545';
+          }, 2000);
+          
+        } catch (error) {
+          console.error('Error creating test scan:', error);
+        }
+      }
+
+      function testSimpleStream() {
+        console.log('Testing simple stream...');
+        
+                 const testEventSource = new EventSource('http://10.60.216.20:8000/api/access/stream-test');
+        
+        testEventSource.onopen = function(event) {
+          console.log('Simple stream test connected');
+        };
+
+        testEventSource.onmessage = function(event) {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('Simple stream test received:', data);
+            
+            if (data.type === 'end') {
+              console.log('Simple stream test completed');
+              testEventSource.close();
+            }
+          } catch (error) {
+            console.error('Error parsing simple stream data:', error);
+          }
+        };
+
+        testEventSource.onerror = function(event) {
+          console.error('Simple stream test error:', event);
+          testEventSource.close();
+        };
+      }
+
+             async function testPolling() {
+         console.log('Testing polling endpoint...');
+         
+         try {
+           const response = await fetch('http://10.60.216.20:8000/api/access/poll');
+           const data = await response.json();
+           console.log('Polling test response:', data);
+           
+           if (data.success) {
+             console.log('Polling endpoint working correctly');
+             alert('✅ Polling endpoint is working! Latest scan: ' + (data.data ? data.data.code : 'None'));
+           } else {
+             console.error('Polling endpoint error:', data.error);
+             alert('❌ Polling endpoint error: ' + data.error);
+           }
+         } catch (error) {
+           console.error('Error testing polling:', error);
+           alert('❌ Error testing polling: ' + error.message);
+         }
+       }
+
+         // Initialize
+     document.addEventListener('DOMContentLoaded', function() {
+       updateScanHistory();
+       updateStats();
+       
+       // Start live streaming
+       startEventStream();
+     });
+
+           // Clean up on page unload
+      window.addEventListener('beforeunload', function() {
+        stopEventStream();
+        stopPolling();
+      });
 
     function clearHistory() {
       if (confirm('Are you sure you want to clear all scan history?')) {
@@ -438,33 +741,138 @@
       }
     }
 
-    function exportHistory() {
-      if (scanHistory.length === 0) {
-        alert('No scans to export');
-        return;
-      }
-      
-      const csvContent = [
-        ['Scan #', 'Code', 'Device', 'Type', 'Status', 'Error Message', 'Timestamp'],
-        ...scanHistory.map((scan, index) => [
-          index + 1,
-          scan.data.code || 'N/A',
-          scan.data.device || 'N/A',
-          scan.data.scan_type || 'Unknown',
-          scan.data.is_valid ? 'Valid' : 'Invalid',
-          scan.data.error_message || '',
-          scan.data.timestamp
-        ])
-      ].map(row => row.join(',')).join('\n');
-      
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `scan_history_${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    }
+         function exportHistory() {
+       if (scanHistory.length === 0) {
+         alert('No scans to export');
+         return;
+       }
+       
+       const csvContent = [
+         ['Scan #', 'Code', 'Device', 'Type', 'Status', 'Error Message', 'Timestamp'],
+         ...scanHistory.map((scan, index) => [
+           index + 1,
+           scan.data.code || 'N/A',
+           scan.data.device || 'N/A',
+           scan.data.scan_type || 'Unknown',
+           scan.data.is_valid ? 'Valid' : 'Invalid',
+           scan.data.error_message || '',
+           scan.data.timestamp
+         ])
+       ].map(row => row.join(',')).join('\n');
+       
+       const blob = new Blob([csvContent], { type: 'text/csv' });
+       const url = window.URL.createObjectURL(blob);
+       const a = document.createElement('a');
+       a.href = url;
+       a.download = `scan_history_${new Date().toISOString().split('T')[0]}.csv`;
+       a.click();
+       window.URL.revokeObjectURL(url);
+     }
+
+     function switchTab(tabName) {
+       // Hide all tab contents
+       document.querySelectorAll('.tab-content').forEach(content => {
+         content.classList.remove('active');
+       });
+       
+       // Remove active class from all tabs
+       document.querySelectorAll('.tab').forEach(tab => {
+         tab.classList.remove('active');
+       });
+       
+       // Show selected tab content
+       document.getElementById(tabName + '-tab').classList.add('active');
+       
+       // Add active class to clicked tab
+       event.target.classList.add('active');
+     }
+
+     function handleCheckKeyPress(event) {
+       if (event.key === 'Enter') {
+         checkCode();
+       }
+     }
+
+     async function checkCode() {
+       const code = document.getElementById('check-code').value.trim();
+       const resultDiv = document.getElementById('check-result');
+       const messageDiv = document.getElementById('check-message');
+       const detailsDiv = document.getElementById('check-details');
+       
+       if (!code) {
+         alert('Please enter a code to check');
+         return;
+       }
+       
+       try {
+                    const response = await fetch('http://10.60.216.20:8000/api/access/check', {
+           method: 'POST',
+           headers: {
+             'Content-Type': 'application/json',
+             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+           },
+           body: JSON.stringify({ code: code })
+         });
+         
+         const data = await response.json();
+         
+         // Show result
+         resultDiv.style.display = 'block';
+         resultDiv.className = 'check-result';
+         
+         if (data.exists) {
+           if (data.is_valid) {
+             resultDiv.classList.add('success');
+             messageDiv.innerHTML = `<strong>✅ ${data.message}</strong>`;
+           } else {
+             resultDiv.classList.add('warning');
+             messageDiv.innerHTML = `<strong>⚠️ ${data.message}</strong>`;
+           }
+         } else {
+           resultDiv.classList.add('error');
+           messageDiv.innerHTML = `<strong>❌ ${data.message}</strong>`;
+         }
+         
+         // Show details
+         if (data.details) {
+           let detailsHtml = '<div style="margin-top: 10px;"><strong>Details:</strong><br>';
+           
+           if (data.type === 'cashier_ticket') {
+             detailsHtml += `
+               <div style="margin-top: 5px;">
+                 <strong>Transaction ID:</strong> ${data.details.transaction_id}<br>
+                 <strong>Used:</strong> ${data.details.is_used ? 'Yes' : 'No'}<br>
+                 <strong>Created:</strong> ${new Date(data.details.created_at).toLocaleString()}<br>
+                 ${data.details.note ? `<strong>Note:</strong> ${data.details.note}` : ''}
+               </div>
+             `;
+           } else if (data.type === 'vip_card') {
+             detailsHtml += `
+               <div style="margin-top: 5px;">
+                 <strong>Name:</strong> ${data.details.name}<br>
+                 <strong>Card Number:</strong> ${data.details.card_number}<br>
+                 <strong>Status:</strong> ${data.details.status}<br>
+                 <strong>Validity Start:</strong> ${data.details.validity_start ? new Date(data.details.validity_start).toLocaleDateString() : 'Not set'}<br>
+                 <strong>Validity End:</strong> ${data.details.validity_end ? new Date(data.details.validity_end).toLocaleDateString() : 'Not set'}<br>
+                 ${data.details.contact_number ? `<strong>Contact:</strong> ${data.details.contact_number}` : ''}
+               </div>
+             `;
+           }
+           
+           detailsHtml += '</div>';
+           detailsDiv.innerHTML = detailsHtml;
+         } else {
+           detailsDiv.innerHTML = '';
+         }
+         
+       } catch (error) {
+         console.error('Error checking code:', error);
+         resultDiv.style.display = 'block';
+         resultDiv.className = 'check-result error';
+         messageDiv.innerHTML = '<strong>❌ Error checking code. Please try again.</strong>';
+         detailsDiv.innerHTML = '';
+       }
+     }
   </script>
 </head>
 <body>
@@ -474,31 +882,57 @@
       <div class="status" id="status">🟢 Connected & Monitoring</div>
     </div>
     
-    <div class="controls">
-      <div class="stats">
-        <div class="stat-item">
-          <div class="stat-label">Total Scans</div>
-          <div class="stat-value" id="total-scans">0</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">Today</div>
-          <div class="stat-value" id="today-scans">0</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">Last Scan</div>
-          <div class="stat-value" id="last-scan-time">--</div>
-        </div>
-      </div>
-      
-      <div>
-        <button class="btn btn-primary" onclick="exportHistory()">📊 Export CSV</button>
-        <button class="btn btn-danger" onclick="clearHistory()">🗑️ Clear History</button>
-      </div>
-    </div>
-    
-    <div class="scan-history" id="scan-history">
-      <!-- Scan items will be dynamically added here -->
-    </div>
+         <div class="controls">
+       <div class="stats">
+         <div class="stat-item">
+           <div class="stat-label">Total Scans</div>
+           <div class="stat-value" id="total-scans">0</div>
+         </div>
+         <div class="stat-item">
+           <div class="stat-label">Today</div>
+           <div class="stat-value" id="today-scans">0</div>
+         </div>
+         <div class="stat-item">
+           <div class="stat-label">Last Scan</div>
+           <div class="stat-value" id="last-scan-time">--</div>
+         </div>
+       </div>
+       
+                          <div>
+            <button class="btn btn-primary" onclick="exportHistory()">📊 Export CSV</button>
+            <button class="btn btn-primary" onclick="restartStream()">🔄 Restart Stream</button>
+            <button class="btn btn-primary" onclick="testScan()">🧪 Test Scan</button>
+            <button class="btn btn-primary" onclick="testSimpleStream()">🔬 Test Stream</button>
+                         <button class="btn btn-primary" onclick="testPolling()">📡 Test Polling</button>
+            <button class="btn btn-danger" onclick="clearHistory()">🗑️ Clear History</button>
+          </div>
+     </div>
+
+     <div class="tabs">
+       <button class="tab active" onclick="switchTab('live')">📱 Live Scans</button>
+       <button class="tab" onclick="switchTab('check')">🔍 Check Code</button>
+     </div>
+     
+     <div class="tab-content active" id="live-tab">
+       <div class="scan-history" id="scan-history">
+         <!-- Scan items will be dynamically added here -->
+       </div>
+     </div>
+
+     <div class="tab-content" id="check-tab">
+       <div class="check-form">
+         <div class="form-group">
+           <label class="form-label">Enter QR Code or Card Number:</label>
+           <input type="text" class="form-input" id="check-code" placeholder="Enter code to check..." onkeypress="handleCheckKeyPress(event)">
+         </div>
+         <button class="btn btn-primary" onclick="checkCode()">🔍 Check Code</button>
+         
+         <div class="check-result" id="check-result">
+           <div id="check-message"></div>
+           <div id="check-details" style="margin-top: 10px; font-size: 0.9rem;"></div>
+         </div>
+       </div>
+     </div>
   </div>
 </body>
 </html>
