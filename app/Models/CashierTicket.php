@@ -14,6 +14,7 @@ class CashierTicket extends Model
         'transaction_id',
         'qr_code',
         'note',
+        'is_used',
     ];
 
     public function transaction()

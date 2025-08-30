@@ -200,6 +200,13 @@
        color: #212529;
        border: 1px solid #e9ecef;
        font-size: 0.8rem;
+       word-break: break-word;
+     }
+
+     .scan-value.error {
+       background: #f8d7da;
+       border-color: #f5c6cb;
+       color: #721c24;
      }
 
     .no-scans {
@@ -296,8 +303,20 @@
       const scanNumber = ++scanCount;
       const scanTime = formatTime(scanData.timestamp);
       
+      // Determine status styling based on validation
+      const isValid = scanData.is_valid;
+      const statusColor = isValid ? '#28a745' : '#dc3545';
+      const statusIcon = isValid ? '✓' : '✗';
+      const statusText = isValid ? 'Valid' : 'Invalid';
+      const borderColor = isValid ? '#28a745' : '#dc3545';
+      
+      // Create scan type display
+      const scanType = scanData.scan_type || 'Unknown';
+      const scanTypeText = scanType === 'cashier_ticket' ? 'Cashier Ticket' : 
+                          scanType === 'vip_card' ? 'VIP Card' : 'Unknown';
+      
       return `
-        <div class="scan-item ${isNew ? 'new' : ''}" data-code="${scanData.code}">
+        <div class="scan-item ${isNew ? 'new' : ''}" data-code="${scanData.code}" style="border-left-color: ${borderColor};">
           <div class="scan-header">
             <span class="scan-time">${scanTime}</span>
             <span class="scan-number">#${scanNumber}</span>
@@ -305,16 +324,26 @@
           <div class="scan-content">
             <div class="scan-row">
               <span class="scan-label">Code:</span>
-              <span class="scan-value">${scanData.code}</span>
+              <span class="scan-value">${scanData.code || 'N/A'}</span>
             </div>
             <div class="scan-row">
               <span class="scan-label">Device:</span>
               <span class="scan-value">${scanData.device || 'N/A'}</span>
             </div>
             <div class="scan-row">
-              <span class="scan-label">Status:</span>
-              <span class="scan-value" style="color: #28a745; font-weight: bold;">✓ Valid</span>
+              <span class="scan-label">Type:</span>
+              <span class="scan-value">${scanTypeText}</span>
             </div>
+            <div class="scan-row">
+              <span class="scan-label">Status:</span>
+              <span class="scan-value" style="color: ${statusColor}; font-weight: bold;">${statusIcon} ${statusText}</span>
+            </div>
+            ${scanData.error_message ? `
+            <div class="scan-row">
+              <span class="scan-label">Error:</span>
+              <span class="scan-value error">${scanData.error_message}</span>
+            </div>
+            ` : ''}
           </div>
         </div>
       `;
@@ -350,11 +379,11 @@
 
     async function pollScan() {
       try {
-        const res = await fetch("http://192.168.0.10:8000/api/access/latest");
+        const res = await fetch("api/access/latest");
         const data = await res.json();
         
-        if (data && data.code && data.code !== lastScanCode) {
-          lastScanCode = data.code;
+        if (data && data.timestamp && data.timestamp !== lastScanCode) {
+          lastScanCode = data.timestamp;
           
           // Add new scan to the beginning of the array
           const newScan = {
@@ -372,6 +401,11 @@
           // Update the display
           updateScanHistory();
           updateStats();
+          
+          // Update last scan time
+          if (data.timestamp) {
+            document.getElementById('last-scan-time').textContent = formatTime(data.timestamp);
+          }
           
           // Remove the 'new' class after animation
           setTimeout(() => {
@@ -411,11 +445,14 @@
       }
       
       const csvContent = [
-        ['Scan #', 'Code', 'Device', 'Timestamp'],
+        ['Scan #', 'Code', 'Device', 'Type', 'Status', 'Error Message', 'Timestamp'],
         ...scanHistory.map((scan, index) => [
           index + 1,
-          scan.data.code,
+          scan.data.code || 'N/A',
           scan.data.device || 'N/A',
+          scan.data.scan_type || 'Unknown',
+          scan.data.is_valid ? 'Valid' : 'Invalid',
+          scan.data.error_message || '',
           scan.data.timestamp
         ])
       ].map(row => row.join(',')).join('\n');
