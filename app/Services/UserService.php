@@ -61,6 +61,42 @@ class UserService extends BaseService
   }
 
   /**
+  * Get users for dropdown selection
+  */
+  public function getUsersForDropdown()
+  {
+    return User::query()
+      ->with('userRole')
+      ->where('user_role_id', '!=', 1) // Exclude Developer Account
+      ->where('user_status', 1) // Only active users
+      ->orderBy('user_login', 'asc')
+      ->get()
+      ->map(function ($user) {
+        $userDetails = $user->user_details;
+        $displayName = '';
+        
+        // Try to get display name from user details
+        if (isset($userDetails['first_name']) || isset($userDetails['last_name'])) {
+          $firstName = $userDetails['first_name'] ?? '';
+          $lastName = $userDetails['last_name'] ?? '';
+          $displayName = trim($firstName . ' ' . $lastName);
+        }
+        
+        // Fallback to user_login if no name is set
+        if (empty($displayName)) {
+          $displayName = $user->user_login;
+        }
+        
+        return [
+          'id' => $user->id,
+          'name' => $displayName,
+          'email' => $user->user_email,
+          'role' => $user->userRole ? $user->userRole->name : 'Unknown'
+        ];
+      });
+  }
+
+  /**
   * Store a newly created resource in storage.
   */
   public function storeWithMeta(array $data, array $metaData)

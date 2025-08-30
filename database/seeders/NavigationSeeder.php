@@ -17,7 +17,7 @@ class NavigationSeeder extends Seeder
             'user_management' => Navigation::create([
                 'name' => 'User Management',
                 'slug' => 'user-management',
-                'icon' => 'cil-people',
+                'icon' => 'fi-br-user',
                 'parent_id' => null,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -25,7 +25,7 @@ class NavigationSeeder extends Seeder
             // 'content_management' => Navigation::create([
             //     'name' => 'Content Management',
             //     'slug' => 'content-management',
-            //     'icon' => 'cil-library',
+            //     'icon' => 'fi-br-file',
             //     'parent_id' => null,
             //     'active' => 1,
             //     'show_in_menu' => 1
@@ -33,7 +33,7 @@ class NavigationSeeder extends Seeder
             'vip_management' => Navigation::create([
                 'name' => 'VIP Management',
                 'slug' => 'vip-management',
-                'icon' => 'cil-star',
+                'icon' => 'fi-br-star',
                 'parent_id' => null,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -41,7 +41,7 @@ class NavigationSeeder extends Seeder
             'rate_management' => Navigation::create([
                 'name' => 'Rate Management',
                 'slug' => 'rate-management',
-                'icon' => 'cil-dollar',
+                'icon' => 'fi-br-dollar',
                 'parent_id' => null,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -49,7 +49,7 @@ class NavigationSeeder extends Seeder
             'promoter_management' => Navigation::create([
                 'name' => 'Promoter Management',
                 'slug' => 'promoter-management',
-                'icon' => 'cil-badge',
+                'icon' => 'fi-br-badge',
                 'parent_id' => null,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -57,7 +57,7 @@ class NavigationSeeder extends Seeder
             'reports' => Navigation::create([
                 'name' => 'Reports',
                 'slug' => 'reports',
-                'icon' => 'cil-chart',
+                'icon' => 'fi-br-chart-pie',
                 'parent_id' => null,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -65,7 +65,7 @@ class NavigationSeeder extends Seeder
             'system_settings' => Navigation::create([
                 'name' => 'System Settings',
                 'slug' => 'system-settings',
-                'icon' => 'cil-settings',
+                'icon' => 'fi-br-settings',
                 'parent_id' => null,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -78,7 +78,7 @@ class NavigationSeeder extends Seeder
             [
                 'name' => 'All Users',
                 'slug' => 'user-management/users',
-                'icon' => 'cil-user',
+                'icon' => 'fi-br-user',
                 'parent_id' => $parents['user_management']->id,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -86,7 +86,7 @@ class NavigationSeeder extends Seeder
             [
                 'name' => 'Permission Settings',
                 'slug' => 'user-management/roles',
-                'icon' => 'cil-shield-alt',
+                'icon' => 'fi-br-shield-check',
                 'parent_id' => $parents['user_management']->id,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -96,7 +96,7 @@ class NavigationSeeder extends Seeder
             // [
             //     'name' => 'Media Library',
             //     'slug' => 'content-management/media-library',
-            //     'icon' => 'cil-image',
+            //     'icon' => 'fi-br-file',
             //     'parent_id' => $parents['content_management']->id,
             //     'active' => 1,
             //     'show_in_menu' => 1
@@ -106,7 +106,7 @@ class NavigationSeeder extends Seeder
             [
                 'name' => 'All VIPs',
                 'slug' => 'vip-management/vips',
-                'icon' => 'cil-user-follow',
+                'icon' => 'fi-br-star-octogram',
                 'parent_id' => $parents['vip_management']->id,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -116,7 +116,7 @@ class NavigationSeeder extends Seeder
             [
                 'name' => 'All Rates',
                 'slug' => 'rate-management/rates',
-                'icon' => 'cil-tag',
+                'icon' => 'fi-br-hastag',
                 'parent_id' => $parents['rate_management']->id,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -124,7 +124,7 @@ class NavigationSeeder extends Seeder
             [
                 'name' => 'All Discounts',
                 'slug' => 'rate-management/discounts',
-                'icon' => 'cil-calculator',
+                'icon' => 'fi-br-calculator',
                 'parent_id' => $parents['rate_management']->id,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -134,7 +134,7 @@ class NavigationSeeder extends Seeder
             [
                 'name' => 'All Promoters',
                 'slug' => 'promoter-management/promoters',
-                'icon' => 'cil-contact',
+                'icon' => 'fi-br-id-badge',
                 'parent_id' => $parents['promoter_management']->id,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -144,7 +144,7 @@ class NavigationSeeder extends Seeder
             [
                 'name' => 'Sales Reports',
                 'slug' => 'reports/sales',
-                'icon' => 'cil-chart-line',
+                'icon' => 'fi-br-chart-connected',
                 'parent_id' => $parents['reports']->id,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -154,7 +154,7 @@ class NavigationSeeder extends Seeder
             // [
             //     'name' => 'Cashier',
             //     'slug' => 'cashier',
-            //     'icon' => 'cil-credit-card',
+            //     'icon' => 'fi-br-credit-card',
             //     'parent_id' => null,
             //     'active' => 1,
             //     'show_in_menu' => 1
@@ -164,7 +164,7 @@ class NavigationSeeder extends Seeder
             [
                 'name' => 'Navigation',
                 'slug' => 'system-settings/navigation',
-                'icon' => 'cil-list',
+                'icon' => 'fi-br-list',
                 'parent_id' => $parents['system_settings']->id,
                 'active' => 1,
                 'show_in_menu' => 1
@@ -172,7 +172,7 @@ class NavigationSeeder extends Seeder
             [
                 'name' => 'Audit Trail',
                 'slug' => 'system-settings/audit-trail',
-                'icon' => 'cil-list',
+                'icon' => 'fi-br-document',
                 'parent_id' => $parents['system_settings']->id,
                 'active' => 1,
                 'show_in_menu' => 1
