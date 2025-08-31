@@ -373,10 +373,13 @@
     }
   </style>
   <script>
-         let scanHistory = [];
-     let lastScanCode = null;
-     let scanCount = 0;
-     let eventSource = null;
+    // Get the base URL dynamically from the current page
+    const baseUrl = window.location.protocol + '//' + window.location.host;
+    
+    let scanHistory = [];
+    let lastScanCode = null;
+    let scanCount = 0;
+    let eventSource = null;
 
     function formatTime(timestamp) {
       const date = new Date(timestamp);
@@ -404,8 +407,7 @@
       
       // Create scan type display
       const scanType = scanData.scan_type || 'Unknown';
-      const scanTypeText = scanType === 'cashier_ticket' ? 'Cashier Ticket' : 
-                          scanType === 'vip_card' ? 'VIP Card' : 'Unknown';
+      const scanTypeText = scanType === 'cashier_ticket' ? 'Cashier Ticket' : scanType === 'vip_card' ? 'VIP Card' : 'Unknown';
       
       return `
         <div class="scan-item ${isNew ? 'new' : ''}" data-code="${scanData.code}" style="border-left-color: ${borderColor};">
@@ -469,13 +471,13 @@
       }).length;
     }
 
-                     function startEventStream() {
+    function startEventStream() {
         if (eventSource) {
           eventSource.close();
         }
 
         // Try the main stream first
-        eventSource = new EventSource('http://10.60.216.20:8000/api/kqt300/stream');
+        eventSource = new EventSource(baseUrl + '/api/kqt300/stream');
         
         eventSource.onopen = function(event) {
           console.log('Event stream connected');
@@ -557,7 +559,7 @@
         };
       }
 
-           function stopEventStream() {
+      function stopEventStream() {
         if (eventSource) {
           eventSource.close();
           eventSource = null;
@@ -566,58 +568,58 @@
 
       let pollingInterval = null;
 
-             function startPolling() {
-         if (pollingInterval) {
-           clearInterval(pollingInterval);
-         }
+      function startPolling() {
+        if (pollingInterval) {
+          clearInterval(pollingInterval);
+        }
          
-         document.getElementById('status').textContent = '🔄 Polling Mode Active';
-         document.getElementById('status').style.color = '#ffc107';
-         
-         // Start polling every 2 seconds
-         pollingInterval = setInterval(async function() {
-           try {
-             const res = await fetch("http://10.60.216.20:8000/api/kqt300/poll");
-             const response = await res.json();
-             
-             if (response.success && response.data && response.data.timestamp && response.data.timestamp !== lastScanCode) {
-               lastScanCode = response.data.timestamp;
-               
-               // Add new scan to the beginning of the array
-               const newScan = {
-                 data: response.data,
-                 html: createScanItem(response.data, true)
-               };
-               
-               scanHistory.unshift(newScan);
-               
-               // Keep only the last 50 scans to prevent memory issues
-               if (scanHistory.length > 50) {
-                 scanHistory = scanHistory.slice(0, 50);
-               }
-               
-               // Update the display
-               updateScanHistory();
-               updateStats();
-               
-               // Update last scan time
-               if (response.data.timestamp) {
-                 document.getElementById('last-scan-time').textContent = formatTime(response.data.timestamp);
-               }
-               
-               // Remove the 'new' class after animation
-               setTimeout(() => {
-                 const newItems = document.querySelectorAll('.scan-item.new');
-                 newItems.forEach(item => item.classList.remove('new'));
-               }, 1000);
-             }
-           } catch (e) {
-             console.error("Error fetching scan", e);
-             document.getElementById('status').textContent = '❌ Polling Error';
-             document.getElementById('status').style.color = '#dc3545';
-           }
-         }, 2000);
-       }
+        document.getElementById('status').textContent = '🔄 Polling Mode Active';
+        document.getElementById('status').style.color = '#ffc107';
+        
+        // Start polling every 2 seconds
+        pollingInterval = setInterval(async function() {
+          try {
+            const res = await fetch(baseUrl + "/api/kqt300/poll");
+            const response = await res.json();
+            
+            if (response.success && response.data && response.data.timestamp && response.data.timestamp !== lastScanCode) {
+              lastScanCode = response.data.timestamp;
+              
+              // Add new scan to the beginning of the array
+              const newScan = {
+                data: response.data,
+                html: createScanItem(response.data, true)
+              };
+              
+              scanHistory.unshift(newScan);
+              
+              // Keep only the last 50 scans to prevent memory issues
+              if (scanHistory.length > 50) {
+                scanHistory = scanHistory.slice(0, 50);
+              }
+              
+              // Update the display
+              updateScanHistory();
+              updateStats();
+              
+              // Update last scan time
+              if (response.data.timestamp) {
+                document.getElementById('last-scan-time').textContent = formatTime(response.data.timestamp);
+              }
+              
+              // Remove the 'new' class after animation
+              setTimeout(() => {
+                const newItems = document.querySelectorAll('.scan-item.new');
+                newItems.forEach(item => item.classList.remove('new'));
+              }, 1000);
+            }
+          } catch (e) {
+            console.error("Error fetching scan", e);
+            document.getElementById('status').textContent = '❌ Polling Error';
+            document.getElementById('status').style.color = '#dc3545';
+          }
+        }, 2000);
+      }
 
       function stopPolling() {
         if (pollingInterval) {
@@ -626,9 +628,7 @@
         }
       }
 
-      
-
-           function restartStream() {
+      function restartStream() {
         document.getElementById('status').textContent = '🔄 Restarting Stream...';
         document.getElementById('status').style.color = '#ffc107';
         stopEventStream();
@@ -640,7 +640,7 @@
 
       async function testScan() {
         try {
-                     const response = await fetch('http://10.60.216.20:8000/api/kqt300/test-scan', {
+            const response = await fetch(baseUrl + '/api/kqt300/test-scan', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -670,7 +670,7 @@
       function testSimpleStream() {
         console.log('Testing simple stream...');
         
-                 const testEventSource = new EventSource('http://10.60.216.20:8000/api/kqt300/stream-test');
+        const testEventSource = new EventSource(baseUrl + '/api/kqt300/stream-test');
         
         testEventSource.onopen = function(event) {
           console.log('Simple stream test connected');
@@ -696,26 +696,26 @@
         };
       }
 
-             async function testPolling() {
-         console.log('Testing polling endpoint...');
-         
-         try {
-           const response = await fetch('http://10.60.216.20:8000/api/kqt300/poll');
-           const data = await response.json();
-           console.log('Polling test response:', data);
-           
-           if (data.success) {
-             console.log('Polling endpoint working correctly');
-             alert('✅ Polling endpoint is working! Latest scan: ' + (data.data ? data.data.code : 'None'));
-           } else {
-             console.error('Polling endpoint error:', data.error);
-             alert('❌ Polling endpoint error: ' + data.error);
-           }
-         } catch (error) {
-           console.error('Error testing polling:', error);
-           alert('❌ Error testing polling: ' + error.message);
-         }
-       }
+      async function testPolling() {
+        console.log('Testing polling endpoint...');
+        
+        try {
+          const response = await fetch(baseUrl + '/api/kqt300/poll');
+          const data = await response.json();
+          console.log('Polling test response:', data);
+          
+          if (data.success) {
+            console.log('Polling endpoint working correctly');
+            alert('✅ Polling endpoint is working! Latest scan: ' + (data.data ? data.data.code : 'None'));
+          } else {
+            console.error('Polling endpoint error:', data.error);
+            alert('❌ Polling endpoint error: ' + data.error);
+          }
+        } catch (error) {
+          console.error('Error testing polling:', error);
+          alert('❌ Error testing polling: ' + error.message);
+        }
+      }
 
          // Initialize
      document.addEventListener('DOMContentLoaded', function() {
@@ -726,7 +726,7 @@
        startEventStream();
      });
 
-           // Clean up on page unload
+      // Clean up on page unload
       window.addEventListener('beforeunload', function() {
         stopEventStream();
         stopPolling();
@@ -741,7 +741,7 @@
       }
     }
 
-         function exportHistory() {
+      function exportHistory() {
        if (scanHistory.length === 0) {
          alert('No scans to export');
          return;
@@ -805,7 +805,7 @@
        }
        
        try {
-                    const response = await fetch('http://10.60.216.20:8000/api/kqt300/check', {
+        const response = await fetch(baseUrl + '/api/kqt300/check', {
            method: 'POST',
            headers: {
              'Content-Type': 'application/json',
@@ -882,7 +882,7 @@
       <div class="status" id="status">🟢 Connected & Monitoring</div>
     </div>
     
-         <div class="controls">
+      <div class="controls">
        <div class="stats">
          <div class="stat-item">
            <div class="stat-label">Total Scans</div>
@@ -898,12 +898,12 @@
          </div>
        </div>
        
-                          <div>
+          <div>
             <button class="btn btn-primary" onclick="exportHistory()">📊 Export CSV</button>
             <button class="btn btn-primary" onclick="restartStream()">🔄 Restart Stream</button>
             <button class="btn btn-primary" onclick="testScan()">🧪 Test Scan</button>
             <button class="btn btn-primary" onclick="testSimpleStream()">🔬 Test Stream</button>
-                         <button class="btn btn-primary" onclick="testPolling()">📡 Test Polling</button>
+            <button class="btn btn-primary" onclick="testPolling()">📡 Test Polling</button>
             <button class="btn btn-danger" onclick="clearHistory()">🗑️ Clear History</button>
           </div>
      </div>

@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17.5-alpine
+    container_name: ticketing_postgres
+    environment:
+      POSTGRES_DB: ticketing_system
+      POSTGRES_USER: ticketing_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ticketing_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+    ports:
+      - "5432:5432"
+    networks:
+      - ticketing_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticketing_user -d ticketing_system"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  laravel:
+    build:
+      context: .
+      dockerfile: docker/laravel/Dockerfile
+    container_name: ticketing_laravel
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=ticketing_system
+      - DB_USERNAME=ticketing_user
+      - DB_PASSWORD=${DB_PASSWORD:-ticketing_password}
+      - CACHE_DRIVER=file
+      - SESSION_DRIVER=file
+      - QUEUE_CONNECTION=sync
+    volumes:
+      - .:/var/www/html
+      - ./storage:/var/www/html/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ticketing_network
+    healthcheck:
+      test: ["CMD", "php", "artisan", "route:list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  admin_panel:
+    build:
+      context: ./admin-panel
+      dockerfile: ../docker/admin-panel/Dockerfile
+    container_name: ticketing_admin_panel
+    environment:
+      - VITE_API_URL=${API_URL:-http://localhost:8000}
+    volumes:
+      - ./admin-panel:/app
+      - /app/node_modules
+    ports:
+      - "4000:4000"
+    networks:
+      - ticketing_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  client_printer:
+    build:
+      context: ./client-printer-service
+      dockerfile: ../docker/client-printer/Dockerfile
+    container_name: ticketing_client_printer
+    environment:
+      - PORT=3001
+      - API_URL=${API_URL:-http://localhost:8000}
+    ports:
+      - "3001:3001"
+    networks:
+      - ticketing_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  pd300_display:
+    build:
+      context: ./pd300-display
+      dockerfile: ../docker/pd300-display/Dockerfile
+    container_name: ticketing_pd300_display
+    environment:
+      - API_URL=${API_URL:-http://localhost:8000}
+    volumes:
+      - /dev:/dev:ro
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    networks:
+      - ticketing_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('PD300 service running')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    container_name: ticketing_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./storage/logs:/var/log/nginx
+    depends_on:
+      - laravel
+      - admin_panel
+    networks:
+      - ticketing_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+
+networks:
+  ticketing_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
