@@ -11,7 +11,7 @@ use App\Services\MessageService;
  * @OA\Info(
  *     title="Ticketing System API",
  *     version="1.0.0",
- *     description="API documentation for Ticketing System",
+ *     description="Comprehensive API documentation for Ticketing System with KQT300 device integration",
  *     @OA\Contact(
  *         email="support@ticketingsystem.com"
  *     )
@@ -27,6 +27,51 @@ use App\Services\MessageService;
  *     type="http",
  *     scheme="bearer",
  *     bearerFormat="JWT"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Authentication",
+ *     description="User authentication and authorization endpoints"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="User Management",
+ *     description="User management operations including authentication, profiles, and user administration"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Role Management",
+ *     description="Role and permission management operations"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="VIP Management",
+ *     description="VIP card and member management"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Cashier Operations",
+ *     description="Cashier transaction and ticket management"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Scan Management",
+ *     description="Barcode scanning and validation operations"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="KQT300 Device Integration",
+ *     description="KQT300 QR Scanner device integration endpoints"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="Reports",
+ *     description="Sales reports and analytics"
+ * )
+ * 
+ * @OA\Tag(
+ *     name="System Settings",
+ *     description="System configuration and settings"
  * )
  */
 

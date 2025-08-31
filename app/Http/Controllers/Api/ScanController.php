@@ -33,12 +33,54 @@ class ScanController extends BaseController
      *         description="Scan data stored successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Scan received")
+     *             @OA\Property(property="message", type="string", example="Scan validated successfully"),
+     *             @OA\Property(property="scan_type", type="string", example="cashier_ticket"),
+     *             @OA\Property(property="code", type="string", example="313233343536")
      *         )
      *     ),
      *     @OA\Response(
      *         response=400,
-     *         description="Invalid scan data"
+     *         description="Invalid scan data",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Ticket already used"),
+     *             @OA\Property(property="scan_type", type="string", example="cashier_ticket"),
+     *             @OA\Property(property="code", type="string", example="313233343536")
+     *         )
+     *     )
+     * )
+     * 
+     * @OA\Post(
+     *     path="/api/kqt300/validate",
+     *     summary="KQT300 device scan validation endpoint",
+     *     description="Primary endpoint for KQT300 QR scanner device to validate scanned codes",
+     *     tags={"KQT300 Device Integration"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="vgdecoderesult", type="string", example="313233343536", description="Hex encoded scan result from KQT300 device"),
+     *             @OA\Property(property="devicenumber", type="string", example="001", description="KQT300 device number")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Scan validated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Scan validated successfully"),
+     *             @OA\Property(property="scan_type", type="string", example="cashier_ticket"),
+     *             @OA\Property(property="code", type="string", example="313233343536")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid scan or ticket already used",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Ticket already used"),
+     *             @OA\Property(property="scan_type", type="string", example="cashier_ticket"),
+     *             @OA\Property(property="code", type="string", example="313233343536")
+     *         )
      *     )
      * )
      */
@@ -209,6 +251,29 @@ class ScanController extends BaseController
      *         description="No scan data available"
      *     )
      * )
+     * 
+     * @OA\Get(
+     *     path="/api/kqt300/latest",
+     *     summary="Get the latest scan data for KQT300 device",
+     *     description="Returns the most recent scan data for KQT300 device monitoring",
+     *     tags={"KQT300 Device Integration"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Latest scan data",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="string", example="313233343536", description="Decoded scan code"),
+     *             @OA\Property(property="device", type="string", example="001", description="KQT300 device number"),
+     *             @OA\Property(property="timestamp", type="string", format="date-time", example="2024-01-01T12:00:00", description="Scan timestamp"),
+     *             @OA\Property(property="scan_type", type="string", example="cashier_ticket", description="Type of scan"),
+     *             @OA\Property(property="is_valid", type="boolean", example=true, description="Whether scan was valid"),
+     *             @OA\Property(property="error_message", type="string", example=null, description="Error message if any")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="No scan data available"
+     *     )
+     * )
      */
     public function showLatest()
     {
@@ -225,6 +290,28 @@ class ScanController extends BaseController
      *     @OA\Response(
      *         response=200,
      *         description="Server-Sent Events stream"
+     *     )
+     * )
+     * 
+     * @OA\Get(
+     *     path="/api/kqt300/stream",
+     *     summary="KQT300 device real-time scan stream",
+     *     description="Server-Sent Events stream for KQT300 device to receive real-time scan updates",
+     *     tags={"KQT300 Device Integration"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Server-Sent Events stream with scan updates",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="type", type="string", example="scan_update", description="Event type"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="code", type="string", example="313233343536"),
+     *                 @OA\Property(property="device", type="string", example="001"),
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2024-01-01T12:00:00"),
+     *                 @OA\Property(property="scan_type", type="string", example="cashier_ticket"),
+     *                 @OA\Property(property="is_valid", type="boolean", example=true),
+     *                 @OA\Property(property="error_message", type="string", example=null)
+     *             )
+     *         )
      *     )
      * )
      */
@@ -323,6 +410,37 @@ class ScanController extends BaseController
      *         description="Latest scan data"
      *     )
      * )
+     * 
+     * @OA\Get(
+     *     path="/api/kqt300/poll",
+     *     summary="KQT300 device polling endpoint",
+     *     description="Simple polling endpoint for KQT300 device to check for latest scan data",
+     *     tags={"KQT300 Device Integration"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Latest scan data with timestamp",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="code", type="string", example="313233343536"),
+     *                 @OA\Property(property="device", type="string", example="001"),
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2024-01-01T12:00:00"),
+     *                 @OA\Property(property="scan_type", type="string", example="cashier_ticket"),
+     *                 @OA\Property(property="is_valid", type="boolean", example=true),
+     *                 @OA\Property(property="error_message", type="string", example=null)
+     *             ),
+     *             @OA\Property(property="timestamp", type="string", format="date-time", example="2024-01-01T12:00:00")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="string", example="Database connection error")
+     *         )
+     *     )
+     * )
      */
     public function poll()
     {
@@ -352,6 +470,28 @@ class ScanController extends BaseController
      *     @OA\Response(
      *         response=200,
      *         description="Test scan created"
+     *     )
+     * )
+     * 
+     * @OA\Post(
+     *     path="/api/kqt300/test-scan",
+     *     summary="KQT300 device test scan endpoint",
+     *     description="Creates a test scan for KQT300 device testing and stream verification",
+     *     tags={"KQT300 Device Integration"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Test scan created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Test scan created"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="code", type="string", example="TEST1234"),
+     *                 @OA\Property(property="device", type="string", example="Test Device"),
+     *                 @OA\Property(property="timestamp", type="string", format="date-time", example="2024-01-01T12:00:00"),
+     *                 @OA\Property(property="scan_type", type="string", example="test"),
+     *                 @OA\Property(property="is_valid", type="boolean", example=true),
+     *                 @OA\Property(property="error_message", type="string", example=null)
+     *             )
+     *         )
      *     )
      * )
      */
@@ -385,6 +525,22 @@ class ScanController extends BaseController
      *     @OA\Response(
      *         response=200,
      *         description="Simple stream test"
+     *     )
+     * )
+     * 
+     * @OA\Get(
+     *     path="/api/kqt300/stream-test",
+     *     summary="KQT300 device stream test endpoint",
+     *     description="Simple test endpoint to verify KQT300 device streaming functionality",
+     *     tags={"KQT300 Device Integration"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Server-Sent Events test stream",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="type", type="string", example="test", description="Event type"),
+     *             @OA\Property(property="message", type="string", example="Test message 1", description="Test message"),
+     *             @OA\Property(property="timestamp", type="string", format="date-time", example="2024-01-01T12:00:00")
+     *         )
      *     )
      * )
      */
@@ -445,6 +601,46 @@ class ScanController extends BaseController
      *             @OA\Property(property="is_valid", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Code found and valid"),
      *             @OA\Property(property="details", type="object")
+     *         )
+     *     )
+     * )
+     * 
+     * @OA\Post(
+     *     path="/api/kqt300/check",
+     *     summary="KQT300 device code validation check",
+     *     description="Check if a code exists in the database without marking it as used for KQT300 device validation",
+     *     tags={"KQT300 Device Integration"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="string", example="313233343536", description="Code to check for KQT300 device")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Code check result",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="exists", type="boolean", example=true),
+     *             @OA\Property(property="type", type="string", example="cashier_ticket"),
+     *             @OA\Property(property="is_valid", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Code found and valid"),
+     *             @OA\Property(property="details", type="object",
+     *                 @OA\Property(property="transaction_id", type="string", example="TXN123456"),
+     *                 @OA\Property(property="is_used", type="boolean", example=false),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00"),
+     *                 @OA\Property(property="note", type="string", example="VIP ticket")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="exists", type="boolean", example=false),
+     *             @OA\Property(property="type", type="string", example=null),
+     *             @OA\Property(property="is_valid", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Error checking code: Database connection failed"),
+     *             @OA\Property(property="details", type="string", example=null)
      *         )
      *     )
      * )
@@ -558,6 +754,36 @@ class ScanController extends BaseController
 
     /**
      * Health check endpoint for Docker monitoring
+     * 
+     * @OA\Get(
+     *     path="/api/kqt300/health",
+     *     summary="KQT300 device health check endpoint",
+     *     description="Health check endpoint for KQT300 device monitoring and Docker health checks",
+     *     tags={"KQT300 Device Integration"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="System health status",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="healthy"),
+     *             @OA\Property(property="timestamp", type="string", format="date-time", example="2024-01-01T12:00:00"),
+     *             @OA\Property(property="service", type="string", example="ScanController"),
+     *             @OA\Property(property="database_connection", type="boolean", example=true),
+     *             @OA\Property(property="cache_connection", type="boolean", example=true),
+     *             @OA\Property(property="last_scan_time", type="string", format="date-time", example="2024-01-01T12:00:00"),
+     *             @OA\Property(property="active_devices", type="integer", example=2),
+     *             @OA\Property(property="uptime", type="string", example="24h 30m 15s")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="System unhealthy",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="unhealthy"),
+     *             @OA\Property(property="error", type="string", example="Database connection failed"),
+     *             @OA\Property(property="timestamp", type="string", format="date-time", example="2024-01-01T12:00:00")
+     *         )
+     *     )
+     * )
      */
     public function health()
     {

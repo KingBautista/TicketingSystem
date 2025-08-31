@@ -160,7 +160,7 @@ class RoleController extends BaseController
    * @OA\Post(
    *     path="/api/user-management/roles",
    *     summary="Create a new role",
-   *     tags={"Roles"},
+   *     tags={"Role Management"},
    *     security={{"bearerAuth": {}}},
    *     @OA\RequestBody(
    *         required=true,
@@ -259,7 +259,7 @@ class RoleController extends BaseController
    * @OA\Put(
    *     path="/api/user-management/roles/{id}",
    *     summary="Update an existing role",
-   *     tags={"Roles"},
+   *     tags={"Role Management"},
    *     security={{"bearerAuth": {}}},
    *     @OA\Parameter(
    *         name="id",

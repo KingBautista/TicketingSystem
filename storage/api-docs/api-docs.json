@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Ticketing System API",
-        "description": "API documentation for Ticketing System",
+        "description": "Comprehensive API documentation for Ticketing System with KQT300 device integration",
         "contact": {
             "email": "support@ticketingsystem.com"
         },
@@ -827,6 +827,122 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/kqt300/status": {
+            "get": {
+                "tags": [
+                    "KQT300 Device Integration"
+                ],
+                "summary": "Get KQT300 device status and system information",
+                "description": "Returns comprehensive system status including database connection, Redis status, server info, and available endpoints",
+                "operationId": "c2676495b0d6fbb01e691171171c8319",
+                "responses": {
+                    "200": {
+                        "description": "Device status retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "device_status": {
+                                                    "type": "string",
+                                                    "example": "online"
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00Z"
+                                                },
+                                                "api_version": {
+                                                    "type": "string",
+                                                    "example": "1.0"
+                                                },
+                                                "database_connection": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "redis_connection": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "server_info": {
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Ticketing System"
+                                                        },
+                                                        "environment": {
+                                                            "type": "string",
+                                                            "example": "production"
+                                                        },
+                                                        "version": {
+                                                            "type": "string",
+                                                            "example": "1.0.0"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "endpoints": {
+                                                    "properties": {
+                                                        "validate": {
+                                                            "type": "string",
+                                                            "example": "http://localhost:8000/api/kqt300/validate"
+                                                        },
+                                                        "stream": {
+                                                            "type": "string",
+                                                            "example": "http://localhost:8000/api/kqt300/stream"
+                                                        },
+                                                        "poll": {
+                                                            "type": "string",
+                                                            "example": "http://localhost:8000/api/kqt300/poll"
+                                                        },
+                                                        "health": {
+                                                            "type": "string",
+                                                            "example": "http://localhost:8000/api/kqt300/health"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "uptime": {
+                                                    "type": "string",
+                                                    "example": "24h 30m 15s"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to get device status"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/system-settings/navigation": {
@@ -1783,7 +1899,7 @@
             },
             "post": {
                 "tags": [
-                    "Roles"
+                    "Role Management"
                 ],
                 "summary": "Create a new role",
                 "description": "Store a newly created role in storage.",
@@ -1903,7 +2019,7 @@
             },
             "put": {
                 "tags": [
-                    "Roles"
+                    "Role Management"
                 ],
                 "summary": "Update an existing role",
                 "description": "Update the specified role in storage.",
@@ -2297,7 +2413,15 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Scan received"
+                                            "example": "Scan validated successfully"
+                                        },
+                                        "scan_type": {
+                                            "type": "string",
+                                            "example": "cashier_ticket"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "313233343536"
                                         }
                                     },
                                     "type": "object"
@@ -2306,7 +2430,122 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid scan data"
+                        "description": "Invalid scan data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ticket already used"
+                                        },
+                                        "scan_type": {
+                                            "type": "string",
+                                            "example": "cashier_ticket"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "313233343536"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kqt300/validate": {
+            "post": {
+                "tags": [
+                    "KQT300 Device Integration"
+                ],
+                "summary": "KQT300 device scan validation endpoint",
+                "description": "Primary endpoint for KQT300 QR scanner device to validate scanned codes",
+                "operationId": "5ccc4a4b8df70ec2c1fde058855af629",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "vgdecoderesult": {
+                                        "description": "Hex encoded scan result from KQT300 device",
+                                        "type": "string",
+                                        "example": "313233343536"
+                                    },
+                                    "devicenumber": {
+                                        "description": "KQT300 device number",
+                                        "type": "string",
+                                        "example": "001"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Scan validated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Scan validated successfully"
+                                        },
+                                        "scan_type": {
+                                            "type": "string",
+                                            "example": "cashier_ticket"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "313233343536"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid scan or ticket already used",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ticket already used"
+                                        },
+                                        "scan_type": {
+                                            "type": "string",
+                                            "example": "cashier_ticket"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "313233343536"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -2350,6 +2589,617 @@
                     },
                     "404": {
                         "description": "No scan data available"
+                    }
+                }
+            }
+        },
+        "/api/kqt300/latest": {
+            "get": {
+                "tags": [
+                    "KQT300 Device Integration"
+                ],
+                "summary": "Get the latest scan data for KQT300 device",
+                "description": "Returns the most recent scan data for KQT300 device monitoring",
+                "operationId": "c605db0a1c240fb81e005e2fcaa4e1d2",
+                "responses": {
+                    "200": {
+                        "description": "Latest scan data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "description": "Decoded scan code",
+                                            "type": "string",
+                                            "example": "313233343536"
+                                        },
+                                        "device": {
+                                            "description": "KQT300 device number",
+                                            "type": "string",
+                                            "example": "001"
+                                        },
+                                        "timestamp": {
+                                            "description": "Scan timestamp",
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00"
+                                        },
+                                        "scan_type": {
+                                            "description": "Type of scan",
+                                            "type": "string",
+                                            "example": "cashier_ticket"
+                                        },
+                                        "is_valid": {
+                                            "description": "Whether scan was valid",
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "error_message": {
+                                            "description": "Error message if any",
+                                            "type": "string",
+                                            "example": null
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No scan data available"
+                    }
+                }
+            }
+        },
+        "/api/access/stream": {
+            "get": {
+                "tags": [
+                    "Scan Management"
+                ],
+                "summary": "Stream live scan updates",
+                "description": "Stream live scan updates using Server-Sent Events.",
+                "operationId": "262ff6b038173ad4a7db5381e3df4b09",
+                "responses": {
+                    "200": {
+                        "description": "Server-Sent Events stream"
+                    }
+                }
+            }
+        },
+        "/api/kqt300/stream": {
+            "get": {
+                "tags": [
+                    "KQT300 Device Integration"
+                ],
+                "summary": "KQT300 device real-time scan stream",
+                "description": "Server-Sent Events stream for KQT300 device to receive real-time scan updates",
+                "operationId": "dcf27a2fb11cea6036fbf5fee2f94727",
+                "responses": {
+                    "200": {
+                        "description": "Server-Sent Events stream with scan updates",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "type": {
+                                            "description": "Event type",
+                                            "type": "string",
+                                            "example": "scan_update"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "313233343536"
+                                                },
+                                                "device": {
+                                                    "type": "string",
+                                                    "example": "001"
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00"
+                                                },
+                                                "scan_type": {
+                                                    "type": "string",
+                                                    "example": "cashier_ticket"
+                                                },
+                                                "is_valid": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "error_message": {
+                                                    "type": "string",
+                                                    "example": null
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/access/poll": {
+            "get": {
+                "tags": [
+                    "Scan Management"
+                ],
+                "summary": "Poll for latest scan data",
+                "description": "Simple polling endpoint that returns latest scan data.",
+                "operationId": "f924d4f0070a6b034add2babef8ec1d3",
+                "responses": {
+                    "200": {
+                        "description": "Latest scan data"
+                    }
+                }
+            }
+        },
+        "/api/kqt300/poll": {
+            "get": {
+                "tags": [
+                    "KQT300 Device Integration"
+                ],
+                "summary": "KQT300 device polling endpoint",
+                "description": "Simple polling endpoint for KQT300 device to check for latest scan data",
+                "operationId": "1286668ab5a0f77ed02d974d475eec73",
+                "responses": {
+                    "200": {
+                        "description": "Latest scan data with timestamp",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "313233343536"
+                                                },
+                                                "device": {
+                                                    "type": "string",
+                                                    "example": "001"
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00"
+                                                },
+                                                "scan_type": {
+                                                    "type": "string",
+                                                    "example": "cashier_ticket"
+                                                },
+                                                "is_valid": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "error_message": {
+                                                    "type": "string",
+                                                    "example": null
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Database connection error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/access/test-scan": {
+            "post": {
+                "tags": [
+                    "Scan Management"
+                ],
+                "summary": "Test scan endpoint",
+                "description": "Test endpoint to simulate a scan for testing the stream.",
+                "operationId": "2e1253c7d0b9ff4183451e9befaeb0f3",
+                "responses": {
+                    "200": {
+                        "description": "Test scan created"
+                    }
+                }
+            }
+        },
+        "/api/kqt300/test-scan": {
+            "post": {
+                "tags": [
+                    "KQT300 Device Integration"
+                ],
+                "summary": "KQT300 device test scan endpoint",
+                "description": "Creates a test scan for KQT300 device testing and stream verification",
+                "operationId": "e52192c86be62918f479e1ff2561ef53",
+                "responses": {
+                    "200": {
+                        "description": "Test scan created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Test scan created"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "TEST1234"
+                                                },
+                                                "device": {
+                                                    "type": "string",
+                                                    "example": "Test Device"
+                                                },
+                                                "timestamp": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00"
+                                                },
+                                                "scan_type": {
+                                                    "type": "string",
+                                                    "example": "test"
+                                                },
+                                                "is_valid": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "error_message": {
+                                                    "type": "string",
+                                                    "example": null
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/access/stream-test": {
+            "get": {
+                "tags": [
+                    "Scan Management"
+                ],
+                "summary": "Test streaming endpoint",
+                "description": "Simple test endpoint to verify streaming works.",
+                "operationId": "f8520fb0afaf6247f168e1c93cf024ce",
+                "responses": {
+                    "200": {
+                        "description": "Simple stream test"
+                    }
+                }
+            }
+        },
+        "/api/kqt300/stream-test": {
+            "get": {
+                "tags": [
+                    "KQT300 Device Integration"
+                ],
+                "summary": "KQT300 device stream test endpoint",
+                "description": "Simple test endpoint to verify KQT300 device streaming functionality",
+                "operationId": "2463ad6698b59fd5d6dc614939097e08",
+                "responses": {
+                    "200": {
+                        "description": "Server-Sent Events test stream",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "type": {
+                                            "description": "Event type",
+                                            "type": "string",
+                                            "example": "test"
+                                        },
+                                        "message": {
+                                            "description": "Test message",
+                                            "type": "string",
+                                            "example": "Test message 1"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/access/check": {
+            "post": {
+                "tags": [
+                    "Scan Management"
+                ],
+                "summary": "Check if a code exists in the database",
+                "description": "Check if a code exists in the database without marking it as used.",
+                "operationId": "1d9b8ac4c6119161f23326dfa812f69f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "code": {
+                                        "description": "Code to check",
+                                        "type": "string",
+                                        "example": "313233343536"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code check result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "exists": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "example": "cashier_ticket"
+                                        },
+                                        "is_valid": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code found and valid"
+                                        },
+                                        "details": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kqt300/check": {
+            "post": {
+                "tags": [
+                    "KQT300 Device Integration"
+                ],
+                "summary": "KQT300 device code validation check",
+                "description": "Check if a code exists in the database without marking it as used for KQT300 device validation",
+                "operationId": "e4dd9054a97f905bd83e34ccba025af0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "code": {
+                                        "description": "Code to check for KQT300 device",
+                                        "type": "string",
+                                        "example": "313233343536"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Code check result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "exists": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "example": "cashier_ticket"
+                                        },
+                                        "is_valid": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Code found and valid"
+                                        },
+                                        "details": {
+                                            "properties": {
+                                                "transaction_id": {
+                                                    "type": "string",
+                                                    "example": "TXN123456"
+                                                },
+                                                "is_used": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T12:00:00"
+                                                },
+                                                "note": {
+                                                    "type": "string",
+                                                    "example": "VIP ticket"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "exists": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "example": null
+                                        },
+                                        "is_valid": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Error checking code: Database connection failed"
+                                        },
+                                        "details": {
+                                            "type": "string",
+                                            "example": null
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/kqt300/health": {
+            "get": {
+                "tags": [
+                    "KQT300 Device Integration"
+                ],
+                "summary": "KQT300 device health check endpoint",
+                "description": "Health check endpoint for KQT300 device monitoring and Docker health checks",
+                "operationId": "a188f02bea76b94d4775b69731f3478b",
+                "responses": {
+                    "200": {
+                        "description": "System health status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "healthy"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00"
+                                        },
+                                        "service": {
+                                            "type": "string",
+                                            "example": "ScanController"
+                                        },
+                                        "database_connection": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "cache_connection": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "last_scan_time": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00"
+                                        },
+                                        "active_devices": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "uptime": {
+                                            "type": "string",
+                                            "example": "24h 30m 15s"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "System unhealthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "unhealthy"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Database connection failed"
+                                        },
+                                        "timestamp": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -2442,7 +3292,7 @@
             },
             "post": {
                 "tags": [
-                    "Users"
+                    "User Management"
                 ],
                 "summary": "Create a new user",
                 "description": "Store a newly created user in storage.",
@@ -2571,7 +3421,7 @@
             },
             "put": {
                 "tags": [
-                    "Users"
+                    "User Management"
                 ],
                 "summary": "Update an existing user",
                 "description": "Update the specified user in storage.",
@@ -2762,6 +3612,352 @@
                     },
                     "401": {
                         "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user-management/users/bulk/password": {
+            "post": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Bulk change password for multiple users",
+                "description": "Bulk change password for multiple users.",
+                "operationId": "264f9f91f71ca54d2d57a403474e92dd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_ids",
+                                    "new_password"
+                                ],
+                                "properties": {
+                                    "user_ids": {
+                                        "description": "Array of user IDs",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    },
+                                    "new_password": {
+                                        "description": "New password for all users",
+                                        "type": "string",
+                                        "example": "newpassword123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Passwords changed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Passwords have been changed successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user-management/users/bulk/role": {
+            "post": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Bulk change role for multiple users",
+                "description": "Bulk change role for multiple users.",
+                "operationId": "4c66d2b4601a8077220da7196ef01653",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_ids",
+                                    "role_id"
+                                ],
+                                "properties": {
+                                    "user_ids": {
+                                        "description": "Array of user IDs",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    },
+                                    "role_id": {
+                                        "description": "New role ID for all users",
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Roles changed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Roles have been changed successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/profile": {
+            "post": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Update authenticated user's profile",
+                "description": "Update the authenticated user's profile.",
+                "operationId": "59354d5fd6b08fb38faf80974723ebdd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_login",
+                                    "user_email"
+                                ],
+                                "properties": {
+                                    "user_login": {
+                                        "description": "Username",
+                                        "type": "string",
+                                        "example": "john_doe"
+                                    },
+                                    "user_email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "user_pass": {
+                                        "description": "New password (optional)",
+                                        "type": "string",
+                                        "example": "newpassword123"
+                                    },
+                                    "first_name": {
+                                        "description": "First name",
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "description": "Last name",
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "nickname": {
+                                        "description": "Nickname",
+                                        "type": "string",
+                                        "example": "Johnny"
+                                    },
+                                    "biography": {
+                                        "description": "Biography",
+                                        "type": "string",
+                                        "example": "Software developer"
+                                    },
+                                    "theme": {
+                                        "description": "Theme preference",
+                                        "type": "string",
+                                        "example": "dark"
+                                    },
+                                    "attachment_file": {
+                                        "description": "Profile picture",
+                                        "type": "string",
+                                        "example": "profile.jpg"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profile has been updated successfully."
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/user": {
+            "get": {
+                "tags": [
+                    "User Management"
+                ],
+                "summary": "Get authenticated user's information",
+                "description": "Get the authenticated user's information.",
+                "operationId": "3671108ef08ef7ba13008db3dfd0a947",
+                "responses": {
+                    "200": {
+                        "description": "User information retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "user_login": {
+                                            "type": "string",
+                                            "example": "john_doe"
+                                        },
+                                        "user_email": {
+                                            "type": "string",
+                                            "example": "john@example.com"
+                                        },
+                                        "user_status": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "user_role": {
+                                            "type": "object"
+                                        },
+                                        "user_details": {
+                                            "type": "object"
+                                        },
+                                        "first_name": {
+                                            "type": "string",
+                                            "example": "John"
+                                        },
+                                        "last_name": {
+                                            "type": "string",
+                                            "example": "Doe"
+                                        },
+                                        "nickname": {
+                                            "type": "string",
+                                            "example": "Johnny"
+                                        },
+                                        "biography": {
+                                            "type": "string",
+                                            "example": "Software developer"
+                                        },
+                                        "theme": {
+                                            "type": "string",
+                                            "example": "dark"
+                                        },
+                                        "attachment_file": {
+                                            "type": "string",
+                                            "example": "profile.jpg"
+                                        },
+                                        "attachment_metadata": {
+                                            "type": "string",
+                                            "example": "profile.jpg"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2024-01-01T12:00:00"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "500": {
+                        "description": "Server error"
                     }
                 },
                 "security": [
@@ -3166,12 +4362,36 @@
     },
     "tags": [
         {
-            "name": "Audit Trail",
-            "description": "Audit Trail"
+            "name": "Authentication",
+            "description": "User authentication and authorization endpoints"
         },
         {
-            "name": "Authentication",
-            "description": "Authentication"
+            "name": "User Management",
+            "description": "User management operations including authentication, profiles, and user administration"
+        },
+        {
+            "name": "Role Management",
+            "description": "Role and permission management operations"
+        },
+        {
+            "name": "VIP Management",
+            "description": "VIP card and member management"
+        },
+        {
+            "name": "Scan Management",
+            "description": "Barcode scanning and validation operations"
+        },
+        {
+            "name": "KQT300 Device Integration",
+            "description": "KQT300 QR Scanner device integration endpoints"
+        },
+        {
+            "name": "System Settings",
+            "description": "System configuration and settings"
+        },
+        {
+            "name": "Audit Trail",
+            "description": "Audit Trail"
         },
         {
             "name": "Cashier Management",
@@ -3186,40 +4406,12 @@
             "description": "Rate Management"
         },
         {
-            "name": "System Settings",
-            "description": "System Settings"
-        },
-        {
             "name": "Promoter Management",
             "description": "Promoter Management"
         },
         {
-            "name": "Role Management",
-            "description": "Role Management"
-        },
-        {
-            "name": "Roles",
-            "description": "Roles"
-        },
-        {
             "name": "Sales Report",
             "description": "Sales Report"
-        },
-        {
-            "name": "Scan Management",
-            "description": "Scan Management"
-        },
-        {
-            "name": "User Management",
-            "description": "User Management"
-        },
-        {
-            "name": "Users",
-            "description": "Users"
-        },
-        {
-            "name": "VIP Management",
-            "description": "VIP Management"
         }
     ]
 }

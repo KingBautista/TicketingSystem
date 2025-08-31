@@ -200,7 +200,7 @@ class UserController extends BaseController
    * @OA\Post(
    *     path="/api/user-management/users",
    *     summary="Create a new user",
-   *     tags={"Users"},
+   *     tags={"User Management"},
    *     security={{"bearerAuth": {}}},
    *     @OA\RequestBody(
    *         required=true,
@@ -272,7 +272,7 @@ class UserController extends BaseController
    * @OA\Put(
    *     path="/api/user-management/users/{id}",
    *     summary="Update an existing user",
-   *     tags={"Users"},
+   *     tags={"User Management"},
    *     security={{"bearerAuth": {}}},
    *     @OA\Parameter(
    *         name="id",
@@ -349,9 +349,42 @@ class UserController extends BaseController
     }
   }
 
-  public function bulkChangePassword(Request $request) 
-  {
-    try {
+  /**
+   * Bulk change password for multiple users.
+   * 
+   * @OA\Post(
+   *     path="/api/user-management/users/bulk/password",
+   *     summary="Bulk change password for multiple users",
+   *     tags={"User Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\RequestBody(
+   *         required=true,
+   *         @OA\JsonContent(
+   *             required={"user_ids", "new_password"},
+   *             @OA\Property(property="user_ids", type="array", @OA\Items(type="integer"), example={1,2,3}, description="Array of user IDs"),
+   *             @OA\Property(property="new_password", type="string", example="newpassword123", description="New password for all users")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Passwords changed successfully",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="message", type="string", example="Passwords have been changed successfully.")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     ),
+   *     @OA\Response(
+   *         response=500,
+   *         description="Server error"
+   *     )
+   * )
+      */
+   public function bulkChangePassword(Request $request) 
+   {
+      try {
       $userIds = $request->user_ids;
       $newPassword = $request->new_password;
       $count = count($userIds);
@@ -373,9 +406,42 @@ class UserController extends BaseController
     }
   }
 
-  public function bulkChangeRole(Request $request) 
-  {
-    try {
+  /**
+   * Bulk change role for multiple users.
+   * 
+   * @OA\Post(
+   *     path="/api/user-management/users/bulk/role",
+   *     summary="Bulk change role for multiple users",
+   *     tags={"User Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\RequestBody(
+   *         required=true,
+   *         @OA\JsonContent(
+   *             required={"user_ids", "role_id"},
+   *             @OA\Property(property="user_ids", type="array", @OA\Items(type="integer"), example={1,2,3}, description="Array of user IDs"),
+   *             @OA\Property(property="role_id", type="integer", example=2, description="New role ID for all users")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Roles changed successfully",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="message", type="string", example="Roles have been changed successfully.")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     ),
+   *     @OA\Response(
+   *         response=500,
+   *         description="Server error"
+   *     )
+   * )
+      */
+   public function bulkChangeRole(Request $request) 
+   {
+     try {
       $userIds = $request->user_ids;
       $roleId = $request->role_id;
       $count = count($userIds);
@@ -390,9 +456,54 @@ class UserController extends BaseController
     }
   }
 
-  public function updateProfile(ProfileRequest $request) 
-  {
-    try {
+  /**
+   * Update the authenticated user's profile.
+   * 
+   * @OA\Post(
+   *     path="/api/profile",
+   *     summary="Update authenticated user's profile",
+   *     tags={"User Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\RequestBody(
+   *         required=true,
+   *         @OA\JsonContent(
+   *             required={"user_login", "user_email"},
+   *             @OA\Property(property="user_login", type="string", example="john_doe", description="Username"),
+   *             @OA\Property(property="user_email", type="string", format="email", example="john@example.com", description="Email address"),
+   *             @OA\Property(property="user_pass", type="string", example="newpassword123", description="New password (optional)"),
+   *             @OA\Property(property="first_name", type="string", example="John", description="First name"),
+   *             @OA\Property(property="last_name", type="string", example="Doe", description="Last name"),
+   *             @OA\Property(property="nickname", type="string", example="Johnny", description="Nickname"),
+   *             @OA\Property(property="biography", type="string", example="Software developer", description="Biography"),
+   *             @OA\Property(property="theme", type="string", example="dark", description="Theme preference"),
+   *             @OA\Property(property="attachment_file", type="string", example="profile.jpg", description="Profile picture")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=200,
+   *         description="Profile updated successfully",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="message", type="string", example="Profile has been updated successfully."),
+   *             @OA\Property(property="user", type="object")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     ),
+   *     @OA\Response(
+   *         response=422,
+   *         description="Validation error"
+   *     ),
+   *     @OA\Response(
+   *         response=500,
+   *         description="Server error"
+   *     )
+   * )
+      */
+   public function updateProfile(ProfileRequest $request) 
+   {
+     try {
       $data = $request->validated();
       $user = Auth::user();
       $oldData = $user->toArray();
@@ -439,9 +550,48 @@ class UserController extends BaseController
     }
   }
 
-  public function getUser(Request $request) 
-  {
-    try {
+  /**
+   * Get the authenticated user's information.
+   * 
+   * @OA\Get(
+   *     path="/api/user",
+   *     summary="Get authenticated user's information",
+   *     tags={"User Management"},
+   *     security={{"bearerAuth": {}}},
+   *     @OA\Response(
+   *         response=200,
+   *         description="User information retrieved successfully",
+   *         @OA\JsonContent(
+   *             @OA\Property(property="id", type="integer", example=1),
+   *             @OA\Property(property="user_login", type="string", example="john_doe"),
+   *             @OA\Property(property="user_email", type="string", example="john@example.com"),
+   *             @OA\Property(property="user_status", type="integer", example=1),
+   *             @OA\Property(property="user_role", type="object"),
+   *             @OA\Property(property="user_details", type="object"),
+   *             @OA\Property(property="first_name", type="string", example="John"),
+   *             @OA\Property(property="last_name", type="string", example="Doe"),
+   *             @OA\Property(property="nickname", type="string", example="Johnny"),
+   *             @OA\Property(property="biography", type="string", example="Software developer"),
+   *             @OA\Property(property="theme", type="string", example="dark"),
+   *             @OA\Property(property="attachment_file", type="string", example="profile.jpg"),
+   *             @OA\Property(property="attachment_metadata", type="string", example="profile.jpg"),
+   *             @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T12:00:00"),
+   *             @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T12:00:00")
+   *         )
+   *     ),
+   *     @OA\Response(
+   *         response=401,
+   *         description="Unauthenticated"
+   *     ),
+   *     @OA\Response(
+   *         response=500,
+   *         description="Server error"
+   *     )
+   * )
+      */
+   public function getUser(Request $request) 
+   {
+     try {
       $user = Auth::user();
       $userData = [
         'id' => $user->id,
