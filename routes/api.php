@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\CashierController;
 use App\Http\Controllers\Api\ScanController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\PrintController;
+use App\Http\Controllers\Api\KQT300Controller;
 
 // Note: Swagger documentation is available at /docs (handled by L5-Swagger)
 // API documentation JSON is available at /docs (L5-Swagger route)
@@ -256,10 +257,31 @@ Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/validate', [AuthController::class, 'activateUser']);
 Route::post('/generate-password', [AuthController::class, 'genTempPassword']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/access/validate', [ScanController::class, 'store']);
-Route::get('/access/latest', [ScanController::class, 'showLatest']);
-Route::get('/access/stream', [ScanController::class, 'stream']);
-Route::get('/access/poll', [ScanController::class, 'poll']);
-Route::get('/access/stream-test', [ScanController::class, 'streamTest']);
-Route::post('/access/check', [ScanController::class, 'checkCode']);
-Route::post('/access/test-scan', [ScanController::class, 'testScan']);
+
+// KQT300 Device Integration Routes
+Route::prefix('kqt300')->group(function () {
+    // Device status and health check
+    Route::get('/status', [KQT300Controller::class, 'getStatus']);
+    Route::get('/health', [ScanController::class, 'health']);
+    
+    // Core access control endpoints (used by KQT300 device)
+    Route::post('/validate', [ScanController::class, 'store']);
+    Route::get('/latest', [ScanController::class, 'showLatest']);
+    Route::get('/stream', [ScanController::class, 'stream']);
+    Route::get('/poll', [ScanController::class, 'poll']);
+    Route::get('/stream-test', [ScanController::class, 'streamTest']);
+    Route::post('/check', [ScanController::class, 'checkCode']);
+    Route::post('/test-scan', [ScanController::class, 'testScan']);
+});
+
+// Legacy access routes (for backward compatibility)
+Route::prefix('access')->group(function () {
+    Route::post('/validate', [ScanController::class, 'store']);
+    Route::get('/latest', [ScanController::class, 'showLatest']);
+    Route::get('/stream', [ScanController::class, 'stream']);
+    Route::get('/poll', [ScanController::class, 'poll']);
+    Route::get('/stream-test', [ScanController::class, 'streamTest']);
+    Route::post('/check', [ScanController::class, 'checkCode']);
+    Route::post('/test-scan', [ScanController::class, 'testScan']);
+    Route::get('/health', [ScanController::class, 'health']);
+});

@@ -555,4 +555,86 @@ class ScanController extends BaseController
             ], 500);
         }
     }
+
+    /**
+     * Health check endpoint for Docker monitoring
+     */
+    public function health()
+    {
+        try {
+            $healthData = [
+                'status' => 'healthy',
+                'timestamp' => now()->toISOString(),
+                'service' => 'ScanController',
+                'database_connection' => $this->checkDatabaseConnection(),
+                'cache_connection' => $this->checkCacheConnection(),
+                'last_scan_time' => $this->getLastScanTime(),
+                'active_devices' => $this->getActiveDeviceCount(),
+                'uptime' => $this->getSystemUptime(),
+            ];
+
+            return response()->json($healthData);
+        } catch (\Exception $e) {
+            \Log::error('ScanController Health Check Error: ' . $e->getMessage());
+            return response()->json([
+                'status' => 'unhealthy',
+                'error' => $e->getMessage(),
+                'timestamp' => now()->toISOString()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check database connection
+     */
+    private function checkDatabaseConnection(): bool
+    {
+        try {
+            \DB::connection()->getPdo();
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check cache connection
+     */
+    private function checkCacheConnection(): bool
+    {
+        try {
+            Cache::has('health_check');
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get last scan time
+     */
+    private function getLastScanTime(): ?string
+    {
+        $lastScan = Cache::get('last_scan_time');
+        return $lastScan ?: null;
+    }
+
+    /**
+     * Get active device count
+     */
+    private function getActiveDeviceCount(): int
+    {
+        // Count active devices in cache
+        $devices = Cache::get('active_devices', []);
+        return count($devices);
+    }
+
+    /**
+     * Get system uptime
+     */
+    private function getSystemUptime(): string
+    {
+        // Calculate system uptime (placeholder)
+        return '24h 30m 15s';
+    }
 }

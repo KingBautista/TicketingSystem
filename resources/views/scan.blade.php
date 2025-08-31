@@ -475,7 +475,7 @@
         }
 
         // Try the main stream first
-        eventSource = new EventSource('http://10.60.216.20:8000/api/access/stream');
+        eventSource = new EventSource('http://10.60.216.20:8000/api/kqt300/stream');
         
         eventSource.onopen = function(event) {
           console.log('Event stream connected');
@@ -577,7 +577,7 @@
          // Start polling every 2 seconds
          pollingInterval = setInterval(async function() {
            try {
-             const res = await fetch("http://10.60.216.20:8000/api/access/poll");
+             const res = await fetch("http://10.60.216.20:8000/api/kqt300/poll");
              const response = await res.json();
              
              if (response.success && response.data && response.data.timestamp && response.data.timestamp !== lastScanCode) {
@@ -640,7 +640,7 @@
 
       async function testScan() {
         try {
-                     const response = await fetch('http://10.60.216.20:8000/api/access/test-scan', {
+                     const response = await fetch('http://10.60.216.20:8000/api/kqt300/test-scan', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -670,7 +670,7 @@
       function testSimpleStream() {
         console.log('Testing simple stream...');
         
-                 const testEventSource = new EventSource('http://10.60.216.20:8000/api/access/stream-test');
+                 const testEventSource = new EventSource('http://10.60.216.20:8000/api/kqt300/stream-test');
         
         testEventSource.onopen = function(event) {
           console.log('Simple stream test connected');
@@ -700,7 +700,7 @@
          console.log('Testing polling endpoint...');
          
          try {
-           const response = await fetch('http://10.60.216.20:8000/api/access/poll');
+           const response = await fetch('http://10.60.216.20:8000/api/kqt300/poll');
            const data = await response.json();
            console.log('Polling test response:', data);
            
@@ -805,7 +805,7 @@
        }
        
        try {
-                    const response = await fetch('http://10.60.216.20:8000/api/access/check', {
+                    const response = await fetch('http://10.60.216.20:8000/api/kqt300/check', {
            method: 'POST',
            headers: {
              'Content-Type': 'application/json',
