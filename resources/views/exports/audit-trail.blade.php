@@ -121,15 +121,23 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($data as $row)
+            @forelse($auditTrails as $auditTrail)
                 <tr>
-                    <td>{{ \Carbon\Carbon::parse($row['created_at'])->format('Y-m-d H:i:s') }}</td>
-                    <td>{{ $row['user']['name'] ?? 'Unknown' }}</td>
-                    <td>{{ $row['module'] }}</td>
-                    <td>{{ $row['action'] }}</td>
-                    <td style="max-width: 200px; word-wrap: break-word;">{{ $row['description'] }}</td>
-                    <td>{{ $row['ip_address'] }}</td>
-                    <td style="max-width: 150px; word-wrap: break-word; font-size: 7px;">{{ $row['user_agent'] }}</td>
+                    <td>{{ \Carbon\Carbon::parse($auditTrail->created_at)->format('Y-m-d H:i:s') }}</td>
+                    <td>
+                        @php
+                            $firstName = $auditTrail->first_name ?? '';
+                            $lastName = $auditTrail->last_name ?? '';
+                            $fullName = trim($firstName . ' ' . $lastName);
+                            $userName = $fullName ?: ($auditTrail->user_login ?? 'Unknown');
+                        @endphp
+                        {{ $userName }}
+                    </td>
+                    <td>{{ $auditTrail->module }}</td>
+                    <td>{{ $auditTrail->action }}</td>
+                    <td style="max-width: 200px; word-wrap: break-word;">{{ $auditTrail->description }}</td>
+                    <td>{{ $auditTrail->ip_address }}</td>
+                    <td style="max-width: 150px; word-wrap: break-word; font-size: 7px;">{{ $auditTrail->user_agent }}</td>
                 </tr>
             @empty
                 <tr>
@@ -141,7 +149,7 @@
 
     <div class="summary">
         <h3>Report Summary:</h3>
-        <p><strong>Total Records:</strong> {{ count($data) }}</p>
+        <p><strong>Total Records:</strong> {{ count($auditTrails) }}</p>
         <p><strong>Date Range:</strong> 
             @if(isset($filters['start_date']) && isset($filters['end_date']))
                 {{ $filters['start_date'] }} to {{ $filters['end_date'] }}
@@ -149,9 +157,9 @@
                 All available records
             @endif
         </p>
-        @if(count($data) > 0)
-            <p><strong>First Record:</strong> {{ \Carbon\Carbon::parse($data[0]['created_at'])->format('Y-m-d H:i:s') }}</p>
-            <p><strong>Last Record:</strong> {{ \Carbon\Carbon::parse($data[count($data)-1]['created_at'])->format('Y-m-d H:i:s') }}</p>
+        @if(count($auditTrails) > 0)
+            <p><strong>First Record:</strong> {{ \Carbon\Carbon::parse($auditTrails->first()->created_at)->format('Y-m-d H:i:s') }}</p>
+            <p><strong>Last Record:</strong> {{ \Carbon\Carbon::parse($auditTrails->last()->created_at)->format('Y-m-d H:i:s') }}</p>
         @endif
     </div>
 </body>

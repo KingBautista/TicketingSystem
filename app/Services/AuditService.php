@@ -174,13 +174,15 @@ class AuditService extends BaseService
     public function exportAuditTrail($filters = [], $format = 'csv')
     {
         $query = $this->buildAuditQuery();
-        $auditTrails = $query->get();
 
         if ($format === 'csv') {
+            $auditTrails = $query->get();
             return $this->generateCsv($auditTrails);
         }
 
         if ($format === 'pdf') {
+            // For PDF, limit to 100 records to prevent memory issues
+            $auditTrails = $query->limit(100)->get();
             return $this->generatePdf($auditTrails, $filters);
         }
 
@@ -235,10 +237,21 @@ class AuditService extends BaseService
 
     private function generatePdf($auditTrails, $filters)
     {
+        // Set memory limit for PDF generation
+        ini_set('memory_limit', '256M');
+        
         $pdf = \PDF::loadView('exports.audit-trail', [
             'auditTrails' => $auditTrails,
             'filters' => $filters,
             'generated_at' => now()->format('Y-m-d H:i:s')
+        ]);
+        
+        // Set PDF options for better performance
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'isPhpEnabled' => false,
+            'defaultFont' => 'Arial'
         ]);
         
         return $pdf->download('audit-trail-' . now()->format('Y-m-d-H-i-s') . '.pdf');

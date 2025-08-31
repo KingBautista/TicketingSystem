@@ -126,13 +126,15 @@ class SalesReportService extends BaseService
     public function exportSalesReport($filters = [], $format = 'csv')
     {
         $query = $this->buildSalesQuery();
-        $transactions = $query->get();
 
         if ($format === 'csv') {
+            $transactions = $query->get();
             return $this->generateCsv($transactions);
         }
 
         if ($format === 'pdf') {
+            // For PDF, limit to 100 records to prevent memory issues
+            $transactions = $query->limit(100)->get();
             return $this->generatePdf($transactions, $filters);
         }
 
@@ -185,10 +187,21 @@ class SalesReportService extends BaseService
 
     private function generatePdf($transactions, $filters)
     {
+        // Set memory limit for PDF generation
+        ini_set('memory_limit', '256M');
+        
         $pdf = \PDF::loadView('exports.sales-report', [
             'transactions' => $transactions,
             'filters' => $filters,
             'generated_at' => now()->format('Y-m-d H:i:s')
+        ]);
+        
+        // Set PDF options for better performance
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'isPhpEnabled' => false,
+            'defaultFont' => 'Arial'
         ]);
         
         return $pdf->download('sales-report-' . now()->format('Y-m-d-H-i-s') . '.pdf');
