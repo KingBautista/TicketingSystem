@@ -125,6 +125,7 @@ curl http://localhost:8080
 - **API Documentation**: http://localhost:8080/api/documentation
 - **Admin Panel**: http://localhost:4000
 - **Laravel API**: http://localhost:8080
+- **My Current IP add: http://10.198.126.20:8080/
 
 ## Production Deployment
 

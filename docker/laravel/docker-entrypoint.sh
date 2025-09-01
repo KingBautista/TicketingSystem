@@ -33,14 +33,39 @@ else
     echo "APP_KEY already exists, skipping generation"
 fi
 
-# Run database migrations
-echo "Running database migrations..."
-php artisan migrate --force
+# Run database migrations only if needed
+echo "Checking migration status..."
+if php artisan migrate:status | grep -q "No migrations found\|No pending migrations"; then
+    echo "Migrations are up to date, skipping..."
+else
+    echo "Running database migrations..."
+    php artisan migrate --force
+fi
 
-# Seed database if needed (only in development)
+# Seed database if needed (only in development and only if not already seeded)
 if [ "$APP_ENV" = "local" ] || [ "$APP_ENV" = "development" ]; then
-    echo "Seeding database..."
-    php artisan db:seed --force || echo "Warning: Database seeding failed or no seeders found"
+    echo "Checking if database needs seeding..."
+    
+    # Check if we've already seeded in this session
+    if [ "$DB_SEEDED" = "true" ]; then
+        echo "Database already seeded (environment variable), skipping..."
+    else
+        # Check if users table has data (more reliable than flag files)
+        echo "Checking database content..."
+        if php artisan tinker --execute="echo (App\Models\User::count() > 0 ? 'SEEDED' : 'EMPTY'); exit;" 2>/dev/null | grep -q "SEEDED"; then
+            echo "Database already seeded (users exist), skipping..."
+            # Set environment variable for this session
+            export DB_SEEDED=true
+        else
+            echo "Seeding database..."
+            php artisan db:seed --force || echo "Warning: Database seeding failed or no seeders found"
+            echo "Seeding completed"
+            # Set environment variable for this session
+            export DB_SEEDED=true
+        fi
+    fi
+else
+    echo "Not in development mode, skipping seeding"
 fi
 
 # Clear all caches

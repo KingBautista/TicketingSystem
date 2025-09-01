@@ -59,7 +59,7 @@ services:
       dockerfile: ../docker/admin-panel/Dockerfile.prod
     container_name: ticketing_admin_panel_prod
     environment:
-      - VITE_API_BASE_URL=${API_URL}
+      - VITE_API_BASE_URL=${API_URL:-http://localhost:8080}
     networks:
       - ticketing_network
     healthcheck:
@@ -113,6 +113,7 @@ services:
     container_name: ticketing_nginx_prod
     ports:
       - "80:80"
+      - "8080:80"
       - "443:443"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
