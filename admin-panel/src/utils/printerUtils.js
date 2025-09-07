@@ -5,7 +5,7 @@
 
 export class ClientPrinter {
     constructor() {
-        this.clientServiceUrl = 'http://localhost:3001';
+        this.clientServiceUrl = 'http://localhost:3000';
     }
 
     /**
@@ -15,7 +15,7 @@ export class ClientPrinter {
         try {
             const response = await fetch(`${this.clientServiceUrl}/health`);
             const result = await response.json();
-            return result.status === 'ok';
+            return result.status === 'healthy';
         } catch (error) {
             console.error('❌ Client printer service not available:', error);
             return false;
@@ -33,7 +33,7 @@ export class ClientPrinter {
             const isHealthy = await this.checkServiceHealth();
             if (!isHealthy) {
                 console.error('❌ Client printer service not running');
-                console.error('❌ Please start the service: node client-printer-service/server.js');
+                console.error('❌ Please start the service: client-side-service/start-service.bat');
                 return false;
             }
             
@@ -44,8 +44,8 @@ export class ClientPrinter {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    command,
-                    data
+                    content: typeof data === 'object' ? JSON.stringify(data) : data,
+                    type: command
                 })
             });
             
@@ -87,8 +87,10 @@ export class ClientPrinter {
         try {
             console.log('🖨️ Frontend printing transaction:', transactionData);
             
-            // Use the existing printTransactionTickets method
-            return await this.executePrinterCommand('transactionfile', transactionData);
+            // For transaction printing, we need to create a temporary file or pass JSON directly
+            // Let's use the 'transaction' command instead of 'transactionfile'
+            const jsonString = typeof transactionData === 'object' ? JSON.stringify(transactionData) : transactionData;
+            return await this.executePrinterCommand('transaction', jsonString);
         } catch (error) {
             console.error('❌ Frontend printing error:', error);
             return false;
@@ -102,8 +104,9 @@ export class ClientPrinter {
         try {
             console.log('🖨️ Frontend printing close cash report:', closeCashData);
             
-            // Pass the actual close cash data to the printer
-            return await this.executePrinterCommand('closecash', closeCashData);
+            // Convert object to JSON string for close cash printing
+            const jsonString = typeof closeCashData === 'object' ? JSON.stringify(closeCashData) : closeCashData;
+            return await this.executePrinterCommand('closecash', jsonString);
         } catch (error) {
             console.error('❌ Frontend close cash printing error:', error);
             return false;

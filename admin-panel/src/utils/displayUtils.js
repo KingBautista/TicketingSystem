@@ -5,19 +5,19 @@
 
 export class ClientDisplay {
     constructor() {
-        this.clientServiceUrl = 'http://localhost:3001';
+        this.clientServiceUrl = 'http://localhost:3000';
     }
 
     /**
-     * Check if client printer service is running
+     * Check if client display service is running
      */
     async checkServiceHealth() {
         try {
             const response = await fetch(`${this.clientServiceUrl}/health`);
             const result = await response.json();
-            return result.status === 'ok';
+            return result.status === 'healthy';
         } catch (error) {
-            console.error('❌ Client printer service not available:', error);
+            console.error('❌ Client display service not available:', error);
             return false;
         }
     }
@@ -32,8 +32,8 @@ export class ClientDisplay {
             // Check if service is running
             const isHealthy = await this.checkServiceHealth();
             if (!isHealthy) {
-                console.error('❌ Client printer service not running');
-                console.error('❌ Please start the service: node client-printer-service/server.js');
+                console.error('❌ Client display service not running');
+                console.error('❌ Please start the service: client-side-service/start-service.bat');
                 return false;
             }
             
@@ -44,10 +44,8 @@ export class ClientDisplay {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    data: {
-                        line1: line1 || '',
-                        line2: line2 || ''
-                    }
+                    content: `${line1 || ''}\n${line2 || ''}`.trim(),
+                    type: 'display'
                 })
             });
             

@@ -56,7 +56,7 @@ export default function ForgotPassword() {
 							</div>
 						}
 
-						<p className="text-body-secondary">Email Address</p>
+						<p className="text-body-secondary">Email Address or Username</p>
 
 						<div className="input-group mb-3">
 							<span className="input-group-text">
@@ -67,8 +67,8 @@ export default function ForgotPassword() {
 							<input 
 								ref={emailRef}
 								className={`form-control ${errors && errors.email ? 'is-invalid' : ''}`}
-								type="email"
-								placeholder="Email"
+								type="text"
+								placeholder="Email or Username"
 								required
 							/>
 							{errors && errors.email && (

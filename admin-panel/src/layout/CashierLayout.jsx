@@ -45,20 +45,25 @@ export default function CashierLayout() {
   // Frontend printing handler
   const handleFrontendPrinting = async (printData) => {
     try {
+      console.log('🖨️ Starting frontend printing with data:', printData);
+      
       // Import the client printer utility
       const { clientPrinter } = await import('../utils/printerUtils.js');
+      console.log('📦 Client printer utility imported successfully');
       
       // Print the transaction using client printer service
+      console.log('🔄 Calling clientPrinter.printTransaction...');
       const printSuccess = await clientPrinter.printTransaction(printData);
+      console.log('📊 Print result:', printSuccess);
       
       if (printSuccess) {
-        console.log('Transaction printed successfully via client printer service');
+        console.log('✅ Transaction printed successfully via client printer service');
       } else {
-        console.error('Failed to print transaction via client printer service');
+        console.error('❌ Failed to print transaction via client printer service');
         toastRef.current.showToast('Transaction saved but printing failed.', 'warning');
       }
     } catch (error) {
-      console.error('Error during frontend printing:', error);
+      console.error('❌ Error during frontend printing:', error);
       toastRef.current.showToast('Transaction saved but printing failed.', 'warning');
     }
   };
@@ -225,6 +230,8 @@ export default function CashierLayout() {
     };
     axiosClient.post('/cashier/transactions', payload)
       .then(({ data }) => {
+        console.log('📄 Transaction response:', data);
+        
         // Reset all form fields
         setPaidAmount('');
         setQuantity(1);
@@ -233,10 +240,13 @@ export default function CashierLayout() {
 
         // Handle frontend printing if printData is available
         if (data.printData) {
+          console.log('🖨️ Print data received:', data.printData);
           handleFrontendPrinting(data.printData);
+          toastRef.current.showToast('Transaction saved and printed!', 'success');
+        } else {
+          console.log('❌ No print data received');
+          toastRef.current.showToast('Transaction saved but no print data received!', 'warning');
         }
-
-        toastRef.current.showToast('Transaction saved and printed!', 'success');
       })
       .catch(() => {
         toastRef.current.showToast('Failed to save transaction.', 'danger');

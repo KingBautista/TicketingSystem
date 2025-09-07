@@ -127,9 +127,9 @@ export default function Login() {
 									</div>
 								}
 								
-								{/* Email Input */}
+								{/* Email/Username Input */}
 								<div className="mb-3">
-									<label htmlFor="email" className="form-label fw-medium text-dark mb-1">Email Address</label>
+									<label htmlFor="email" className="form-label fw-medium text-dark mb-1">Email or Username</label>
 									<div className="input-group">
 										<span className="input-group-text bg-light border-end-0 border-2">
 											<FontAwesomeIcon icon={solidIconMap.user} className="text-muted" />
@@ -138,8 +138,8 @@ export default function Login() {
 											id="email"
 											ref={emailRef} 
 											className="form-control border-start-0 border-2" 
-											type="email" 
-											placeholder="Enter your email" 
+											type="text" 
+											placeholder="Enter your email or username" 
 											required
 											style={{ fontSize: '1rem' }}
 										/>

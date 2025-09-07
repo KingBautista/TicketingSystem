@@ -115,7 +115,11 @@ class AuthController extends Controller
 		$data = $request->validated();
 		$message = '';
 
-		$user = User::where('user_email', $data['email'])->first();
+		// Check if user exists with either user_email or user_login
+		$user = User::where(function($query) use ($data) {
+			$query->where('user_email', '=', $data['email'])
+				  ->orWhere('user_login', '=', $data['email']);
+		})->first();
 
 		if($user) {
 			$salt = $user->user_salt;
@@ -150,7 +154,7 @@ class AuthController extends Controller
 	 *         required=true,
 	 *         @OA\JsonContent(
 	 *             required={"email", "password"},
-	 *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="Email address"),
+	 *             @OA\Property(property="email", type="string", example="john@example.com", description="Email address or username"),
 	 *             @OA\Property(property="password", type="string", example="password123", description="Password")
 	 *         )
 	 *     ),
@@ -172,13 +176,29 @@ class AuthController extends Controller
 	{
 		$credentials = $request->validated();
 
-		$user = User::where('user_email', '=', $credentials['email'])->where('user_status', 1)->first();
-		if (!Hash::check($user->user_salt.$credentials['password'].env("PEPPER_HASH"), $user->user_pass))
+		// Check if user exists with either user_email or user_login
+		$user = User::where(function($query) use ($credentials) {
+			$query->where('user_email', '=', $credentials['email'])
+				  ->orWhere('user_login', '=', $credentials['email']);
+		})->where('user_status', 1)->first();
+
+		// Check if user exists
+		if (!$user) {
 			return response([
-				'errors' => ['Invalid email or password.'],
+				'errors' => ['Invalid email/username or password.'],
 				'status' => false,
 				'status_code' => 422,
 			], 422);
+		}
+
+		// Check password
+		if (!Hash::check($user->user_salt.$credentials['password'].env("PEPPER_HASH"), $user->user_pass)) {
+			return response([
+				'errors' => ['Invalid email/username or password.'],
+				'status' => false,
+				'status_code' => 422,
+			], 422);
+		}
 		
 		$user->tokens()->delete();
 
