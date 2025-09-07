@@ -9,6 +9,8 @@ TicketingSystem is designed for businesses that need to manage ticket sales, cas
 - PD300 customer displays  
 - KQT300 QR code scanners
 - Multiple cashier stations
+- Real-time transaction processing
+- Comprehensive reporting and analytics
 
 ## 🏗️ Architecture
 
@@ -19,27 +21,40 @@ TicketingSystem is designed for businesses that need to manage ticket sales, cas
 - Sanctum authentication
 - Role-based access control
 - Audit trail system
+- Email notifications
+- PDF generation
 
 ### Frontend (React 19 + CoreUI)
 - Modern admin panel with responsive design
 - Rich text editor (TinyMCE)
 - Real-time dashboard with statistics
 - Cashier transaction management
+- User management and role assignment
+- Promoter and rate management
+- Discount system
+- VIP customer management
 
 ### Hardware Integration
-- Client-side printer service (Node.js)
-- Client-side display service (Node.js)
+- **Consolidated Client-Side Service** (Node.js)
+  - Star BSC10 thermal printer integration
+  - PD300 customer display control
+  - QR code generation and printing
+  - Transaction receipt printing
+  - Open/close cash reports
 - KQT300 QR scanner integration
 - Distributed architecture for multiple cashier stations
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- PHP 8.1+
-- Node.js 18+
-- PostgreSQL 12+
-- Composer
-- npm/yarn
+- **PHP 8.1+** with extensions: curl, json, mbstring, xml, zip, gd, intl, bcmath
+- **Node.js 18+** with npm
+- **PostgreSQL 12+**
+- **Composer** (PHP dependency manager)
+- **Git** (version control)
+- **WAMP Server** (Windows) or **LAMP Stack** (Linux)
+
+> 📖 **For detailed installation instructions, see [INSTALLATION_MANUAL.md](INSTALLATION_MANUAL.md)**
 
 ### Installation
 
@@ -64,12 +79,8 @@ TicketingSystem is designed for businesses that need to manage ticket sales, cas
    npm install
    cd ..
    
-   # Client services
-   cd client-printer-service
-   npm install
-   cd ..
-   
-   cd client-side-display-service
+   # Consolidated client-side service
+   cd client-side-service
    npm install
    cd ..
    ```
@@ -78,6 +89,7 @@ TicketingSystem is designed for businesses that need to manage ticket sales, cas
    ```bash
    cp env.example .env
    # Edit .env with your database credentials
+   php artisan key:generate
    ```
 
 5. **Database setup**
@@ -88,20 +100,24 @@ TicketingSystem is designed for businesses that need to manage ticket sales, cas
 
 6. **Start services**
    ```bash
-   # Start Laravel development server
-   php artisan serve
+   # Terminal 1: Start Laravel API server
+   php artisan serve --port=8000
    
-   # Start admin panel (in new terminal)
+   # Terminal 2: Start admin panel
    cd admin-panel
    npm run dev
    
-   # Start client services (in separate terminals)
-   cd client-printer-service
+   # Terminal 3: Start consolidated client-side service
+   cd client-side-service
    npm start
-   
-   cd client-side-display-service
-   npm start
+   # OR use the batch file (Windows)
+   start-service.bat
    ```
+
+### **Access Points**
+- **Admin Panel**: http://localhost:4000
+- **API Documentation**: http://localhost:8000/api/documentation
+- **Client Service Health**: http://localhost:3000/health
 
 ## 📁 Project Structure
 
@@ -111,13 +127,34 @@ TicketingSystem/
 │   ├── Http/Controllers/   # API controllers
 │   ├── Models/            # Eloquent models
 │   ├── Services/          # Business logic services
+│   ├── Mail/              # Email templates
+│   ├── Traits/            # Reusable traits
 │   └── ...
-├── admin-panel/           # React admin panel
-├── client-side-printer-service/ # Node.js printer service
-├── client-side-display-service/ # Node.js display service
-├── pd300-display/         # Hardware integration scripts
-├── database/              # Migrations and seeders
-└── routes/                # API routes
+├── admin-panel/           # React admin panel (CoreUI)
+│   ├── src/
+│   │   ├── components/    # Reusable React components
+│   │   ├── pages/         # Page components
+│   │   ├── utils/         # Utility functions
+│   │   ├── contexts/      # React contexts
+│   │   └── hooks/         # Custom React hooks
+│   └── public/            # Static assets
+├── client-side-service/   # Consolidated Node.js service
+│   ├── server.js          # Main service server
+│   ├── star-final-printer.js # Star BSC10 printer integration
+│   ├── send-display.js    # PD300 display integration
+│   ├── start-service.bat  # Windows startup script
+│   └── package.json       # Node.js dependencies
+├── database/              # Database files
+│   ├── migrations/        # Database migrations
+│   ├── seeders/           # Database seeders
+│   └── factories/         # Model factories
+├── config/                # Laravel configuration
+├── routes/                # API routes
+├── storage/               # File storage
+├── tests/                 # Test files
+├── INSTALLATION_MANUAL.md # Detailed installation guide
+├── KQT300_SETUP.md       # QR scanner setup guide
+└── README.md             # This file
 ```
 
 ## 🔧 Configuration
@@ -133,17 +170,41 @@ DB_USERNAME=ticketing_user
 DB_PASSWORD=your_password
 ```
 
-### Hardware Services
-- **Printer Service**: Runs on port 3001
-- **Display Service**: Runs on port 3002
-- **Admin Panel**: Runs on port 4000
-- **Laravel API**: Runs on port 8000
+### Service Ports
+- **Laravel API**: Port 8000
+- **Admin Panel**: Port 4000
+- **Client-Side Service**: Port 3000 (consolidated printer + display)
+
+### Environment Variables
+Key environment variables in `.env`:
+```env
+# Application
+APP_NAME="TicketingSystem"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+# Database
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=ticketing_system
+DB_USERNAME=ticketing_user
+DB_PASSWORD=your_password
+
+# API Configuration
+API_URL=http://localhost:8000
+
+# Swagger Documentation
+L5_SWAGGER_CONST_HOST=http://127.0.0.1:8000
+L5_SWAGGER_BASE_PATH=http://127.0.0.1:8000
+```
 
 ## 🖥️ Client-Side Hardware Setup
 
-### **Distributed Hardware Architecture**
+### **Consolidated Client-Side Service**
 
-This setup allows multiple cashier computers to have their own printers and displays, controlled from the central server.
+The system now uses a **single consolidated service** that handles both printer and display functionality, simplifying deployment and management.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -172,28 +233,13 @@ This setup allows multiple cashier computers to have their own printers and disp
                     │  │ (React)     │ │
                     │  └─────────────┘ │
                     │  ┌─────────────┐ │
-                    │  │ Node.js     │ │
-                    │  │ Printer     │ │
+                    │  │ Client-Side │ │
                     │  │ Service     │ │
+                    │  │ (Port 3000) │ │
                     │  └─────────────┘ │
                     │  ┌─────────────┐ │
                     │  │ Star BSC10  │ │
                     │  │ Printer     │ │
-                    │  └─────────────┘ │
-                    └─────────────────┘
-                              │
-                    ┌─────────────────┐
-                    │   CASHIER 2     │
-                    │   COMPUTER      │
-                    │  ┌─────────────┐ │
-                    │  │ Frontend    │ │
-                    │  │ (React)     │ │
-                    │  │ Display     │ │
-                    │  └─────────────┘ │
-                    │  ┌─────────────┐ │
-                    │  │ Node.js     │ │
-                    │  │ Display     │ │
-                    │  │ Service     │ │
                     │  └─────────────┘ │
                     │  ┌─────────────┐ │
                     │  │ PD300       │ │
@@ -214,54 +260,47 @@ This setup allows multiple cashier computers to have their own printers and disp
 For each cashier computer:
 
 1. **Create a folder** for the hardware services
-2. **Copy the service files** from the server
+2. **Copy the consolidated service files** from the server
 3. **Install Node.js** (if not already installed)
-4. **Run the services** using the provided batch files
+4. **Run the consolidated service** using the provided batch file
 
 #### **File Structure for Client Computers**
 ```
 C:\TicketingSystem\ClientServices\
-├── client-side-printer-service\
-│   ├── server.js
-│   ├── package.json
-│   └── start-service.bat
-├── client-side-display-service\
-│   ├── server.js
-│   ├── package.json
-│   └── start-service.bat
-└── pd300-display\ (copy from server)
-    ├── star-final-printer.js
-    ├── send-display.bat
-    └── send-display.js
+└── client-side-service\
+    ├── server.js              # Main consolidated service
+    ├── star-final-printer.js  # Star BSC10 printer integration
+    ├── send-display.js        # PD300 display integration
+    ├── package.json           # Node.js dependencies
+    └── start-service.bat      # Windows startup script
 ```
 
 #### **Installation on Client Computers**
 
-**Printer Service:**
+**Consolidated Service:**
 ```cmd
-cd C:\TicketingSystem\ClientServices\client-side-printer-service
+cd C:\TicketingSystem\ClientServices\client-side-service
 npm install
 start-service.bat
 ```
 
-**Display Service:**
+**Manual Start (Alternative):**
 ```cmd
-cd C:\TicketingSystem\ClientServices\client-side-display-service
-npm install
-start-service.bat
+cd C:\TicketingSystem\ClientServices\client-side-service
+npm start
 ```
 
 ### **Network Configuration**
 
 **Server Access to Clients:**
 The server will access client services using computer names:
-- **CASHIER-1**: `http://CASHIER-1:3001` (printer), `http://CASHIER-1:3002` (display)
-- **CASHIER-2**: `http://CASHIER-2:3001` (printer), `http://CASHIER-2:3002` (display)
+- **CASHIER-1**: `http://CASHIER-1:3000` (consolidated service)
+- **CASHIER-2**: `http://CASHIER-2:3000` (consolidated service)
 
 **Requirements:**
 1. **Same network** (LAN/WAN)
 2. **Computer names** must be resolvable
-3. **Firewall** must allow ports 3001 and 3002
+3. **Firewall** must allow port 3000
 4. **Windows file sharing** enabled (optional, for easier setup)
 
 ### **Hardware Setup**
@@ -281,70 +320,90 @@ The server will access client services using computer names:
 
 **Test Printer:**
 ```bash
-curl -X POST http://localhost:3001/test-print \
-  -H "Content-Type: application/json" \
-  -d '{"text": "Test print from client computer"}'
+curl -X GET http://localhost:3000/test/printer
 ```
 
 **Test Display:**
 ```bash
-curl -X POST http://localhost:3002/test-display \
+curl -X GET http://localhost:3000/test/display
+```
+
+**Test Transaction Printing:**
+```bash
+curl -X POST http://localhost:3000/print \
   -H "Content-Type: application/json" \
-  -d '{"line1": "Test Display", "line2": "From Client"}'
+  -d '{"content": "Test Print", "type": "receipt"}'
 ```
 
 **Health Check:**
 ```bash
-# Check printer service health
-curl http://localhost:3001/health
-
-# Check display service health
-curl http://localhost:3002/health
+# Check consolidated service health
+curl http://localhost:3000/health
 ```
 
 ### **Frontend Integration**
 
 **JavaScript Example:**
 ```javascript
-// Send print command to specific cashier
-const printResponse = await fetch('/api/print/to-cashier', {
+// Print transaction receipt
+const printResponse = await fetch('http://localhost:3000/print', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-        cashier: 'CASHIER-1',
-        command: 'transactionfile',
-        data: { order_id: 'TKT-001', total: 25.99 }
+        content: JSON.stringify(transactionData),
+        type: 'transaction'
     })
 });
 
-// Send display message to specific cashier
-const displayResponse = await fetch('/api/display/to-cashier', {
+// Display message on PD300
+const displayResponse = await fetch('http://localhost:3000/display', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-        cashier: 'CASHIER-1',
-        line1: 'Order Ready!',
-        line2: 'Please Collect'
+        content: 'Order Ready!\nPlease Collect',
+        type: 'display'
+    })
+});
+
+// Combined print and display
+const combinedResponse = await fetch('http://localhost:3000/print-and-display', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        printContent: 'Receipt content',
+        displayContent: 'Thank you!\nPlease come again'
     })
 });
 ```
 
-### **Benefits of This Setup:**
-✅ **Distributed hardware** - Each cashier has their own devices  
-✅ **Scalable** - Easy to add more cashier computers  
+### **Benefits of Consolidated Setup:**
+✅ **Simplified deployment** - Single service to manage  
+✅ **Reduced complexity** - One port, one service  
+✅ **Better reliability** - Fewer moving parts  
+✅ **Easier maintenance** - Single update point  
+✅ **Resource efficient** - Lower memory and CPU usage  
 ✅ **Network-based** - No need for USB extenders  
 ✅ **Centralized control** - Server manages all hardware  
-✅ **Independent operation** - Clients work even if server is down  
-✅ **Easy maintenance** - Update services independently  
 
 ## 📚 Additional Documentation
 
-- [KQT300 Setup Guide](KQT300_SETUP.md)
+- **[Installation Manual](INSTALLATION_MANUAL.md)** - Comprehensive installation and deployment guide
+- **[KQT300 Setup Guide](KQT300_SETUP.md)** - QR scanner hardware setup
 
 ## 🛠️ Development
 
 ### API Documentation
 Access Swagger documentation at: `http://localhost:8000/api/documentation`
+
+### Available API Endpoints
+- **Authentication**: `/api/auth/*`
+- **Cashier Management**: `/api/cashier/*`
+- **User Management**: `/api/users/*`
+- **Promoter Management**: `/api/promoters/*`
+- **Rate Management**: `/api/rates/*`
+- **Discount Management**: `/api/discounts/*`
+- **VIP Management**: `/api/vips/*`
+- **Reports**: `/api/reports/*`
 
 ### Testing
 ```bash
@@ -354,8 +413,69 @@ php artisan test
 # Run frontend tests
 cd admin-panel
 npm test
+
+# Test client-side service
+cd client-side-service
+npm test
 ```
+
+### Development Commands
+```bash
+# Clear Laravel caches
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+
+# Regenerate Swagger documentation
+php artisan l5-swagger:generate
+
+# Run database migrations
+php artisan migrate
+
+# Seed database with test data
+php artisan db:seed
+```
+
+## 🔧 Key Features
+
+### **Backend Features**
+- ✅ **RESTful API** with comprehensive endpoints
+- ✅ **Authentication & Authorization** with Sanctum
+- ✅ **Role-based Access Control** (Admin, Cashier, etc.)
+- ✅ **Audit Trail** for all system activities
+- ✅ **Email Notifications** for password reset, etc.
+- ✅ **PDF Generation** for reports and receipts
+- ✅ **Image Upload & Management** with media library
+- ✅ **Database Seeding** with sample data
+
+### **Frontend Features**
+- ✅ **Modern React Admin Panel** with CoreUI
+- ✅ **Responsive Design** for all screen sizes
+- ✅ **Real-time Dashboard** with statistics
+- ✅ **Rich Text Editor** (TinyMCE) for content management
+- ✅ **User Management** with role assignment
+- ✅ **Cashier Interface** for transaction processing
+- ✅ **Promoter & Rate Management**
+- ✅ **Discount System** with percentage and fixed amounts
+- ✅ **VIP Customer Management**
+- ✅ **Comprehensive Reporting**
+
+### **Hardware Integration**
+- ✅ **Star BSC10 Thermal Printer** support
+- ✅ **PD300 Customer Display** integration
+- ✅ **QR Code Generation** and printing
+- ✅ **Transaction Receipt Printing**
+- ✅ **Open/Close Cash Reports**
+- ✅ **KQT300 QR Scanner** integration
+- ✅ **Distributed Architecture** for multiple cashier stations
 
 ## 📄 License
 
 This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: September 2025  
+**Author**: Your Company Name
