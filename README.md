@@ -479,3 +479,152 @@ This project is open-sourced software licensed under the [MIT license](https://o
 **Version**: 1.0.0  
 **Last Updated**: September 2025  
 **Author**: Your Company Name
+
+
+# 📘 Local Deployment Guide – TicketingSystem (Laravel + React + KQT300)
+
+This document explains how to deploy the **TicketingSystem** project (Laravel + ReactJS) on a local machine using **WAMPServer**, and make it accessible over the LAN for clients and the **KQT300 device**.
+
+---
+
+## 📂 Project Structure
+```
+TicketingSystem/
+│
+├── admin-panel/       # ReactJS (Admin Panel)
+│   └── dist/          # React build output
+│
+├── app/               # Laravel app code
+├── public/            # Laravel web root
+├── routes/
+├── vendor/
+└── ... other Laravel files
+```
+
+- **Laravel API** → runs on **port 8000**  
+- **React Admin Panel** → runs on **port 4000**  
+
+---
+
+## 🔹 Step 1: Find Local IP Address
+Run in **Command Prompt**:
+```bash
+ipconfig
+```
+Look for your active adapter (Ethernet/Wi-Fi):
+```
+IPv4 Address . . . . . : 192.168.1.100
+```
+This IP will be used for access.
+
+---
+
+## 🔹 Step 2: Configure Laravel
+Edit `.env` in Laravel project:
+```env
+APP_URL=http://192.168.1.100:8000
+```
+
+---
+
+## 🔹 Step 3: Build React Admin Panel
+Inside `admin-panel/`:
+```bash
+npm run build
+```
+This generates a `dist/` folder.  
+Move/copy it into:
+```
+C:\wamp64\www\TicketingSystem\admin-panel\dist
+```
+
+Update `admin-panel/.env`:
+```env
+VITE_API_BASE_URL=http://192.168.1.100:8000
+```
+
+---
+
+## 🔹 Step 4: Apache Configuration
+
+### 1. Open `httpd.conf`
+Located at:
+```
+C:\wamp64\bin\apache\apache{version}\conf\httpd.conf
+```
+Ensure these lines exist:
+```apache
+Listen 80
+Listen 4000
+Listen 8000
+Include conf/extra/httpd-vhosts.conf
+```
+
+### 2. Edit Virtual Hosts
+File:
+```
+C:\wamp64\bin\apache\apache{version}\conf\extra\httpd-vhosts.conf
+```
+
+Add:
+```apache
+# Laravel API (port 8000)
+<VirtualHost *:8000>
+    ServerName 192.168.1.100
+    DocumentRoot "c:/wamp64/www/TicketingSystem/public"
+
+    <Directory "c:/wamp64/www/TicketingSystem/public">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+
+# React Admin Panel (port 4000)
+<VirtualHost *:4000>
+    ServerName 192.168.1.100
+    DocumentRoot "c:/wamp64/www/TicketingSystem/admin-panel/dist"
+
+    <Directory "c:/wamp64/www/TicketingSystem/admin-panel/dist">
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
+
+### 3. Restart Apache
+Restart **WAMP → Apache Service**.
+
+---
+
+## 🔹 Step 5: Allow Firewall
+Open ports **8000** and **4000**:
+- Open **Windows Defender Firewall → Advanced Settings → Inbound Rules**
+- Add **TCP rules** for ports `8000` and `4000`.
+
+---
+
+## 🔹 Step 6: Access URLs
+- Laravel API → `http://192.168.1.100:8000`  
+- React Admin → `http://192.168.1.100:4000`  
+
+---
+
+## 🔹 Step 7: KQT300 Device Setup
+Point KQT300 to Laravel API endpoint:
+```
+http://192.168.1.100:8000/api/...
+```
+
+---
+
+## ✅ Final Architecture
+- **React Admin Panel** → `http://192.168.1.100:4000`  
+- **Laravel API** → `http://192.168.1.100:8000`  
+- **KQT300 Device** → communicates directly with Laravel API  
+
+```
+[ Client Browser ] --> [ React (4000) ] --> [ Laravel API (8000) ]
+[ KQT300 Device ] ---------------------> [ Laravel API (8000) ]
+```
