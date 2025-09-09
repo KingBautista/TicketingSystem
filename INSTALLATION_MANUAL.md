@@ -35,6 +35,17 @@
 ### **1. WAMP Server (Windows) / LAMP Stack (Linux)**
 
 #### **Windows - WAMP Server**
+
+**⚠️ Important: DLL Requirements**
+Before installing WAMP Server, you must install the required Microsoft Visual C++ Redistributable Packages. These DLL files are essential for WAMP Server to function properly.
+
+**Install Visual C++ Redistributables:**
+1. **Download VisualCppRedist AIO** (All-In-One installer) from [GitHub Releases](https://github.com/abbodi1406/vcredist/releases)
+2. **Download the latest** `VisualCppRedist_AIO_x86_x64.exe` file
+3. **Run as Administrator** and follow the installation wizard
+4. **Restart your computer** after installation
+
+**Install WAMP Server:**
 1. **Download WAMP Server** from [wampserver.com](https://www.wampserver.com/)
 2. **Install WAMP Server** with default settings
 3. **Verify installation**:
