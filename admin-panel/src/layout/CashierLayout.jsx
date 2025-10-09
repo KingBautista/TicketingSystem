@@ -19,7 +19,6 @@ export default function CashierLayout() {
   const [showTransaction, setShowTransaction] = useState(() => !!localStorage.getItem('cashier_session_token'));
   const [showCloseCash, setShowCloseCash] = useState(false);
   const [cashOnHand, setCashOnHand] = useState('');
-  const [password, setPassword] = useState('');
   const [paidAmount, setPaidAmount] = useState('');
   const [sessionOpen, setSessionOpen] = useState(() => !!localStorage.getItem('cashier_session_token'));
   const [sessionClosed, setSessionClosed] = useState(false);
@@ -149,15 +148,8 @@ export default function CashierLayout() {
   // Integrate handleOpenCash with backend
   const handleOpenCash = async (e) => {
     e && e.preventDefault();
-    if (!cashOnHand || !password) {
-      toastRef.current.showToast('Please enter cash on hand and password.', 'warning');
-      return;
-    }
-    // Validate password by calling /validate-password endpoint
-    try {
-      await axiosClient.post('/validate-password', { password });
-    } catch (err) {
-      toastRef.current.showToast('Invalid password.', 'danger');
+    if (!cashOnHand) {
+      toastRef.current.showToast('Please enter cash on hand amount.', 'warning');
       return;
     }
     // Open cashier session
@@ -178,9 +170,11 @@ export default function CashierLayout() {
       setSessionOpen(true);
       setShowPrintOpen(true);
       setShowOpenCash(false);
-      toastRef.current.showToast('Cash session opened!', 'success');
+      toastRef.current.showToast('Cash session opened successfully!', 'success');
     } catch (err) {
-      toastRef.current.showToast('Failed to open cash session.', 'danger');
+      console.error('Open cash session error:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to open cash session.';
+      toastRef.current.showToast(errorMessage, 'danger');
     }
   };
   const handlePrintOpenClose = () => {
@@ -263,16 +257,8 @@ export default function CashierLayout() {
 
   const handleCloseCash = async (e) => {
     e && e.preventDefault();
-    if (!cashOnHand || !password) {
-      toastRef.current.showToast('Please enter cash on hand and password.', 'warning');
-      return;
-    }
-
-    try {
-      // First validate password
-      await axiosClient.post('/validate-password', { password });
-    } catch (err) {
-      toastRef.current.showToast('Invalid password.', 'danger');
+    if (!cashOnHand) {
+      toastRef.current.showToast('Please enter cash on hand amount.', 'warning');
       return;
     }
 
@@ -299,10 +285,12 @@ export default function CashierLayout() {
 
       setSessionClosed(true);
       setShowPrintClose(true);
-      toastRef.current.showToast('Cash session closed!', 'success');
+      toastRef.current.showToast('Cash session closed successfully!', 'success');
       localStorage.removeItem('cashier_session_token');
     } catch (err) {
-      toastRef.current.showToast('Failed to close cash session.', 'danger');
+      console.error('Close cash session error:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to close cash session.';
+      toastRef.current.showToast(errorMessage, 'danger');
     }
   };
 
@@ -444,9 +432,7 @@ export default function CashierLayout() {
           <OpenCashModal
             show={showOpenCash}
             cashOnHand={cashOnHand}
-            password={password}
             setCashOnHand={setCashOnHand}
-            setPassword={setPassword}
             handleOpenCash={handleOpenCash}
             PROMOTER_NAME={promoter?.name || 'N/A'}
             headerStyle={headerStyle}
@@ -514,9 +500,7 @@ export default function CashierLayout() {
           <CloseCashModal
             show={showCloseCash}
             cashOnHand={cashOnHand}
-            password={password}
             setCashOnHand={setCashOnHand}
-            setPassword={setPassword}
             handleCloseCash={handleCloseCash}
             PROMOTER_NAME={promoter?.name || 'N/A'}
             headerStyle={headerStyle}

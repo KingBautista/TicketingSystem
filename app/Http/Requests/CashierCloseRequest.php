@@ -18,4 +18,16 @@ class CashierCloseRequest extends FormRequest
             'closing_cash' => 'required|numeric|min:0',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'session_id.required' => 'Session ID is required.',
+            'session_id.integer' => 'Session ID must be a valid number.',
+            'session_id.exists' => 'The selected session does not exist.',
+            'closing_cash.required' => 'Closing cash amount is required.',
+            'closing_cash.numeric' => 'Closing cash must be a valid number.',
+            'closing_cash.min' => 'Closing cash must be at least 0.',
+        ];
+    }
 }

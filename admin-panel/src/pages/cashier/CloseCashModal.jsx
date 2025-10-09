@@ -5,9 +5,7 @@ import { solidIconMap } from '../../utils/solidIcons.js';
 export default function CloseCashModal({
   show,
   cashOnHand,
-  password,
   setCashOnHand,
-  setPassword,
   handleCloseCash,
   PROMOTER_NAME,
   headerStyle,
@@ -26,22 +24,14 @@ export default function CloseCashModal({
           </div>
           <div className="modal-body p-3">
             <form onSubmit={handleCloseCash}>
-              <div className="mb-3">
+              <div className="mb-4">
                 <label className="form-label">Cash on Hand</label>
                 <input
                   type="number"
                   className="form-control form-control-lg"
+                  value={cashOnHand}
                   onChange={e => setCashOnHand(e.target.value)}
                   min="0"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="form-label">Confirm Password</label>
-                <input
-                  type="password"
-                  className="form-control form-control-lg"
-                  onChange={e => setPassword(e.target.value)}
                   required
                 />
               </div>

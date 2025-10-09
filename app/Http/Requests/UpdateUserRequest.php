@@ -37,11 +37,6 @@ class UpdateUserRequest extends FormRequest
 			],
 			"user_pass" => [
 				'string',
-				'min:8',              // must be at least 8 characters in length
-				'regex:/[a-z]/',      // must contain at least one lowercase letter
-				'regex:/[A-Z]/',      // must contain at least one uppercase letter
-				'regex:/[0-9]/',      // must contain at least one digit
-				'regex:/[@$!%*#?&]/', // must contain a special character
 			],
 		];
 	}
@@ -52,7 +47,7 @@ class UpdateUserRequest extends FormRequest
 			"user_login.unique" => "The username has already been taken.",
 			"user_email.email" => "The email field must be a valid email address.",
 			"user_email.unique" => "The email has already been taken.",
-			"user_pass.required" => "The password field is required.",
+			"user_pass.string" => "Password must be a valid text.",
 			"user_role_id.exists" => "The selected role is invalid.",
 		];
 	}

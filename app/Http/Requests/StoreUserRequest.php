@@ -39,11 +39,6 @@ class StoreUserRequest extends FormRequest
 			"user_pass" => [
 				'required',
 				'string',
-				'min:8',              // must be at least 8 characters in length
-				'regex:/[a-z]/',      // must contain at least one lowercase letter
-				'regex:/[A-Z]/',      // must contain at least one uppercase letter
-				'regex:/[0-9]/',      // must contain at least one digit
-				'regex:/[@$!#?&]/', // must contain a special character
 			],
 		];
 	}
@@ -59,8 +54,6 @@ class StoreUserRequest extends FormRequest
 			"user_email.unique" => "This email address has already been registered. Please use a different one.",
 			"user_pass.required" => "Password is required.",
 			"user_pass.string" => "Password must be a valid text.",
-			"user_pass.min" => "Password must be at least 8 characters long.",
-			"user_pass.regex" => "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
 			"user_role_id.required" => "User role is required.",
 			"user_role_id.integer" => "Role ID must be a valid number.",
 			"user_role_id.exists" => "The selected role does not exist.",
