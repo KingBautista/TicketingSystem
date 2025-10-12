@@ -254,10 +254,6 @@ export default function Login() {
 							<h2 className="fw-bold mb-2 text-white" style={{ fontSize: '2.2rem' }}>
 								Welcome to ELID
 							</h2>
-							
-							<p className="fs-5 mb-3 text-white" style={{ maxWidth: '400px', margin: '0 auto' }}>
-								Your trusted partner in comprehensive IT solutions
-							</p>
 						</div>
 					</div>
 				</div>
