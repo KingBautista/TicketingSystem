@@ -6,7 +6,7 @@ import { networkInterfaces } from 'os';
  */
 export class ServiceConfig {
     constructor() {
-        this.port = process.env.PORT || 4000; // Default to port 4000
+        this.port = process.env.PORT || 3001; // Default to port 3001 to avoid conflicts
         this.host = this.detectBestIP();
     }
 
