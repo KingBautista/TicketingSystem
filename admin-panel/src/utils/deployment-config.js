@@ -47,15 +47,29 @@ export class DeploymentServiceChecker {
             
             clearTimeout(timeoutId);
             
+            console.log(`📡 Health check response: ${response.status} ${response.statusText}`);
+            console.log(`📡 Content-Type: ${response.headers.get('content-type')}`);
+            
             if (response.ok) {
-                const data = await response.json();
-                if (data.status === 'healthy') {
-                    console.log(`✅ Deployment service is healthy: ${this.serviceUrl}`);
-                    return true;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const data = await response.json();
+                    if (data.status === 'healthy') {
+                        console.log(`✅ Deployment service is healthy: ${this.serviceUrl}`);
+                        return true;
+                    } else {
+                        console.log(`❌ Service not healthy:`, data);
+                        return false;
+                    }
+                } else {
+                    const text = await response.text();
+                    console.log(`❌ Health endpoint returned non-JSON:`, text.substring(0, 200));
+                    return false;
                 }
             }
             
-            console.log(`❌ Deployment service not healthy: ${response.status}`);
+            const text = await response.text();
+            console.log(`❌ Health check failed (${response.status}):`, text.substring(0, 200));
             return false;
         } catch (error) {
             console.log(`❌ Deployment service not available: ${error.message}`);
@@ -89,11 +103,26 @@ export class DeploymentServiceChecker {
                     }
                 });
                 
+                console.log(`📡 Response status: ${response.status} ${response.statusText}`);
+                console.log(`📡 Response headers:`, Object.fromEntries(response.headers.entries()));
+                
                 if (response.ok) {
-                    const data = await response.json();
-                    console.log(`✅ Request successful to ${endpoint}`);
-                    return { success: true, data };
+                    // Check if response is actually JSON
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        console.log(`✅ Request successful to ${endpoint}:`, data);
+                        return { success: true, data };
+                    } else {
+                        // Response is not JSON, get text to see what we got
+                        const text = await response.text();
+                        console.log(`⚠️ Non-JSON response from ${endpoint}:`, text.substring(0, 200));
+                        throw new Error(`Expected JSON but got ${contentType || 'unknown content type'}`);
+                    }
                 } else {
+                    // Get response text for better error reporting
+                    const text = await response.text();
+                    console.log(`❌ HTTP ${response.status} response:`, text.substring(0, 200));
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (error) {
