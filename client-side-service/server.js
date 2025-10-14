@@ -16,7 +16,14 @@ const app = express();
 const PORT = serviceConfig.port;
 const HOST = serviceConfig.host;
 
-app.use(cors());
+// Configure CORS to allow all origins
+app.use(cors({
+    origin: '*', // Allow all origins
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: false
+}));
+
 app.use(express.json());
 
 // Initialize printer
@@ -407,16 +414,18 @@ app.get('/test/display', async (req, res) => {
     }
 });
 
-// Start server
-app.listen(PORT, HOST, () => {
-    console.log(`🚀 Client-Side Service running on ${HOST}:${PORT}`);
+// Start server - bind to all interfaces (0.0.0.0) to accept connections from any IP
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Client-Side Service running on ALL INTERFACES:${PORT}`);
     console.log(`💻 Computer: ${process.env.COMPUTERNAME || 'Unknown'}`);
-    console.log(`🌐 Service URL: ${serviceConfig.getServiceUrl()}`);
+    console.log(`🌐 Service accessible from any IP on port ${PORT}`);
     console.log(`🔗 Local access: http://localhost:${PORT}`);
     console.log(`🔗 Network access: http://${HOST}:${PORT}`);
+    console.log(`🔗 Any IP access: http://[ANY_IP]:${PORT}`);
     console.log(`📺 Display: PD-300 ready`);
     console.log(`🖨️ Printer: Star BSC10 ready`);
     console.log(`📱 Features: Printer + Display + PD300`);
+    console.log(`🌐 CORS: Enabled for all origins`);
     console.log(`\n📋 Available endpoints:`);
     console.log(`   GET  /health - Health check`);
     console.log(`   GET  /config - Service configuration`);
@@ -427,5 +436,6 @@ app.listen(PORT, HOST, () => {
     console.log(`   GET  /test/printer - Test printer`);
     console.log(`   GET  /test/display - Test display`);
     console.log(`\n🔧 Frontend Configuration:`);
-    console.log(`   Update your frontend to use: ${serviceConfig.getServiceUrl()}`);
+    console.log(`   Service accepts connections from ANY IP address`);
+    console.log(`   Recommended URL: http://192.168.0.176:${PORT}`);
 });
