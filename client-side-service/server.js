@@ -7,12 +7,14 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { StarBSC10Printer } from './star-final-printer.js';
+import { serviceConfig } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = serviceConfig.port;
+const HOST = serviceConfig.host;
 
 app.use(cors());
 app.use(express.json());
@@ -26,10 +28,17 @@ app.get('/health', (req, res) => {
         status: 'healthy', 
         service: 'Client-Side Service (Printer + Display + PD300)',
         computer: process.env.COMPUTERNAME || 'Unknown',
+        host: HOST,
         port: PORT,
+        serviceUrl: serviceConfig.getServiceUrl(),
         timestamp: new Date().toISOString(),
         features: ['printer', 'display', 'pd300']
     });
+});
+
+// Configuration endpoint for frontend
+app.get('/config', (req, res) => {
+    res.json(serviceConfig.getFrontendConfig());
 });
 
 // Printer endpoints
@@ -399,20 +408,24 @@ app.get('/test/display', async (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Client-Side Service running on port ${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`🚀 Client-Side Service running on ${HOST}:${PORT}`);
     console.log(`💻 Computer: ${process.env.COMPUTERNAME || 'Unknown'}`);
-    console.log(`🌐 Service URL: http://localhost:${PORT}`);
-    console.log(`🔗 Server can access via: http://${process.env.COMPUTERNAME || 'localhost'}:${PORT}`);
+    console.log(`🌐 Service URL: ${serviceConfig.getServiceUrl()}`);
+    console.log(`🔗 Local access: http://localhost:${PORT}`);
+    console.log(`🔗 Network access: http://${HOST}:${PORT}`);
     console.log(`📺 Display: PD-300 ready`);
     console.log(`🖨️ Printer: Star BSC10 ready`);
     console.log(`📱 Features: Printer + Display + PD300`);
     console.log(`\n📋 Available endpoints:`);
     console.log(`   GET  /health - Health check`);
+    console.log(`   GET  /config - Service configuration`);
     console.log(`   POST /print - Print content`);
     console.log(`   POST /display - Display content`);
     console.log(`   POST /pd300/display - PD300 display`);
     console.log(`   POST /print-and-display - Print and display`);
     console.log(`   GET  /test/printer - Test printer`);
     console.log(`   GET  /test/display - Test display`);
+    console.log(`\n🔧 Frontend Configuration:`);
+    console.log(`   Update your frontend to use: ${serviceConfig.getServiceUrl()}`);
 });

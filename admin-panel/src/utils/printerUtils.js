@@ -3,9 +3,22 @@
  * This calls a local Node.js service that executes star-final-printer.js
  */
 
+import { serviceDiscovery } from './serviceDiscovery.js';
+
 export class ClientPrinter {
     constructor() {
-        this.clientServiceUrl = 'http://localhost:3000';
+        this.clientServiceUrl = null; // Will be set dynamically
+        this.serviceDiscovery = serviceDiscovery;
+    }
+
+    /**
+     * Get the current service URL (with auto-discovery)
+     */
+    async getServiceUrl() {
+        if (!this.clientServiceUrl) {
+            this.clientServiceUrl = await this.serviceDiscovery.getBestServiceUrl();
+        }
+        return this.clientServiceUrl;
     }
 
     /**
@@ -13,11 +26,14 @@ export class ClientPrinter {
      */
     async checkServiceHealth() {
         try {
-            const response = await fetch(`${this.clientServiceUrl}/health`);
+            const serviceUrl = await this.getServiceUrl();
+            const response = await fetch(`${serviceUrl}/health`);
             const result = await response.json();
             return result.status === 'healthy';
         } catch (error) {
             console.error('❌ Client printer service not available:', error);
+            // Try to rediscover services
+            this.clientServiceUrl = null;
             return false;
         }
     }
@@ -29,16 +45,20 @@ export class ClientPrinter {
         try {
             console.log(`🖨️ Executing printer command via client service: ${command}`);
             
+            // Get the current service URL
+            const serviceUrl = await this.getServiceUrl();
+            
             // Check if service is running
             const isHealthy = await this.checkServiceHealth();
             if (!isHealthy) {
                 console.error('❌ Client printer service not running');
                 console.error('❌ Please start the service: client-side-service/start-service.bat');
+                console.error(`❌ Tried to connect to: ${serviceUrl}`);
                 return false;
             }
             
             // Call the local client service
-            const response = await fetch(`${this.clientServiceUrl}/print`, {
+            const response = await fetch(`${serviceUrl}/print`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -60,6 +80,8 @@ export class ClientPrinter {
             }
         } catch (error) {
             console.error('❌ Printer command error:', error);
+            // Reset service URL to force rediscovery
+            this.clientServiceUrl = null;
             return false;
         }
     }

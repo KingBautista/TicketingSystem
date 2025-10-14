@@ -35,9 +35,16 @@ if not exist "node_modules" (
 
 echo Starting Client-Side Service...
 echo.
+
+REM Generate frontend configuration
+echo Generating frontend configuration...
+node generate-frontend-config.js
+
+echo.
 echo Service will be available at:
 echo   http://localhost:3000
 echo   http://%COMPUTERNAME%:3000
+echo   (Network IP will be detected automatically)
 echo.
 echo Press Ctrl+C to stop the service
 echo ========================================

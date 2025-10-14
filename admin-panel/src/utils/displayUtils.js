@@ -3,9 +3,22 @@
  * This calls a local Node.js service that executes send-display.js
  */
 
+import { serviceDiscovery } from './serviceDiscovery.js';
+
 export class ClientDisplay {
     constructor() {
-        this.clientServiceUrl = 'http://localhost:3000';
+        this.clientServiceUrl = null; // Will be set dynamically
+        this.serviceDiscovery = serviceDiscovery;
+    }
+
+    /**
+     * Get the current service URL (with auto-discovery)
+     */
+    async getServiceUrl() {
+        if (!this.clientServiceUrl) {
+            this.clientServiceUrl = await this.serviceDiscovery.getBestServiceUrl();
+        }
+        return this.clientServiceUrl;
     }
 
     /**
@@ -13,11 +26,14 @@ export class ClientDisplay {
      */
     async checkServiceHealth() {
         try {
-            const response = await fetch(`${this.clientServiceUrl}/health`);
+            const serviceUrl = await this.getServiceUrl();
+            const response = await fetch(`${serviceUrl}/health`);
             const result = await response.json();
             return result.status === 'healthy';
         } catch (error) {
             console.error('❌ Client display service not available:', error);
+            // Try to rediscover services
+            this.clientServiceUrl = null;
             return false;
         }
     }
@@ -29,16 +45,20 @@ export class ClientDisplay {
         try {
             console.log('📺 Frontend sending to PD-300 display:', { line1, line2 });
             
+            // Get the current service URL
+            const serviceUrl = await this.getServiceUrl();
+            
             // Check if service is running
             const isHealthy = await this.checkServiceHealth();
             if (!isHealthy) {
                 console.error('❌ Client display service not running');
                 console.error('❌ Please start the service: client-side-service/start-service.bat');
+                console.error(`❌ Tried to connect to: ${serviceUrl}`);
                 return false;
             }
             
             // Call the local client service display endpoint
-            const response = await fetch(`${this.clientServiceUrl}/display`, {
+            const response = await fetch(`${serviceUrl}/display`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -60,6 +80,8 @@ export class ClientDisplay {
             }
         } catch (error) {
             console.error('❌ Display command error:', error);
+            // Reset service URL to force rediscovery
+            this.clientServiceUrl = null;
             return false;
         }
     }
