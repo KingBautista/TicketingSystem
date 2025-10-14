@@ -43,34 +43,39 @@ export class ServiceDiscovery {
     }
 
     /**
-     * Generate common IP ranges to check
+     * Generate common IP ranges to check (optimized for faster discovery)
      */
     generateIPRanges() {
         const ips = [];
         
-        // Add localhost
-        ips.push('127.0.0.1');
-        
-        // Add current config IP if it's not localhost
-        if (this.config.host !== '127.0.0.1' && this.config.host !== 'localhost') {
+        // Add current config IP first (highest priority)
+        if (this.config.host && this.config.host !== '127.0.0.1' && this.config.host !== 'localhost') {
             ips.push(this.config.host);
         }
         
-        // Add common local network ranges
-        // 192.168.0.x (most common home networks)
-        for (let i = 1; i <= 254; i++) {
-            ips.push(`192.168.0.${i}`);
+        // Add localhost
+        ips.push('127.0.0.1');
+        
+        // Add specific known IPs (your server IP)
+        ips.push('192.168.0.176');
+        
+        // Add limited range around the configured IP
+        if (this.config.host && this.config.host.startsWith('192.168.0.')) {
+            const baseIP = this.config.host.split('.')[3];
+            const startIP = Math.max(1, parseInt(baseIP) - 10);
+            const endIP = Math.min(254, parseInt(baseIP) + 10);
+            
+            for (let i = startIP; i <= endIP; i++) {
+                if (`192.168.0.${i}` !== this.config.host) {
+                    ips.push(`192.168.0.${i}`);
+                }
+            }
         }
         
-        // 192.168.1.x (alternative home networks)
-        for (let i = 1; i <= 254; i++) {
-            ips.push(`192.168.1.${i}`);
-        }
-        
-        // 10.0.0.x (corporate networks)
-        for (let i = 1; i <= 254; i++) {
-            ips.push(`10.0.0.${i}`);
-        }
+        // Add a few common gateway IPs
+        ips.push('192.168.0.1');
+        ips.push('192.168.1.1');
+        ips.push('10.0.0.1');
         
         return ips;
     }
@@ -82,11 +87,14 @@ export class ServiceDiscovery {
         try {
             const fullUrl = `http://${url}`;
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 1000); // 1 second timeout for faster discovery
             
             const response = await fetch(`${fullUrl}/health`, {
                 method: 'GET',
-                signal: controller.signal
+                signal: controller.signal,
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
             
             clearTimeout(timeoutId);
@@ -94,6 +102,7 @@ export class ServiceDiscovery {
             if (response.ok) {
                 const data = await response.json();
                 if (data.status === 'healthy') {
+                    console.log(`✅ Found service at: ${fullUrl}`);
                     return {
                         url: fullUrl,
                         host: url.split(':')[0],
@@ -103,7 +112,7 @@ export class ServiceDiscovery {
                 }
             }
         } catch (error) {
-            // Service not available or timeout
+            // Service not available or timeout - silently continue
         }
         
         return null;
@@ -113,16 +122,21 @@ export class ServiceDiscovery {
      * Get the best available service URL
      */
     async getBestServiceUrl() {
+        console.log('🔍 Looking for client service...');
+        
         // First try the configured service
         if (this.config.serviceUrl) {
+            console.log(`🎯 Trying configured service: ${this.config.serviceUrl}`);
             const configService = await this.checkService(this.config.serviceUrl.replace('http://', ''));
             if (configService) {
+                console.log(`✅ Using configured service: ${configService.url}`);
                 this.currentServiceUrl = configService.url;
                 return configService.url;
             }
         }
         
         // If configured service is not available, discover services
+        console.log('🔍 Discovering services on network...');
         const services = await this.discoverServices();
         
         if (services.length > 0) {
@@ -134,11 +148,13 @@ export class ServiceDiscovery {
             );
             
             const selectedService = preferredService || services[0];
+            console.log(`✅ Using discovered service: ${selectedService.url}`);
             this.currentServiceUrl = selectedService.url;
             return selectedService.url;
         }
         
         // Fallback to configured URL
+        console.log(`⚠️ No services found, using configured URL: ${this.config.serviceUrl}`);
         return this.config.serviceUrl;
     }
 
