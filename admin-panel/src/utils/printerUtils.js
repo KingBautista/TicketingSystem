@@ -4,37 +4,52 @@
  */
 
 import { serviceDiscovery } from './serviceDiscovery.js';
+import { deploymentServiceChecker, DEPLOYMENT_CONFIG } from './deployment-config.js';
 
 export class ClientPrinter {
     constructor() {
         this.clientServiceUrl = null; // Will be set dynamically
         this.serviceDiscovery = serviceDiscovery;
+        this.deploymentMode = DEPLOYMENT_CONFIG.isDeployment;
+        this.deploymentChecker = deploymentServiceChecker;
     }
 
     /**
-     * Get the current service URL (with auto-discovery)
+     * Get the current service URL (with auto-discovery or deployment mode)
      */
     async getServiceUrl() {
-        if (!this.clientServiceUrl) {
-            this.clientServiceUrl = await this.serviceDiscovery.getBestServiceUrl();
+        if (this.deploymentMode) {
+            // In deployment mode, use direct connection
+            return this.deploymentChecker.getServiceUrl();
+        } else {
+            // In development mode, use service discovery
+            if (!this.clientServiceUrl) {
+                this.clientServiceUrl = await this.serviceDiscovery.getBestServiceUrl();
+            }
+            return this.clientServiceUrl;
         }
-        return this.clientServiceUrl;
     }
 
     /**
      * Check if client printer service is running
      */
     async checkServiceHealth() {
-        try {
-            const serviceUrl = await this.getServiceUrl();
-            const response = await fetch(`${serviceUrl}/health`);
-            const result = await response.json();
-            return result.status === 'healthy';
-        } catch (error) {
-            console.error('❌ Client printer service not available:', error);
-            // Try to rediscover services
-            this.clientServiceUrl = null;
-            return false;
+        if (this.deploymentMode) {
+            // In deployment mode, use deployment checker
+            return await this.deploymentChecker.checkService();
+        } else {
+            // In development mode, use service discovery
+            try {
+                const serviceUrl = await this.getServiceUrl();
+                const response = await fetch(`${serviceUrl}/health`);
+                const result = await response.json();
+                return result.status === 'healthy';
+            } catch (error) {
+                console.error('❌ Client printer service not available:', error);
+                // Try to rediscover services
+                this.clientServiceUrl = null;
+                return false;
+            }
         }
     }
 
@@ -45,43 +60,65 @@ export class ClientPrinter {
         try {
             console.log(`🖨️ Executing printer command via client service: ${command}`);
             
-            // Get the current service URL
-            const serviceUrl = await this.getServiceUrl();
-            
-            // Check if service is running
-            const isHealthy = await this.checkServiceHealth();
-            if (!isHealthy) {
-                console.error('❌ Client printer service not running');
-                console.error('❌ Please start the service: client-side-service/start-service.bat');
-                console.error(`❌ Tried to connect to: ${serviceUrl}`);
-                return false;
-            }
-            
-            // Call the local client service
-            const response = await fetch(`${serviceUrl}/print`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    content: typeof data === 'object' ? JSON.stringify(data) : data,
-                    type: command
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                console.log('✅ Printer command executed successfully');
-                return true;
+            if (this.deploymentMode) {
+                // In deployment mode, use deployment checker with retry logic
+                const result = await this.deploymentChecker.executeRequest('/print', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        content: typeof data === 'object' ? JSON.stringify(data) : data,
+                        type: command
+                    })
+                });
+                
+                if (result.success) {
+                    console.log('✅ Printer command executed successfully (deployment mode)');
+                    return true;
+                } else {
+                    console.error('❌ Printer command failed (deployment mode):', result.error);
+                    return false;
+                }
             } else {
-                console.error('❌ Printer command failed:', result.error);
-                return false;
+                // In development mode, use service discovery
+                // Get the current service URL
+                const serviceUrl = await this.getServiceUrl();
+                
+                // Check if service is running
+                const isHealthy = await this.checkServiceHealth();
+                if (!isHealthy) {
+                    console.error('❌ Client printer service not running');
+                    console.error('❌ Please start the service: client-side-service/start-service.bat');
+                    console.error(`❌ Tried to connect to: ${serviceUrl}`);
+                    return false;
+                }
+                
+                // Call the local client service
+                const response = await fetch(`${serviceUrl}/print`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: typeof data === 'object' ? JSON.stringify(data) : data,
+                        type: command
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('✅ Printer command executed successfully');
+                    return true;
+                } else {
+                    console.error('❌ Printer command failed:', result.error);
+                    return false;
+                }
             }
         } catch (error) {
             console.error('❌ Printer command error:', error);
-            // Reset service URL to force rediscovery
-            this.clientServiceUrl = null;
+            // Reset service URL to force rediscovery (only in dev mode)
+            if (!this.deploymentMode) {
+                this.clientServiceUrl = null;
+            }
             return false;
         }
     }

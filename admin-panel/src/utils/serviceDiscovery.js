@@ -124,7 +124,7 @@ export class ServiceDiscovery {
     async getBestServiceUrl() {
         console.log('🔍 Looking for client service...');
         
-        // First try the configured service
+        // First try the configured service (direct connection)
         if (this.config.serviceUrl) {
             console.log(`🎯 Trying configured service: ${this.config.serviceUrl}`);
             const configService = await this.checkService(this.config.serviceUrl.replace('http://', ''));
@@ -132,11 +132,22 @@ export class ServiceDiscovery {
                 console.log(`✅ Using configured service: ${configService.url}`);
                 this.currentServiceUrl = configService.url;
                 return configService.url;
+            } else {
+                console.log(`❌ Configured service not available: ${this.config.serviceUrl}`);
             }
         }
         
-        // If configured service is not available, discover services
-        console.log('🔍 Discovering services on network...');
+        // Try localhost as fallback
+        console.log('🔍 Trying localhost fallback...');
+        const localhostService = await this.checkService('127.0.0.1:4000');
+        if (localhostService) {
+            console.log(`✅ Using localhost service: ${localhostService.url}`);
+            this.currentServiceUrl = localhostService.url;
+            return localhostService.url;
+        }
+        
+        // If configured service is not available, try limited discovery
+        console.log('🔍 Trying limited service discovery...');
         const services = await this.discoverServices();
         
         if (services.length > 0) {
@@ -153,7 +164,7 @@ export class ServiceDiscovery {
             return selectedService.url;
         }
         
-        // Fallback to configured URL
+        // Final fallback to configured URL (even if not responding)
         console.log(`⚠️ No services found, using configured URL: ${this.config.serviceUrl}`);
         return this.config.serviceUrl;
     }
