@@ -577,16 +577,21 @@ async function listAvailablePrinters() {
                     if (line.includes('Local') || line.includes('Network') || line.includes('Star') || line.includes('Microsoft') || line.includes('POS')) {
                         console.log(`Found printer line: "${line}"`);
                         
-                        // Split by multiple spaces to handle the table format
-                        const parts = line.split(/\s{2,}/); // Split by 2 or more spaces
-                        console.log(`Split parts:`, parts);
+                        // Parse the fixed-width table format
+                        // Based on the output: "Star BSC10                    Normal Star BSC10             USB001"
+                        const name = line.substring(0, 20).trim();
+                        const status = line.substring(20, 35).trim();
+                        const driver = line.substring(35, 60).trim();
+                        const port = line.substring(60).trim();
                         
-                        if (parts.length >= 2) {
+                        console.log(`Parsed - Name: "${name}", Status: "${status}", Driver: "${driver}", Port: "${port}"`);
+                        
+                        if (name) {
                             printers.push({
-                                name: parts[0].trim(),
-                                status: parts[1] ? parts[1].trim() : 'Unknown',
-                                driver: parts[2] ? parts[2].trim() : 'Unknown',
-                                port: parts[3] ? parts[3].trim() : 'Unknown'
+                                name: name,
+                                status: status || 'Unknown',
+                                driver: driver || 'Unknown',
+                                port: port || 'Unknown'
                             });
                         }
                     }
