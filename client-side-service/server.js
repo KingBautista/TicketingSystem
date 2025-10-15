@@ -481,10 +481,12 @@ async function checkPrinterAvailability() {
     return new Promise((resolve) => {
         const printerName = 'Star BSC10';
         
-        // Check if printer exists using PowerShell
-        const psCommand = `Get-Printer -Name '${printerName}' -ErrorAction SilentlyContinue | Select-Object Name, PrinterStatus, DriverName`;
+        // Check if printer exists using PowerShell - use -File approach to avoid quote issues
+        const tempScript = path.join(__dirname, 'temp_printer_check.ps1');
+        const scriptContent = `Get-Printer -Name "${printerName}" -ErrorAction SilentlyContinue | Select-Object Name, PrinterStatus, DriverName`;
+        fs.writeFileSync(tempScript, scriptContent, 'utf8');
         
-        exec(`powershell -Command '${psCommand}'`, (error, stdout, stderr) => {
+        exec(`powershell -ExecutionPolicy Bypass -File "${tempScript}"`, (error, stdout, stderr) => {
             const result = {
                 printerName: printerName,
                 available: false,
@@ -517,6 +519,9 @@ async function checkPrinterAvailability() {
             result.details.rawError = stderr;
             result.details.timestamp = new Date().toISOString();
             
+            // Clean up temp file
+            try { fs.unlinkSync(tempScript); } catch {}
+            
             resolve(result);
         });
     });
@@ -524,9 +529,11 @@ async function checkPrinterAvailability() {
 
 async function listAvailablePrinters() {
     return new Promise((resolve) => {
-        const psCommand = `Get-Printer | Select-Object Name, PrinterStatus, DriverName, PortName | Format-Table -AutoSize`;
+        const tempScript = path.join(__dirname, 'temp_list_printers.ps1');
+        const scriptContent = `Get-Printer | Select-Object Name, PrinterStatus, DriverName, PortName | Format-Table -AutoSize`;
+        fs.writeFileSync(tempScript, scriptContent, 'utf8');
         
-        exec(`powershell -Command '${psCommand}'`, (error, stdout, stderr) => {
+        exec(`powershell -ExecutionPolicy Bypass -File "${tempScript}"`, (error, stdout, stderr) => {
             const result = {
                 success: !error,
                 printers: [],
@@ -558,6 +565,9 @@ async function listAvailablePrinters() {
                 
                 result.printers = printers;
             }
+            
+            // Clean up temp file
+            try { fs.unlinkSync(tempScript); } catch {}
             
             resolve(result);
         });
