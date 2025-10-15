@@ -557,27 +557,40 @@ async function listAvailablePrinters() {
             };
             
             if (!error && stdout.trim()) {
-                console.log('Raw JSON stdout:', stdout);
+                console.log('Raw JSON stdout length:', stdout.length);
+                console.log('Raw JSON stdout (first 200 chars):', stdout.substring(0, 200));
+                console.log('Raw JSON stdout (last 200 chars):', stdout.substring(Math.max(0, stdout.length - 200)));
                 
                 try {
+                    // Clean the stdout - remove any carriage returns and extra whitespace
+                    const cleanStdout = stdout.replace(/\r/g, '').trim();
+                    console.log('Cleaned stdout:', cleanStdout);
+                    
                     // Parse JSON output from PowerShell
-                    const jsonData = JSON.parse(stdout);
+                    const jsonData = JSON.parse(cleanStdout);
                     console.log('Parsed JSON data:', jsonData);
+                    console.log('JSON data type:', typeof jsonData);
+                    console.log('Is array:', Array.isArray(jsonData));
                     
                     // Handle both single object and array
                     const printerArray = Array.isArray(jsonData) ? jsonData : [jsonData];
+                    console.log('Printer array length:', printerArray.length);
                     
-                    const printers = printerArray.map(printer => ({
-                        name: printer.Name || 'Unknown',
-                        status: printer.PrinterStatus || 'Unknown',
-                        driver: printer.DriverName || 'Unknown',
-                        port: printer.PortName || 'Unknown'
-                    }));
+                    const printers = printerArray.map((printer, index) => {
+                        console.log(`Processing printer ${index}:`, printer);
+                        return {
+                            name: printer.Name || 'Unknown',
+                            status: printer.PrinterStatus || 'Unknown',
+                            driver: printer.DriverName || 'Unknown',
+                            port: printer.PortName || 'Unknown'
+                        };
+                    });
                     
                     console.log('Final printers array:', printers);
                     result.printers = printers;
                 } catch (parseError) {
-                    console.log('JSON parse error:', parseError);
+                    console.log('JSON parse error:', parseError.message);
+                    console.log('JSON parse error stack:', parseError.stack);
                     console.log('Falling back to text parsing...');
                     
                     // Fallback to text parsing if JSON fails
@@ -603,8 +616,14 @@ async function listAvailablePrinters() {
                         }
                     }
                     
+                    console.log('Fallback printers array:', printers);
                     result.printers = printers;
                 }
+            } else {
+                console.log('No stdout or error occurred');
+                console.log('Error:', error);
+                console.log('Stdout:', stdout);
+                console.log('Stderr:', stderr);
             }
             
             // Clean up temp file
