@@ -557,40 +557,42 @@ async function listAvailablePrinters() {
             };
             
             if (!error && stdout.trim()) {
-                // Parse printer list
+                // Parse printer list - simpler approach
                 const lines = stdout.trim().split('\n');
                 const printers = [];
                 console.log('Printer list output lines:', lines);
+                console.log('Raw stdout:', stdout);
                 
-                // Find the start of data (skip headers and separators)
-                let dataStartIndex = -1;
+                // Look for lines that contain printer information
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i].trim();
-                    if (line && !line.includes('----') && !line.includes('Name') && !line.includes('ComputerName')) {
-                        // Check if this looks like a printer entry
-                        if (line.includes('Local') || line.includes('Network') || line.includes('Star') || line.includes('Microsoft')) {
-                            dataStartIndex = i;
-                            break;
-                        }
+                    console.log(`Processing line ${i}: "${line}"`);
+                    
+                    // Skip empty lines, headers, and separators
+                    if (!line || line.includes('----') || line.includes('Name') || line.includes('ComputerName') || line.includes('Type')) {
+                        continue;
                     }
-                }
-                
-                // Parse printer data
-                for (let i = dataStartIndex; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (line && !line.includes('----')) {
-                        const parts = line.split(/\s+/);
+                    
+                    // Check if this line contains printer data
+                    if (line.includes('Local') || line.includes('Network') || line.includes('Star') || line.includes('Microsoft') || line.includes('POS')) {
+                        console.log(`Found printer line: "${line}"`);
+                        
+                        // Split by multiple spaces to handle the table format
+                        const parts = line.split(/\s{2,}/); // Split by 2 or more spaces
+                        console.log(`Split parts:`, parts);
+                        
                         if (parts.length >= 2) {
                             printers.push({
-                                name: parts[0],
-                                status: parts[1] || 'Unknown',
-                                driver: parts[2] || 'Unknown',
-                                port: parts[3] || 'Unknown'
+                                name: parts[0].trim(),
+                                status: parts[1] ? parts[1].trim() : 'Unknown',
+                                driver: parts[2] ? parts[2].trim() : 'Unknown',
+                                port: parts[3] ? parts[3].trim() : 'Unknown'
                             });
                         }
                     }
                 }
                 
+                console.log('Final printers array:', printers);
                 result.printers = printers;
             }
             
