@@ -26,6 +26,9 @@ app.use(cors({
 
 app.use(express.json());
 
+// Serve static files (for the test HTML page)
+app.use(express.static(__dirname));
+
 // Initialize printer
 const printer = new StarBSC10Printer();
 
@@ -46,6 +49,11 @@ app.get('/health', (req, res) => {
 // Configuration endpoint for frontend
 app.get('/config', (req, res) => {
     res.json(serviceConfig.getFrontendConfig());
+});
+
+// Test page endpoint
+app.get('/printer-test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'printer-test.html'));
 });
 
 // Printer endpoints
@@ -346,6 +354,60 @@ app.post('/print-and-display', async (req, res) => {
     }
 });
 
+// Printer availability and status endpoints
+app.get('/printer/status', async (req, res) => {
+    try {
+        const printerStatus = await checkPrinterAvailability();
+        res.json({
+            success: true,
+            message: 'Printer status checked',
+            status: printerStatus
+        });
+    } catch (error) {
+        console.error('❌ Printer status check error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+app.get('/printer/list', async (req, res) => {
+    try {
+        const printers = await listAvailablePrinters();
+        res.json({
+            success: true,
+            message: 'Available printers listed',
+            printers: printers
+        });
+    } catch (error) {
+        console.error('❌ Printer list error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+app.post('/printer/test', async (req, res) => {
+    try {
+        const { testType = 'simple' } = req.body;
+        const testResult = await runPrinterTest(testType);
+        
+        res.json({
+            success: true,
+            message: `Printer test (${testType}) completed`,
+            result: testResult
+        });
+    } catch (error) {
+        console.error('❌ Printer test error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Test endpoints
 app.get('/test/printer', async (req, res) => {
     try {
@@ -414,6 +476,148 @@ app.get('/test/display', async (req, res) => {
     }
 });
 
+// Helper functions for printer diagnostics
+async function checkPrinterAvailability() {
+    return new Promise((resolve) => {
+        const printerName = 'StarBSC10';
+        
+        // Check if printer exists using PowerShell
+        const psCommand = `Get-Printer -Name "${printerName}" -ErrorAction SilentlyContinue | Select-Object Name, PrinterStatus, DriverName`;
+        
+        exec(`powershell -Command "${psCommand}"`, (error, stdout, stderr) => {
+            const result = {
+                printerName: printerName,
+                available: false,
+                status: 'Unknown',
+                driver: 'Unknown',
+                error: null,
+                details: {}
+            };
+            
+            if (error) {
+                result.error = error.message;
+                result.details.errorCode = error.code;
+                result.details.stderr = stderr;
+            } else if (stdout.trim()) {
+                // Parse PowerShell output
+                const lines = stdout.trim().split('\n');
+                if (lines.length > 1) {
+                    const dataLine = lines[1].trim();
+                    const parts = dataLine.split(/\s+/);
+                    if (parts.length >= 2) {
+                        result.available = true;
+                        result.status = parts[1] || 'Unknown';
+                        result.driver = parts[2] || 'Unknown';
+                    }
+                }
+            }
+            
+            // Additional checks
+            result.details.rawOutput = stdout;
+            result.details.rawError = stderr;
+            result.details.timestamp = new Date().toISOString();
+            
+            resolve(result);
+        });
+    });
+}
+
+async function listAvailablePrinters() {
+    return new Promise((resolve) => {
+        const psCommand = `Get-Printer | Select-Object Name, PrinterStatus, DriverName, PortName | Format-Table -AutoSize`;
+        
+        exec(`powershell -Command "${psCommand}"`, (error, stdout, stderr) => {
+            const result = {
+                success: !error,
+                printers: [],
+                error: error ? error.message : null,
+                rawOutput: stdout,
+                rawError: stderr,
+                timestamp: new Date().toISOString()
+            };
+            
+            if (!error && stdout.trim()) {
+                // Parse printer list
+                const lines = stdout.trim().split('\n');
+                const printers = [];
+                
+                for (let i = 2; i < lines.length; i++) { // Skip header lines
+                    const line = lines[i].trim();
+                    if (line && !line.includes('---')) {
+                        const parts = line.split(/\s+/);
+                        if (parts.length >= 2) {
+                            printers.push({
+                                name: parts[0],
+                                status: parts[1] || 'Unknown',
+                                driver: parts[2] || 'Unknown',
+                                port: parts[3] || 'Unknown'
+                            });
+                        }
+                    }
+                }
+                
+                result.printers = printers;
+            }
+            
+            resolve(result);
+        });
+    });
+}
+
+async function runPrinterTest(testType) {
+    return new Promise((resolve) => {
+        const result = {
+            testType: testType,
+            success: false,
+            method: '',
+            output: '',
+            error: null,
+            timestamp: new Date().toISOString()
+        };
+        
+        try {
+            switch (testType) {
+                case 'simple':
+                    result.method = 'printText';
+                    printer.printText(`Printer Test - ${new Date().toLocaleString()}`);
+                    result.success = true;
+                    result.output = 'Simple text test sent to printer';
+                    break;
+                    
+                case 'raw':
+                    result.method = 'printRaw';
+                    const testBuffer = Buffer.from('Raw Test Data\n', 'ascii');
+                    printer.printRaw(testBuffer);
+                    result.success = true;
+                    result.output = 'Raw data test sent to printer';
+                    break;
+                    
+                case 'qr':
+                    result.method = 'printQRCode';
+                    printer.printQRCode('TEST-QR-CODE-' + Date.now());
+                    result.success = true;
+                    result.output = 'QR code test sent to printer';
+                    break;
+                    
+                case 'bold':
+                    result.method = 'printBoldText';
+                    printer.printBoldText('BOLD TEST');
+                    result.success = true;
+                    result.output = 'Bold text test sent to printer';
+                    break;
+                    
+                default:
+                    result.error = `Unknown test type: ${testType}`;
+                    break;
+            }
+        } catch (error) {
+            result.error = error.message;
+        }
+        
+        resolve(result);
+    });
+}
+
 // Start server - bind to all interfaces (0.0.0.0) to accept connections from any IP
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Client-Side Service running on ALL INTERFACES:${PORT}`);
@@ -429,10 +633,14 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n📋 Available endpoints:`);
     console.log(`   GET  /health - Health check`);
     console.log(`   GET  /config - Service configuration`);
+    console.log(`   GET  /printer-test - Printer test dashboard (web interface)`);
     console.log(`   POST /print - Print content`);
     console.log(`   POST /display - Display content`);
     console.log(`   POST /pd300/display - PD300 display`);
     console.log(`   POST /print-and-display - Print and display`);
+    console.log(`   GET  /printer/status - Check printer availability`);
+    console.log(`   GET  /printer/list - List all available printers`);
+    console.log(`   POST /printer/test - Run printer tests`);
     console.log(`   GET  /test/printer - Test printer`);
     console.log(`   GET  /test/display - Test display`);
     console.log(`\n🔧 Frontend Configuration:`);

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Printer Test Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .status.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        
+        .test-section {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .test-section h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🖨️ Printer Test Dashboard</h1>
+    <p>Remote printer testing and diagnostics for TicketingSystem</p>
+    
+    <div class="container">
+        <h2>📊 System Status</h2>
+        <div id="systemStatus">
+            <div class="loading"></div> Checking system status...
+        </div>
+        <button onclick="checkSystemStatus()">🔄 Refresh Status</button>
+    </div>
+    
+    <div class="grid">
+        <div class="container">
+            <h2>🖨️ Printer Diagnostics</h2>
+            
+            <div class="test-section">
+                <h3>Printer Availability</h3>
+                <div id="printerStatus">
+                    <div class="loading"></div> Checking printer status...
+                </div>
+                <button onclick="checkPrinterStatus()">🔍 Check Status</button>
+            </div>
+            
+            <div class="test-section">
+                <h3>Available Printers</h3>
+                <div id="printerList">
+                    <div class="loading"></div> Loading printer list...
+                </div>
+                <button onclick="listPrinters()">📋 List Printers</button>
+            </div>
+        </div>
+        
+        <div class="container">
+            <h2>🧪 Printer Tests</h2>
+            
+            <div class="test-section">
+                <h3>Simple Text Test</h3>
+                <div id="simpleTest">
+                    <button onclick="runPrinterTest('simple')">📝 Test Simple Text</button>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h3>Raw Data Test</h3>
+                <div id="rawTest">
+                    <button onclick="runPrinterTest('raw')">🔧 Test Raw Data</button>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h3>QR Code Test</h3>
+                <div id="qrTest">
+                    <button onclick="runPrinterTest('qr')">📱 Test QR Code</button>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h3>Bold Text Test</h3>
+                <div id="boldTest">
+                    <button onclick="runPrinterTest('bold')">💪 Test Bold Text</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>📋 Test Results Log</h2>
+        <div id="testLog">
+            <div class="status info">Ready to run tests...</div>
+        </div>
+        <button onclick="clearLog()">🗑️ Clear Log</button>
+    </div>
+
+    <script>
+        // Get service URL from current page
+        const serviceUrl = window.location.origin;
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = `[${timestamp}] ${message}`;
+            logDiv.insertBefore(statusDiv, logDiv.firstChild);
+        }
+        
+        function clearLog() {
+            document.getElementById('testLog').innerHTML = '<div class="status info">Log cleared...</div>';
+        }
+        
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                log(`❌ Request failed: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+        
+        async function checkSystemStatus() {
+            const statusDiv = document.getElementById('systemStatus');
+            statusDiv.innerHTML = '<div class="loading"></div> Checking system status...';
+            
+            try {
+                const response = await makeRequest(`${serviceUrl}/health`);
+                statusDiv.innerHTML = `
+                    <div class="status success">
+                        <strong>✅ System Online</strong><br>
+                        Service: ${response.service}<br>
+                        Computer: ${response.computer}<br>
+                        URL: ${response.serviceUrl}<br>
+                        Features: ${response.features.join(', ')}<br>
+                        Timestamp: ${response.timestamp}
+                    </div>
+                `;
+                log('✅ System status check completed', 'success');
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        <strong>❌ System Offline</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+                log(`❌ System status check failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkPrinterStatus() {
+            const statusDiv = document.getElementById('printerStatus');
+            statusDiv.innerHTML = '<div class="loading"></div> Checking printer status...';
+            
+            try {
+                const response = await makeRequest(`${serviceUrl}/printer/status`);
+                const status = response.status;
+                
+                if (status.available) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            <strong>✅ Printer Available</strong><br>
+                            Name: ${status.printerName}<br>
+                            Status: ${status.status}<br>
+                            Driver: ${status.driver}<br>
+                            Timestamp: ${status.details.timestamp}
+                        </div>
+                    `;
+                    log('✅ Printer status check completed - Printer is available', 'success');
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            <strong>❌ Printer Not Available</strong><br>
+                            Name: ${status.printerName}<br>
+                            Error: ${status.error || 'Printer not found'}<br>
+                            Timestamp: ${status.details.timestamp}
+                        </div>
+                    `;
+                    log(`❌ Printer status check completed - Printer not available: ${status.error}`, 'error');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        <strong>❌ Status Check Failed</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+                log(`❌ Printer status check failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function listPrinters() {
+            const listDiv = document.getElementById('printerList');
+            listDiv.innerHTML = '<div class="loading"></div> Loading printer list...';
+            
+            try {
+                const response = await makeRequest(`${serviceUrl}/printer/list`);
+                const printers = response.printers;
+                
+                if (printers.length > 0) {
+                    let html = '<div class="status success"><strong>📋 Available Printers:</strong><br><br>';
+                    printers.forEach(printer => {
+                        html += `
+                            <strong>${printer.name}</strong><br>
+                            Status: ${printer.status}<br>
+                            Driver: ${printer.driver}<br>
+                            Port: ${printer.port}<br><br>
+                        `;
+                    });
+                    html += '</div>';
+                    listDiv.innerHTML = html;
+                    log(`✅ Found ${printers.length} available printers`, 'success');
+                } else {
+                    listDiv.innerHTML = '<div class="status warning">⚠️ No printers found</div>';
+                    log('⚠️ No printers found on the system', 'warning');
+                }
+            } catch (error) {
+                listDiv.innerHTML = `
+                    <div class="status error">
+                        <strong>❌ Failed to List Printers</strong><br>
+                        Error: ${error.message}
+                    </div>
+                `;
+                log(`❌ Failed to list printers: ${error.message}`, 'error');
+            }
+        }
+        
+        async function runPrinterTest(testType) {
+            const testDiv = document.getElementById(`${testType}Test`);
+            const originalContent = testDiv.innerHTML;
+            
+            testDiv.innerHTML = '<div class="loading"></div> Running test...';
+            
+            try {
+                const response = await makeRequest(`${serviceUrl}/printer/test`, {
+                    method: 'POST',
+                    body: JSON.stringify({ testType })
+                });
+                
+                const result = response.result;
+                
+                if (result.success) {
+                    testDiv.innerHTML = `
+                        <div class="status success">
+                            <strong>✅ Test Successful</strong><br>
+                            Method: ${result.method}<br>
+                            Output: ${result.output}<br>
+                            Timestamp: ${result.timestamp}
+                        </div>
+                        <button onclick="runPrinterTest('${testType}')">🔄 Run Again</button>
+                    `;
+                    log(`✅ ${testType} test completed successfully`, 'success');
+                } else {
+                    testDiv.innerHTML = `
+                        <div class="status error">
+                            <strong>❌ Test Failed</strong><br>
+                            Error: ${result.error}<br>
+                            Timestamp: ${result.timestamp}
+                        </div>
+                        <button onclick="runPrinterTest('${testType}')">🔄 Try Again</button>
+                    `;
+                    log(`❌ ${testType} test failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                testDiv.innerHTML = `
+                    <div class="status error">
+                        <strong>❌ Test Error</strong><br>
+                        Error: ${error.message}
+                    </div>
+                    <button onclick="runPrinterTest('${testType}')">🔄 Try Again</button>
+                `;
+                log(`❌ ${testType} test error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-load system status on page load
+        window.addEventListener('load', () => {
+            checkSystemStatus();
+            checkPrinterStatus();
+            listPrinters();
+        });
+    </script>
+</body>
+</html>
