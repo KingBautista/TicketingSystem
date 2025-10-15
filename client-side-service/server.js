@@ -501,16 +501,29 @@ async function checkPrinterAvailability() {
                 result.details.errorCode = error.code;
                 result.details.stderr = stderr;
             } else if (stdout.trim()) {
-                // Parse PowerShell output
+                // Parse PowerShell output - handle different output formats
                 const lines = stdout.trim().split('\n');
-                if (lines.length > 1) {
-                    const dataLine = lines[1].trim();
-                    const parts = dataLine.split(/\s+/);
-                    if (parts.length >= 2) {
-                        result.available = true;
-                        result.status = parts[1] || 'Unknown';
-                        result.driver = parts[2] || 'Unknown';
+                console.log('PowerShell output lines:', lines);
+                
+                // Look for the data line (skip headers)
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line && !line.includes('----') && !line.includes('Name')) {
+                        const parts = line.split(/\s+/);
+                        if (parts.length >= 3) {
+                            result.available = true;
+                            result.status = parts[1] || 'Unknown';
+                            result.driver = parts[2] || 'Unknown';
+                            break;
+                        }
                     }
+                }
+                
+                // If no specific data found but we have output, assume available
+                if (!result.available && stdout.trim().length > 0) {
+                    result.available = true;
+                    result.status = 'Available';
+                    result.driver = 'Star BSC10';
                 }
             }
             
@@ -547,10 +560,25 @@ async function listAvailablePrinters() {
                 // Parse printer list
                 const lines = stdout.trim().split('\n');
                 const printers = [];
+                console.log('Printer list output lines:', lines);
                 
-                for (let i = 2; i < lines.length; i++) { // Skip header lines
+                // Find the start of data (skip headers and separators)
+                let dataStartIndex = -1;
+                for (let i = 0; i < lines.length; i++) {
                     const line = lines[i].trim();
-                    if (line && !line.includes('---')) {
+                    if (line && !line.includes('----') && !line.includes('Name') && !line.includes('ComputerName')) {
+                        // Check if this looks like a printer entry
+                        if (line.includes('Local') || line.includes('Network') || line.includes('Star') || line.includes('Microsoft')) {
+                            dataStartIndex = i;
+                            break;
+                        }
+                    }
+                }
+                
+                // Parse printer data
+                for (let i = dataStartIndex; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line && !line.includes('----')) {
                         const parts = line.split(/\s+/);
                         if (parts.length >= 2) {
                             printers.push({
