@@ -374,11 +374,11 @@ app.get('/printer/status', async (req, res) => {
 
 app.get('/printer/list', async (req, res) => {
     try {
-        const printers = await listAvailablePrinters();
+        const result = await listAvailablePrinters();
         res.json({
             success: true,
             message: 'Available printers listed',
-            printers: printers
+            printers: result.printers
         });
     } catch (error) {
         console.error('❌ Printer list error:', error);
@@ -578,9 +578,44 @@ async function listAvailablePrinters() {
                     
                     const printers = printerArray.map((printer, index) => {
                         console.log(`Processing printer ${index}:`, printer);
+                        
+                        // Convert PrinterStatus number to string
+                        let status = 'Unknown';
+                        if (printer.PrinterStatus !== undefined) {
+                            switch (printer.PrinterStatus) {
+                                case 0: status = 'Normal'; break;
+                                case 1: status = 'Paused'; break;
+                                case 2: status = 'Error'; break;
+                                case 3: status = 'Pending Deletion'; break;
+                                case 4: status = 'Paper Jam'; break;
+                                case 5: status = 'Paper Out'; break;
+                                case 6: status = 'Manual Feed'; break;
+                                case 7: status = 'Paper Problem'; break;
+                                case 8: status = 'Offline'; break;
+                                case 9: status = 'IO Active'; break;
+                                case 10: status = 'Busy'; break;
+                                case 11: status = 'Printing'; break;
+                                case 12: status = 'Output Bin Full'; break;
+                                case 13: status = 'Not Available'; break;
+                                case 14: status = 'Waiting'; break;
+                                case 15: status = 'Processing'; break;
+                                case 16: status = 'Initializing'; break;
+                                case 17: status = 'Warming Up'; break;
+                                case 18: status = 'Toner Low'; break;
+                                case 19: status = 'No Toner'; break;
+                                case 20: status = 'Page Punt'; break;
+                                case 21: status = 'User Intervention Required'; break;
+                                case 22: status = 'Out of Memory'; break;
+                                case 23: status = 'Door Open'; break;
+                                case 24: status = 'Server Unknown'; break;
+                                case 25: status = 'Power Save'; break;
+                                default: status = `Status ${printer.PrinterStatus}`; break;
+                            }
+                        }
+                        
                         return {
                             name: printer.Name || 'Unknown',
-                            status: printer.PrinterStatus || 'Unknown',
+                            status: status,
                             driver: printer.DriverName || 'Unknown',
                             port: printer.PortName || 'Unknown'
                         };
