@@ -12,8 +12,8 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Truncate the table before seeding
-        RolePermission::truncate();
+        // Clear the table before seeding (using delete to avoid foreign key constraints)
+        RolePermission::query()->delete();
 
         // Get Developer Account role
         $developerRole = Role::where('name', 'Developer Account')->first();

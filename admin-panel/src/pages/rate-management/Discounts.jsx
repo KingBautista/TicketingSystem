@@ -20,7 +20,21 @@ export default function Discounts() {
       discount_value: {
         name: "Discount Value",
         withSort: true,
-        render: (row) => row.discount_value_type === 'percentage' ? `${row.discount_value}%` : `₱${parseFloat(row.discount_value).toFixed(2)}`,
+        render: (value, row) => {
+          console.log('Discount value:', value, 'Full row:', row); // Debug log
+          const type = row?.discount_value_type;
+          console.log('Type:', type); // Debug log
+          
+          if (type === 'percentage') {
+            return `${value || 0}%`;
+          } else if (type === 'amount' || type === 'fixed') {
+            const numericValue = parseFloat(value);
+            return `₱${isNaN(numericValue) ? '0.00' : numericValue.toFixed(2)}`;
+          } else {
+            // Fallback for unknown types
+            return value || '0';
+          }
+        },
       },
       discount_value_type: { name: "Type", withSort: true },
       status: {
@@ -65,10 +79,6 @@ export default function Discounts() {
 
   const handleFilterChange = (key, value) => {
     setParams(prev => ({ ...prev, [key]: value }));
-    // Auto-trigger search for non-search fields
-    if (key !== 'search') {
-      setTimeout(() => handleSearch(), 100);
-    }
   };
 
   // Sync search input with params
@@ -274,12 +284,12 @@ export default function Discounts() {
                               className="form-check-input" 
                               type="radio" 
                               name="discount_value_type" 
-                              id="type-fixed"
-                              value="fixed"
-                              checked={params.discount_value_type === 'fixed'}
+                              id="type-amount"
+                              value="amount"
+                              checked={params.discount_value_type === 'amount'}
                               onChange={e => handleFilterChange('discount_value_type', e.target.value)}
                             />
-                            <label className="form-check-label" htmlFor="type-fixed">
+                            <label className="form-check-label" htmlFor="type-amount">
                               Fixed Amount
                             </label>
                           </div>

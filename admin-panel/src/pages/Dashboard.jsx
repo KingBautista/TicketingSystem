@@ -51,24 +51,53 @@ export default function Dashboard() {
 	const loadDashboardData = async () => {
 		try {
 			setLoading(true);
-			const [statsResponse, performanceResponse, summaryResponse] = await Promise.all([
+			const [statsResponse, performanceResponse, summaryResponse] = await Promise.allSettled([
 				axiosClient.get('/dashboard/statistics'),
 				axiosClient.get('/dashboard/cashier-performance'),
 				axiosClient.get('/dashboard/today-summary')
 			]);
 
 			// Debug: Log the responses
-			console.log('Dashboard Stats Response:', statsResponse.data);
-			console.log('Dashboard Performance Response:', performanceResponse.data);
-			console.log('Dashboard Summary Response:', summaryResponse.data);
+			console.log('Dashboard Stats Response:', statsResponse);
+			console.log('Dashboard Performance Response:', performanceResponse);
+			console.log('Dashboard Summary Response:', summaryResponse);
 
 			setDashboardData({
-				statistics: statsResponse.data.data,
-				cashier_performance: performanceResponse.data.data,
-				today_summary: summaryResponse.data.data,
+				statistics: statsResponse.status === 'fulfilled' ? statsResponse.value.data.data : {
+					total_transactions: 0,
+					total_sales: 0,
+					today_transactions: 0,
+					today_sales: 0,
+					active_sessions: 0,
+					expiring_vips: 0,
+				},
+				cashier_performance: performanceResponse.status === 'fulfilled' ? performanceResponse.value.data.data : [],
+				today_summary: summaryResponse.status === 'fulfilled' ? summaryResponse.value.data.data : {
+					total_transactions: 0,
+					total_sales: 0,
+					total_quantity: 0,
+				},
 			});
 		} catch (error) {
 			console.error('Error loading dashboard data:', error);
+			// Ensure data structure is maintained even on error
+			setDashboardData(prevData => ({
+				...prevData,
+				statistics: prevData.statistics || {
+					total_transactions: 0,
+					total_sales: 0,
+					today_transactions: 0,
+					today_sales: 0,
+					active_sessions: 0,
+					expiring_vips: 0,
+				},
+				cashier_performance: prevData.cashier_performance || [],
+				today_summary: prevData.today_summary || {
+					total_transactions: 0,
+					total_sales: 0,
+					total_quantity: 0,
+				}
+			}));
 		} finally {
 			setLoading(false);
 		}
@@ -134,7 +163,7 @@ export default function Dashboard() {
 						<div className="card-body">
 							<FontAwesomeIcon icon={solidIconMap.save} className="mb-2 text-info" size="2x" />
 							<h5 className="card-title">All Transactions</h5>
-							<p className="card-text fs-4 fw-bold">{dashboardData.statistics.total_transactions}</p>
+							<p className="card-text fs-4 fw-bold">{dashboardData.statistics?.total_transactions || 0}</p>
 						</div>
 					</div>
 				</div>
@@ -205,7 +234,7 @@ export default function Dashboard() {
 									</table>
 									<div className="mt-2 text-end">
 										<span className="fw-bold">All Transactions Today: </span>
-										<span className="text-primary fw-bold">{dashboardData.today_summary.total_transactions}</span>
+										<span className="text-primary fw-bold">{dashboardData.today_summary?.total_transactions || 0}</span>
 									</div>
 								</div>
 							</div>
@@ -219,7 +248,7 @@ export default function Dashboard() {
 						<div className="card-body">
 							<FontAwesomeIcon icon={solidIconMap.save} className="mb-2 text-success" size="2x" />
 							<h5 className="card-title">Total Sales</h5>
-							<p className="card-text fs-4 fw-bold">₱{parseFloat(dashboardData.statistics.total_sales || 0).toLocaleString()}</p>
+							<p className="card-text fs-4 fw-bold">₱{parseFloat(dashboardData.statistics?.total_sales || 0).toLocaleString()}</p>
 						</div>
 					</div>
 				</div>
@@ -228,7 +257,7 @@ export default function Dashboard() {
 						<div className="card-body">
 							<FontAwesomeIcon icon={solidIconMap.file} className="mb-2 text-dark" size="2x" />
 							<h5 className="card-title">Today's Sales</h5>
-							<p className="card-text fs-4 fw-bold">₱{parseFloat(dashboardData.statistics.today_sales || 0).toLocaleString()}</p>
+							<p className="card-text fs-4 fw-bold">₱{parseFloat(dashboardData.statistics?.today_sales || 0).toLocaleString()}</p>
 						</div>
 					</div>
 				</div>

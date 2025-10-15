@@ -9,8 +9,8 @@ class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        // Truncate the table before seeding
-        Role::truncate();
+        // Clear the table before seeding (using delete to avoid foreign key constraints)
+        Role::query()->delete();
 
         // Data from user and roles.sql (id, name, active, is_super_admin)
         $roles = [

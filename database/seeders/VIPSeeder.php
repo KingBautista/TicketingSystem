@@ -9,8 +9,8 @@ class VIPSeeder extends Seeder
 {
     public function run(): void
     {
-        // Truncate the table before seeding
-        \DB::table('vips')->truncate();
+        // Clear the table before seeding (using delete to avoid foreign key constraints)
+        \DB::table('vips')->delete();
 
         $now = Carbon::now();
         $vips = [];

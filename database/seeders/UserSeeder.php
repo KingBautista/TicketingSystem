@@ -12,8 +12,9 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::truncate();
-        UserMeta::truncate();
+        // Clear the tables before seeding (using delete to avoid foreign key constraints)
+        User::query()->delete();
+        UserMeta::query()->delete();
 
         // Get Developer Account role
         $developerRole = Role::where('name', 'Developer Account')->first();

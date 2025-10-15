@@ -9,7 +9,8 @@ class DiscountSeeder extends Seeder
 {
     public function run(): void
     {
-        Discount::truncate();
+        // Clear the table before seeding (using delete to avoid foreign key constraints)
+        Discount::query()->delete();
         
         Discount::insert([
             [

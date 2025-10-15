@@ -112,10 +112,6 @@ export default function Users() {
 
   const handleFilterChange = (key, value) => {
     setParams(prev => ({ ...prev, [key]: value }));
-    // Auto-trigger search for non-search fields
-    if (key !== 'search') {
-      setTimeout(() => handleSearch(), 100);
-    }
   };
 
   // Sync search input with params

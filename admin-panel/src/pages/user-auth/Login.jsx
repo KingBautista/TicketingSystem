@@ -239,20 +239,20 @@ export default function Login() {
 							{/* Logo */}
 							<div className="mb-3">
 								<img 
-									src="/assets/img/elid-logo-3.png" 
-									alt="ELID Logo" 
+									src="/assets/img/hitec-logo.png" 
+									alt="HITEC Logo" 
 									className="img-fluid"
 									style={{ 
 										maxWidth: '250px', 
 										height: 'auto',
-										filter: 'brightness(0) invert(1)'
+										filter: 'brightness(1.2) contrast(1.1) drop-shadow(0 0 15px rgba(255,255,255,0.5))'
 									}}
 								/>
 							</div>
 							
 							{/* Welcome Text */}
 							<h2 className="fw-bold mb-2 text-white" style={{ fontSize: '2.2rem' }}>
-								Welcome to ELID
+								Welcome to HITEC
 							</h2>
 						</div>
 					</div>

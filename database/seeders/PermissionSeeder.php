@@ -9,8 +9,8 @@ class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Truncate the table before seeding
-        Permission::truncate();
+        // Clear the table before seeding (using delete to avoid foreign key constraints)
+        Permission::query()->delete();
 
         // Data from user and roles.sql (id, name, label)
         $permissions = [

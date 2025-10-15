@@ -9,7 +9,8 @@ class MediaLibrarySeeder extends Seeder
 {
     public function run(): void
     {
-        MediaLibrary::truncate();
+        // Clear the table before seeding (using delete to avoid foreign key constraints)
+        MediaLibrary::query()->delete();
 
         $mediaItems = [
             [

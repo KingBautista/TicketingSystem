@@ -7,13 +7,12 @@ export default function About() {
       <div className="text-center mb-4">
         <div className="mb-3">
           <img 
-            src="/assets/img/elid-logo-3.png" 
-            alt="ELID Logo" 
+            src="/assets/img/hitec-logo.png" 
+            alt="HITEC Logo" 
             className="img-fluid"
             style={{ maxWidth: '150px', height: 'auto' }}
           />
         </div>
-        <h2 className="h4 mb-0 fw-bold" style={{ color: '#0d6efd' }}>ELID Technology Intl. Inc.</h2>
       </div>
 
       {/* Get in Touch Section */}
@@ -48,7 +47,7 @@ export default function About() {
                     style={{ width: '1.2rem', height: '1.2rem', color: '#0d6efd' }}
                   />
                   <div className="text-start">
-                    <div className="fw-medium">1410 Annapolis Wilshire Plaza Building,</div>
+                    <div className="fw-medium">1401 Annapolis Wilshire Plaza Building,</div>
                     <div className="fw-medium">11 Annapolis St., Greenhills, San Juan, Metro Manila, Philippines</div>
                   </div>
                 </div>
@@ -64,7 +63,7 @@ export default function About() {
                     style={{ width: '1.2rem', height: '1.2rem', color: '#0d6efd' }}
                   />
                   <div>
-                    <div className="fw-medium">info@elid.com.ph</div>
+                    <div className="fw-medium">info@hitec.com.ph</div>
                   </div>
                 </div>
                 <div className="d-flex align-items-start">
@@ -75,7 +74,7 @@ export default function About() {
                     style={{ width: '1.2rem', height: '1.2rem', color: '#0d6efd' }}
                   />
                   <div>
-                    <div className="fw-medium">www.elid.com.ph</div>
+                    <div className="fw-medium">www.hitec.com.ph</div>
                   </div>
                 </div>
               </div>
@@ -89,21 +88,21 @@ export default function About() {
 
       {/* Additional Information */}
       <div className="row g-4">
-        {/* Melanie C. Santos */}
+        {/* Troy L. Mendoza */}
         <div className="col-md-4">
           <div className="text-center">
-            <div className="fw-bold mb-1">Melanie C. Santos</div>
+            <div className="fw-bold mb-1">Troy L. Mendoza</div>
             <div className="text-muted mb-3">Business Development Manager</div>
             <div className="d-flex align-items-center justify-content-center mb-2">
               <img 
-                src="/assets/new-icons/icons-bold/fi-br-call-outgoing.svg" 
-                alt="Phone" 
+                src="/assets/new-icons/icons-bold/fi-br-envelope.svg" 
+                alt="Email" 
                 className="me-2" 
                 style={{ width: '1rem', height: '1rem', color: '#0d6efd' }}
               />
               <div className="text-start">
-                <div className="small text-muted">Globe: +63 917 760 0126</div>
-                <div className="small text-muted">Smart: +63 998 865 1190</div>
+                <div className="small text-muted">Email: tmendoza@elid.com.ph</div>
+                <div className="small text-muted">Mobile: 0917-7312212 / 0998-8651195</div>
               </div>
             </div>
           </div>
