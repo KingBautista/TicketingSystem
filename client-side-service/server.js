@@ -482,9 +482,9 @@ async function checkPrinterAvailability() {
         const printerName = 'Star BSC10';
         
         // Check if printer exists using PowerShell
-        const psCommand = `Get-Printer -Name "${printerName}" -ErrorAction SilentlyContinue | Select-Object Name, PrinterStatus, DriverName`;
+        const psCommand = `Get-Printer -Name '${printerName}' -ErrorAction SilentlyContinue | Select-Object Name, PrinterStatus, DriverName`;
         
-        exec(`powershell -Command "${psCommand}"`, (error, stdout, stderr) => {
+        exec(`powershell -Command '${psCommand}'`, (error, stdout, stderr) => {
             const result = {
                 printerName: printerName,
                 available: false,
@@ -526,7 +526,7 @@ async function listAvailablePrinters() {
     return new Promise((resolve) => {
         const psCommand = `Get-Printer | Select-Object Name, PrinterStatus, DriverName, PortName | Format-Table -AutoSize`;
         
-        exec(`powershell -Command "${psCommand}"`, (error, stdout, stderr) => {
+        exec(`powershell -Command '${psCommand}'`, (error, stdout, stderr) => {
             const result = {
                 success: !error,
                 printers: [],
