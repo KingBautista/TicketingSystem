@@ -77,6 +77,7 @@ export default function SalesReports() {
       ]);
 
       // Set cashiers
+      console.log('Cashiers API Response:', cashiersResponse?.data);
       setCashiers([
         { value: '', label: 'All Cashiers' },
         ...(cashiersResponse?.data || []).map(user => ({
@@ -145,6 +146,7 @@ export default function SalesReports() {
   };
 
   const handleFilterChange = (key, value) => {
+    console.log('Filter changed:', key, value);
     setParams(prev => ({ ...prev, [key]: value }));
   };
 

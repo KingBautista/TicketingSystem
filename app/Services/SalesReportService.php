@@ -58,7 +58,7 @@ class SalesReportService extends BaseService
 
         // Apply filters
         if (request('cashier')) {
-            $query->where('users.user_login', 'like', "%" . request('cashier') . "%");
+            $query->where('users.user_login', request('cashier'));
         }
 
         if (request('startDate')) {
