@@ -214,19 +214,31 @@ class ScanController extends BaseController
         Cache::put('latest_scan', $scanData, now()->addMinutes(10));
 
         if ($isValid) {
-            return response()->json([
-                'status' => true, 
-                'message' => 'Scan validated successfully',
-                'scan_type' => $scanType,
-                'code' => $code
-            ]);
+            // Success response format for KQT300 device
+            $responseData = [
+                'resultCode' => '0000', // 0000 = execute door opening command
+                'wavFileName' => '1', // Play success sound (1.wav)
+                'msg' => 'Access Granted - Welcome!',
+                'msgTimeout' => 3000
+            ];
+            
+            $response = 'code=0000&&desc=json&&' . json_encode($responseData);
+            
+            return response($response)
+                ->header('Content-Type', 'text/plain');
         } else {
-            return response()->json([
-                'status' => false, 
-                'message' => $errorMessage,
-                'scan_type' => $scanType,
-                'code' => $code
-            ], 400);
+            // Failure response format for KQT300 device
+            $responseData = [
+                'resultCode' => '0001', // 0001 = do not open door
+                'wavFileName' => '2', // Play error sound (2.wav)
+                'msg' => $errorMessage ?: 'Access Denied',
+                'msgTimeout' => 3000
+            ];
+            
+            $response = 'code=0001&&desc=json&&' . json_encode($responseData);
+            
+            return response($response)
+                ->header('Content-Type', 'text/plain');
         }
     }
 
@@ -650,13 +662,17 @@ class ScanController extends BaseController
         $code = $request->input('code');
         
         if (!$code) {
-            return response()->json([
-                'exists' => false,
-                'type' => null,
-                'is_valid' => false,
-                'message' => 'No code provided',
-                'details' => null
-            ]);
+            $responseData = [
+                'resultCode' => '0001', // Do not open door
+                'wavFileName' => '2', // Play error sound
+                'msg' => 'No code provided',
+                'msgTimeout' => 3000
+            ];
+            
+            $response = 'code=0001&&desc=json&&' . json_encode($responseData);
+            
+            return response($response)
+                ->header('Content-Type', 'text/plain');
         }
 
         try {
@@ -664,18 +680,18 @@ class ScanController extends BaseController
             $cashierTicket = \App\Models\CashierTicket::where('qr_code', $code)->first();
             
             if ($cashierTicket) {
-                return response()->json([
-                    'exists' => true,
-                    'type' => 'cashier_ticket',
-                    'is_valid' => !$cashierTicket->is_used,
-                    'message' => $cashierTicket->is_used ? 'Ticket already used' : 'Ticket found and available',
-                    'details' => [
-                        'transaction_id' => $cashierTicket->transaction_id,
-                        'is_used' => $cashierTicket->is_used,
-                        'created_at' => $cashierTicket->created_at,
-                        'note' => $cashierTicket->note
-                    ]
-                ]);
+                $isValid = !$cashierTicket->is_used;
+                $responseData = [
+                    'resultCode' => $isValid ? '0000' : '0001',
+                    'wavFileName' => $isValid ? '1' : '2',
+                    'msg' => $cashierTicket->is_used ? 'Ticket already used' : 'Ticket found and available',
+                    'msgTimeout' => 3000
+                ];
+                
+                $response = 'code=' . ($isValid ? '0000' : '0001') . '&&desc=json&&' . json_encode($responseData);
+                
+                return response($response)
+                    ->header('Content-Type', 'text/plain');
             }
 
             // Not a cashier ticket, check if it's a VIP card
@@ -711,30 +727,31 @@ class ScanController extends BaseController
                     $message = 'VIP card has no validity period set';
                 }
 
-                return response()->json([
-                    'exists' => true,
-                    'type' => 'vip_card',
-                    'is_valid' => $isValid,
-                    'message' => $message,
-                    'details' => [
-                        'name' => $vip->name,
-                        'card_number' => $convertedCode,
-                        'validity_start' => $validityStart,
-                        'validity_end' => $validityEnd,
-                        'status' => $vip->status,
-                        'contact_number' => $vip->contact_number
-                    ]
-                ]);
+                $responseData = [
+                    'resultCode' => $isValid ? '0000' : '0001',
+                    'wavFileName' => $isValid ? '1' : '2',
+                    'msg' => $message,
+                    'msgTimeout' => 3000
+                ];
+                
+                $response = 'code=' . ($isValid ? '0000' : '0001') . '&&desc=json&&' . json_encode($responseData);
+                
+                return response($response)
+                    ->header('Content-Type', 'text/plain');
             }
 
             // Code not found
-            return response()->json([
-                'exists' => false,
-                'type' => null,
-                'is_valid' => false,
-                'message' => 'Code not found in tickets or VIP cards',
-                'details' => null
-            ]);
+            $responseData = [
+                'resultCode' => '0001', // Do not open door
+                'wavFileName' => '2', // Play error sound
+                'msg' => 'Code not found in tickets or VIP cards',
+                'msgTimeout' => 3000
+            ];
+            
+            $response = 'code=0001&&desc=json&&' . json_encode($responseData);
+            
+            return response($response)
+                ->header('Content-Type', 'text/plain');
 
         } catch (\Exception $e) {
             \Log::error('Error checking code:', [
@@ -742,13 +759,17 @@ class ScanController extends BaseController
                 'code' => $code
             ]);
 
-            return response()->json([
-                'exists' => false,
-                'type' => null,
-                'is_valid' => false,
-                'message' => 'Error checking code: ' . $e->getMessage(),
-                'details' => null
-            ], 500);
+            $responseData = [
+                'resultCode' => '0001', // Do not open door
+                'wavFileName' => '2', // Play error sound
+                'msg' => 'Error checking code: ' . $e->getMessage(),
+                'msgTimeout' => 3000
+            ];
+            
+            $response = 'code=0001&&desc=json&&' . json_encode($responseData);
+            
+            return response($response)
+                ->header('Content-Type', 'text/plain');
         }
     }
 
