@@ -80,10 +80,12 @@ export default function SalesReports() {
       console.log('Cashiers API Response:', cashiersResponse?.data);
       setCashiers([
         { value: '', label: 'All Cashiers' },
-        ...(cashiersResponse?.data || []).map(user => ({
-          value: user.user_login,
-          label: user.name || user.user_login
-        }))
+        ...(cashiersResponse?.data || [])
+          .filter(user => user.user_login) // Filter out users without user_login
+          .map(user => ({
+            value: user.user_login,
+            label: user.name || user.user_login
+          }))
       ]);
 
       // Set promoters
@@ -282,7 +284,9 @@ export default function SalesReports() {
                       {!collapsedSections.cashier && (
                         <div className="mt-3">
                           <div className="border rounded p-3" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                            {cashiers.map(c => (
+                            {cashiers
+                              .filter(c => c.value !== undefined && c.value !== null) // Additional safety filter
+                              .map(c => (
                               <div key={c.value} className="form-check">
                                 <input 
                                   className="form-check-input" 

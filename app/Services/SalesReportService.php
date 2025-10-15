@@ -48,7 +48,7 @@ class SalesReportService extends BaseService
         $query = CashierTransaction::with(['cashier', 'rate', 'promoter'])
             ->select([
                 'cashier_transactions.*',
-                'users.user_login as cashier_name',
+                'users.user_login as cashier_login',
                 'rates.name as rate_name',
                 'promoters.name as promoter_name'
             ])

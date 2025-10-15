@@ -89,6 +89,7 @@ class UserService extends BaseService
         
         return [
           'id' => $user->id,
+          'user_login' => $user->user_login,
           'name' => $displayName,
           'email' => $user->user_email,
           'role' => $user->userRole ? $user->userRole->name : 'Unknown'
