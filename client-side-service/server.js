@@ -479,7 +479,7 @@ app.get('/test/display', async (req, res) => {
 // Helper functions for printer diagnostics
 async function checkPrinterAvailability() {
     return new Promise((resolve) => {
-        const printerName = 'StarBSC10';
+        const printerName = 'Star BSC10';
         
         // Check if printer exists using PowerShell
         const psCommand = `Get-Printer -Name "${printerName}" -ErrorAction SilentlyContinue | Select-Object Name, PrinterStatus, DriverName`;

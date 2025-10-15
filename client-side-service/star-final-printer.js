@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 export class StarBSC10Printer {
   constructor() {
-    this.printerName = 'StarBSC10';
+    this.printerName = 'Star BSC10';
     console.log('🔍 Creating Final Star BSC10 Printer (RAW mode)...');
   }
 
