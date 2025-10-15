@@ -543,7 +543,7 @@ async function checkPrinterAvailability() {
 async function listAvailablePrinters() {
     return new Promise((resolve) => {
         const tempScript = path.join(__dirname, 'temp_list_printers.ps1');
-        const scriptContent = `Get-Printer | Select-Object Name, PrinterStatus, DriverName, PortName | Format-Table -AutoSize`;
+        const scriptContent = `Get-Printer | Select-Object Name, PrinterStatus, DriverName, PortName | ConvertTo-Json`;
         fs.writeFileSync(tempScript, scriptContent, 'utf8');
         
         exec(`powershell -ExecutionPolicy Bypass -File "${tempScript}"`, (error, stdout, stderr) => {
@@ -557,48 +557,54 @@ async function listAvailablePrinters() {
             };
             
             if (!error && stdout.trim()) {
-                // Parse printer list - simpler approach
-                const lines = stdout.trim().split('\n');
-                const printers = [];
-                console.log('Printer list output lines:', lines);
-                console.log('Raw stdout:', stdout);
+                console.log('Raw JSON stdout:', stdout);
                 
-                // Look for lines that contain printer information
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    console.log(`Processing line ${i}: "${line}"`);
+                try {
+                    // Parse JSON output from PowerShell
+                    const jsonData = JSON.parse(stdout);
+                    console.log('Parsed JSON data:', jsonData);
                     
-                    // Skip empty lines, headers, and separators
-                    if (!line || line.includes('----') || line.includes('Name') || line.includes('ComputerName') || line.includes('Type')) {
-                        continue;
-                    }
+                    // Handle both single object and array
+                    const printerArray = Array.isArray(jsonData) ? jsonData : [jsonData];
                     
-                    // Check if this line contains printer data
-                    if (line.includes('Local') || line.includes('Network') || line.includes('Star') || line.includes('Microsoft') || line.includes('POS')) {
-                        console.log(`Found printer line: "${line}"`);
-                        
-                        // Parse the fixed-width table format
-                        // Based on the output: "Star BSC10                    Normal Star BSC10             USB001"
-                        const name = line.substring(0, 20).trim();
-                        const status = line.substring(20, 35).trim();
-                        const driver = line.substring(35, 60).trim();
-                        const port = line.substring(60).trim();
-                        
-                        console.log(`Parsed - Name: "${name}", Status: "${status}", Driver: "${driver}", Port: "${port}"`);
-                        
-                        if (name) {
-                            printers.push({
-                                name: name,
-                                status: status || 'Unknown',
-                                driver: driver || 'Unknown',
-                                port: port || 'Unknown'
-                            });
+                    const printers = printerArray.map(printer => ({
+                        name: printer.Name || 'Unknown',
+                        status: printer.PrinterStatus || 'Unknown',
+                        driver: printer.DriverName || 'Unknown',
+                        port: printer.PortName || 'Unknown'
+                    }));
+                    
+                    console.log('Final printers array:', printers);
+                    result.printers = printers;
+                } catch (parseError) {
+                    console.log('JSON parse error:', parseError);
+                    console.log('Falling back to text parsing...');
+                    
+                    // Fallback to text parsing if JSON fails
+                    const lines = stdout.trim().split('\n');
+                    const printers = [];
+                    
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (line && line.length > 10 && !line.includes('----') && !line.includes('Name')) {
+                            const name = line.substring(0, 20).trim();
+                            const status = line.substring(20, 35).trim();
+                            const driver = line.substring(35, 60).trim();
+                            const port = line.substring(60).trim();
+                            
+                            if (name && name.length > 0) {
+                                printers.push({
+                                    name: name,
+                                    status: status || 'Unknown',
+                                    driver: driver || 'Unknown',
+                                    port: port || 'Unknown'
+                                });
+                            }
                         }
                     }
+                    
+                    result.printers = printers;
                 }
-                
-                console.log('Final printers array:', printers);
-                result.printers = printers;
             }
             
             // Clean up temp file
