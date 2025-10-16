@@ -22,18 +22,32 @@ export class StarBSC10Printer {
     const tempFile = path.join(__dirname, 'raw_print.bin');
     fs.writeFileSync(tempFile, buffer, 'binary');
     
-    // Use copy /B to send raw binary to printer share
-    const cmd = `copy /B "${tempFile}" "\\\\localhost\\${this.printerName}"`;
+    // Try direct USB port first, then fallback to share
+    const directCmd = `copy /B "${tempFile}" "USB001"`;
+    const shareCmd = `copy /B "${tempFile}" "\\\\localhost\\${this.printerName}"`;
     
     console.log(`🖨️ Sending RAW data to printer: ${this.printerName}`);
-    exec(cmd, (error, stdout, stderr) => {
+    
+    // Try direct USB port first
+    exec(directCmd, (error, stdout, stderr) => {
       if (error) {
-        console.error('❌ Raw print error:', error.message);
+        console.log(`⚠️ Direct USB print failed, trying printer share...`);
+        // Fallback to printer share
+        exec(shareCmd, (error2, stdout2, stderr2) => {
+          if (error2) {
+            console.error('❌ Both direct USB and share print failed:', error2.message);
+            console.error('💡 Try enabling printer sharing or check printer connection');
+          } else {
+            console.log('✅ Raw data sent to printer via share');
+          }
+          // Clean up temp file
+          try { fs.unlinkSync(tempFile); } catch {}
+        });
       } else {
-        console.log('✅ Raw data sent to printer');
+        console.log('✅ Raw data sent to printer via direct USB');
+        // Clean up temp file
+        try { fs.unlinkSync(tempFile); } catch {}
       }
-      // Clean up temp file
-      try { fs.unlinkSync(tempFile); } catch {}
     });
   }
 
