@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { StarBSC10Printer } from './star-final-printer.js';
+import { TestModePrinter } from './test-mode.js';
 import { serviceConfig } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,8 +30,10 @@ app.use(express.json());
 // Serve static files (for the test HTML page)
 app.use(express.static(__dirname));
 
-// Initialize printer
+// Initialize printer and test mode
 const printer = new StarBSC10Printer();
+const testPrinter = new TestModePrinter();
+const isTestMode = process.env.PRINTER_TEST_MODE === 'true' || process.argv.includes('--test-mode');
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -42,13 +45,28 @@ app.get('/health', (req, res) => {
         port: PORT,
         serviceUrl: serviceConfig.getServiceUrl(),
         timestamp: new Date().toISOString(),
-        features: ['printer', 'display', 'pd300']
+        features: ['printer', 'display', 'pd300'],
+        testMode: isTestMode,
+        testModeStatus: isTestMode ? testPrinter.getTestModeStatus() : null
     });
 });
 
 // Configuration endpoint for frontend
 app.get('/config', (req, res) => {
     res.json(serviceConfig.getFrontendConfig());
+});
+
+// Test mode endpoints
+app.get('/test-mode/status', (req, res) => {
+    res.json({
+        testMode: isTestMode,
+        status: testPrinter.getTestModeStatus()
+    });
+});
+
+app.post('/test-mode/clear', (req, res) => {
+    const result = testPrinter.clearTestData();
+    res.json(result);
 });
 
 // Test page endpoint
@@ -69,6 +87,18 @@ app.post('/print', async (req, res) => {
         }
 
         console.log(`🖨️ Printing ${type}:`, content);
+        
+        // Check if test mode is enabled
+        if (isTestMode) {
+            console.log('🧪 Test mode enabled - simulating print operation');
+            const result = await testPrinter.print(type, content);
+            return res.json({ 
+                success: true, 
+                message: `${type} printed successfully (TEST MODE)`,
+                result: result,
+                testMode: true
+            });
+        }
         
         // Use the appropriate Star printer method based on type
         let result;

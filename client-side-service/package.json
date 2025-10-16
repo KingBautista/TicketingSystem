@@ -5,8 +5,11 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start:test": "set PRINTER_TEST_MODE=true && node server.js --test-mode",
     "dev": "nodemon server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node test-print.js",
+    "test:mode": "node test-mode.js",
+    "demo": "node demo-formatted-output.js",
     "config": "node generate-frontend-config.js",
     "set-ip": "node set-ip.js"
   },
@@ -20,6 +23,7 @@
     "escpos": "^3.0.0-alpha.6",
     "escpos-usb": "^3.0.0-alpha.4",
     "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
     "qrcode": "^1.5.4",
     "serialport": "^13.0.0",
     "usb": "^1.9.2"
