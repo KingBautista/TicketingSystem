@@ -7,8 +7,8 @@ export const DEPLOYMENT_CONFIG = {
     // Set to true for deployment scenarios
     isDeployment: true,
     
-    // Direct service URL (no discovery) - using port 3001 to avoid conflicts
-    serviceUrl: 'http://192.168.0.176:3001',
+    // Direct service URL (no discovery) - using localhost:3001 for deployment
+    serviceUrl: 'http://localhost:3001',
     
     // Timeout settings
     connectionTimeout: 5000, // 5 seconds
