@@ -12,6 +12,7 @@ import PrintCloseCashModal from '../pages/cashier/PrintCloseCashModal.jsx';
 import CashierSidebar from '../pages/cashier/CashierSidebar.jsx';
 import TransactionList from '../pages/cashier/TransactionList.jsx';
 import { clientDisplay } from '../utils/displayUtils.js';
+import { printerConnectionDebugger } from '../utils/debug-printer-connection.js';
 
 export default function CashierLayout() {
   // Check for cashier session token in localStorage to persist session
