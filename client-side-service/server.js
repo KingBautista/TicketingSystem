@@ -76,8 +76,11 @@ app.get('/printer-test', (req, res) => {
 
 // Printer endpoints
 app.post('/print', async (req, res) => {
+    console.log(`🖨️ King is here 2`);
+    console.log(req.body);
     try {
         const { content, type = 'receipt' } = req.body;
+        console.log(type);
         
         if (!content) {
             return res.status(400).json({ 
@@ -138,6 +141,7 @@ app.post('/print', async (req, res) => {
                 });
                 break;
             case 'closecash':
+                console.log(`🖨️ King is here 3`);
                 // Handle close cash printing using the star-final-printer.js script
                 result = await new Promise((resolve, reject) => {
                     const closeCashProcess = spawn('node', ['star-final-printer.js', 'closecash', content], {

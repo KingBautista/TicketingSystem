@@ -182,7 +182,7 @@ export default function CashierLayout() {
     setShowPrintOpen(false);
     setShowOpenCash(false);
     setShowTransaction(true);
-    navigate('/cashier');
+    //navigate('/cashier');
   };
 
   // Transaction Handlers

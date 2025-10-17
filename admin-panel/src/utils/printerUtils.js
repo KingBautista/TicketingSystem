@@ -61,6 +61,7 @@ export class ClientPrinter {
             console.log(`🖨️ Executing printer command via client service: ${command}`);
             
             if (this.deploymentMode) {
+              console.log(`🖨️ King is here`);
                 // In deployment mode, use deployment checker with retry logic
                 const result = await this.deploymentChecker.executeRequest('/print', {
                     method: 'POST',
