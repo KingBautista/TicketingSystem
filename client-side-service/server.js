@@ -142,57 +142,53 @@ app.post('/print', async (req, res) => {
                 break;
             case 'closecash':
                 console.log(`🖨️ King is here 3`);
-                // Handle close cash printing using the star-final-printer.js script
+                // Handle close cash printing using direct method
                 result = await new Promise((resolve, reject) => {
-                    const closeCashProcess = spawn('node', ['star-final-printer.js', 'closecash', content], {
-                        cwd: __dirname
-                    });
-                    
-                    let output = '';
-                    let errorOutput = '';
-                    
-                    closeCashProcess.stdout.on('data', (data) => {
-                        output += data.toString();
-                    });
-                    
-                    closeCashProcess.stderr.on('data', (data) => {
-                        errorOutput += data.toString();
-                    });
-                    
-                    closeCashProcess.on('close', (code) => {
-                        if (code === 0) {
-                            resolve({ output, success: true });
-                        } else {
-                            reject(new Error(errorOutput || 'Close cash printing failed'));
-                        }
-                    });
+                    try {
+                        // Parse the JSON content
+                        const closeCashData = JSON.parse(content);
+                        console.log('📄 Parsed close cash data:', closeCashData);
+                        
+                        // Use the direct printCloseCashReceipt method
+                        printer.printCloseCashReceipt(
+                            closeCashData.cashierName,
+                            closeCashData.sessionId,
+                            closeCashData.openingCash,
+                            closeCashData.closingCash,
+                            closeCashData.dailyTransactions,
+                            closeCashData.dailyTotal
+                        );
+                        resolve({ method: 'printCloseCashReceipt', success: true });
+                    } catch (error) {
+                        console.error('❌ Close cash printing error:', error);
+                        reject(error);
+                    }
                 });
                 break;
             case 'opencash':
-                // Handle open cash printing using the star-final-printer.js script
+                console.log(`🖨️ King is here 3`);
+                // Handle open cash printing using direct method
                 result = await new Promise((resolve, reject) => {
-                    const openCashProcess = spawn('node', ['star-final-printer.js', 'opencash', content], {
-                        cwd: __dirname
-                    });
-                    
-                    let output = '';
-                    let errorOutput = '';
-                    
-                    openCashProcess.stdout.on('data', (data) => {
-                        output += data.toString();
-                    });
-                    
-                    openCashProcess.stderr.on('data', (data) => {
-                        errorOutput += data.toString();
-                    });
-                    
-                    openCashProcess.on('close', (code) => {
-                        if (code === 0) {
-                            resolve({ output, success: true });
+                    try {
+                        // Parse the content (format: "cashierName,cashOnHand,sessionId")
+                        const parts = content.split(',');
+                        if (parts.length >= 3) {
+                            const cashierName = parts[0];
+                            const cashOnHand = parts[1];
+                            const sessionId = parts[2];
+                            
+                            console.log('📄 Parsed open cash data:', { cashierName, cashOnHand, sessionId });
+                            
+                            // Use the direct printOpenCashReceipt method
+                            printer.printOpenCashReceipt(cashierName, cashOnHand, sessionId);
+                            resolve({ method: 'printOpenCashReceipt', success: true });
                         } else {
-                            reject(new Error(errorOutput || 'Open cash printing failed'));
+                            reject(new Error('Invalid open cash data format. Expected: "cashierName,cashOnHand,sessionId"'));
                         }
-                    });
+                    } catch (error) {
+                        console.error('❌ Open cash printing error:', error);
+                        reject(error);
+                    }
                 });
                 break;
             default:

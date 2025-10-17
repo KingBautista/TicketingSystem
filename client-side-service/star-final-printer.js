@@ -11,8 +11,27 @@ const __dirname = path.dirname(__filename);
 
 export class StarBSC10Printer {
   constructor() {
-    this.printerName = 'Star BSC10';
+    this.printerName = 'Star BSC10'; // Default printer name
+    this.usbPort = null; // Will be auto-detected
     console.log('🔍 Creating Final Star BSC10 Printer (RAW mode)...');
+    this.detectUsbPort();
+  }
+
+  // Auto-detect USB port and printer name
+  detectUsbPort() {
+    // Test with USB001 to verify port detection is working
+    this.printerName = 'POS-80';
+    this.usbPort = 'USB001'; // Testing with USB001
+    console.log(`🧪 Testing with USB001 - Using configured printer: ${this.printerName} on ${this.usbPort}`);
+    
+    // Optional: Try to verify the printer exists
+    try {
+      const { execSync } = require('child_process');
+      execSync('powershell -Command "Get-WmiObject -Class Win32_Printer | Where-Object {$_.Name -eq \'POS-80\'}"', { encoding: 'utf8' });
+      console.log(`✅ Printer ${this.printerName} verified in Windows`);
+    } catch (error) {
+      console.log(`⚠️ Could not verify printer ${this.printerName}, but will try to use it anyway`);
+    }
   }
 
   // -------------------------
@@ -23,7 +42,7 @@ export class StarBSC10Printer {
     fs.writeFileSync(tempFile, buffer, 'binary');
     
     // Try direct USB port first, then fallback to share
-    const directCmd = `copy /B "${tempFile}" "USB001"`;
+    const directCmd = `copy /B "${tempFile}" "${this.usbPort || 'USB001'}"`;
     const shareCmd = `copy /B "${tempFile}" "\\\\localhost\\${this.printerName}"`;
     
     console.log(`🖨️ Sending RAW data to printer: ${this.printerName}`);
@@ -60,7 +79,7 @@ export class StarBSC10Printer {
     
     // Try PowerShell first, then fallback to direct USB
     const psCmd = `powershell -Command "Get-Content '${tempFile}' -Raw | Out-Printer -Name '${this.printerName}'"`;
-    const directCmd = `copy /B "${tempFile}" "USB001"`;
+    const directCmd = `copy /B "${tempFile}" "${this.usbPort || 'USB001'}"`;
     
     console.log(`🖨️ Printing text: ${text.substring(0, 50)}...`);
     

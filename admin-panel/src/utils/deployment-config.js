@@ -7,7 +7,7 @@ export const DEPLOYMENT_CONFIG = {
     // Set to true for deployment scenarios
     isDeployment: true,
     
-    // Direct service URL (no discovery) - using localhost:3001 for deployment
+    // Direct service URL (no discovery) - using localhost for deployment
     serviceUrl: 'http://localhost:3001',
     
     // Timeout settings
@@ -81,6 +81,7 @@ export class DeploymentServiceChecker {
      * Get service URL (always returns configured URL)
      */
     getServiceUrl() {
+        console.log(`🔍 Deployment checker service URL: ${this.serviceUrl}`);
         return this.serviceUrl;
     }
 
@@ -93,6 +94,7 @@ export class DeploymentServiceChecker {
         for (let attempt = 1; attempt <= this.config.maxRetries; attempt++) {
             try {
                 console.log(`🔄 Attempt ${attempt}/${this.config.maxRetries} to ${endpoint}`);
+                console.log(`🔍 Full URL: ${this.serviceUrl}${endpoint}`);
                 
                 const response = await fetch(`${this.serviceUrl}${endpoint}`, {
                     ...options,
