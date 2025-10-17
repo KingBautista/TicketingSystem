@@ -122,39 +122,18 @@ app.post('/print', async (req, res) => {
                 break;
             case 'transaction':
                 console.log(`🖨️ Printing transaction King`);
-                // Handle transaction printing using a temporary file approach
+                // Handle transaction printing using direct method
                 result = await new Promise((resolve, reject) => {
                     try {
-                        // Create a temporary file with the transaction data
-                        const tempFile = path.join(__dirname, `temp_transaction_${Date.now()}.json`);
-                        fs.writeFileSync(tempFile, content, 'utf8');
+                        // Parse the JSON content first to validate it
+                        const transactionData = JSON.parse(content);
+                        console.log('📄 Parsed transaction data:', transactionData);
                         
-                        const transactionProcess = spawn('node', ['star-final-printer.js', 'transactionfile', tempFile], {
-                            cwd: __dirname
-                        });
-                        
-                        let output = '';
-                        let errorOutput = '';
-                        
-                        transactionProcess.stdout.on('data', (data) => {
-                            output += data.toString();
-                        });
-                        
-                        transactionProcess.stderr.on('data', (data) => {
-                            errorOutput += data.toString();
-                        });
-                        
-                        transactionProcess.on('close', (code) => {
-                            // Clean up temp file
-                            try { fs.unlinkSync(tempFile); } catch {}
-                            
-                            if (code === 0) {
-                                resolve({ output, success: true });
-                            } else {
-                                reject(new Error(errorOutput || 'Transaction printing failed'));
-                            }
-                        });
+                        // Use the direct printTransactionTickets method
+                        printer.printTransactionTickets(content);
+                        resolve({ method: 'printTransactionTickets', success: true });
                     } catch (error) {
+                        console.error('❌ Transaction printing error:', error);
                         reject(error);
                     }
                 });

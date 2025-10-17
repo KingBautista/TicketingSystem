@@ -331,8 +331,15 @@ export class StarBSC10Printer {
     console.log('📄 Received data:', transactionData);
     
     try {
-      // Parse transaction data
-      const data = JSON.parse(transactionData);
+      // Parse transaction data - handle both string and object
+      let data;
+      if (typeof transactionData === 'string') {
+        console.log('📄 Parsing JSON string...');
+        data = JSON.parse(transactionData);
+      } else {
+        console.log('📄 Using object directly...');
+        data = transactionData;
+      }
       const {
         transactionId,
         promoterName,
@@ -459,6 +466,24 @@ export class StarBSC10Printer {
       
     } catch (error) {
       console.error('❌ Error printing transaction tickets:', error);
+      console.error('📄 Raw transaction data that failed:', transactionData);
+      console.error('📄 Data type:', typeof transactionData);
+      console.error('📄 Data length:', transactionData ? transactionData.length : 'N/A');
+      
+      // Try to identify the JSON issue
+      if (typeof transactionData === 'string') {
+        try {
+          // Try to find the problematic character
+          const lines = transactionData.split('\n');
+          lines.forEach((line, index) => {
+            if (line.length > 250) {
+              console.error(`📄 Long line ${index + 1}:`, line.substring(250, 270));
+            }
+          });
+        } catch (e) {
+          console.error('📄 Could not analyze JSON structure');
+        }
+      }
     }
   }
 
