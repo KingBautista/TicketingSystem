@@ -121,7 +121,6 @@ app.post('/print', async (req, res) => {
                 result = { method: 'printQRCodeAsImage', success: true };
                 break;
             case 'transaction':
-                console.log(`🖨️ Printing transaction King`);
                 // Handle transaction printing using direct method
                 result = await new Promise((resolve, reject) => {
                     try {
@@ -139,7 +138,6 @@ app.post('/print', async (req, res) => {
                 });
                 break;
             case 'closecash':
-                console.log(`🖨️ Printing closecash King`);
                 // Handle close cash printing using the star-final-printer.js script
                 result = await new Promise((resolve, reject) => {
                     const closeCashProcess = spawn('node', ['star-final-printer.js', 'closecash', content], {
@@ -167,7 +165,6 @@ app.post('/print', async (req, res) => {
                 });
                 break;
             case 'opencash':
-              console.log(`🖨️ Printing opencash King`);
                 // Handle open cash printing using the star-final-printer.js script
                 result = await new Promise((resolve, reject) => {
                     const openCashProcess = spawn('node', ['star-final-printer.js', 'opencash', content], {

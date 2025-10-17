@@ -88,6 +88,8 @@ export class StarBSC10Printer {
   // Bold text with ESC/POS commands
   // -------------------------
   printBoldText(text) {
+    console.log(`🖨️ Printing printBoldText King`);
+
     const buffer = Buffer.concat([
       Buffer.from([0x1B, 0x40]),         // init
       Buffer.from([0x1B, 0x61, 0x00]),   // left align
@@ -105,6 +107,7 @@ export class StarBSC10Printer {
   // QR code using ESC/POS commands (bigger size)
   // -------------------------
   printQRCode(data) {
+    console.log(`🖨️ Printing printQRCode King`);
     // ESC/POS QR code commands
     const buffer = Buffer.concat([
       Buffer.from([0x1B, 0x40]),         // init
@@ -131,6 +134,7 @@ export class StarBSC10Printer {
   // QR code as IMAGE (fixed square aspect ratio)
   // -------------------------
   async printQRCodeAsImage(data) {
+    console.log(`🖨️ Printing printQRCodeAsImage King`);
     const tempFile = path.join(__dirname, 'qr.png');
     
     // Create a square QR code with proper margins
@@ -327,6 +331,7 @@ export class StarBSC10Printer {
   // Print Transaction Tickets (Official)
   // -------------------------
   async printTransactionTickets(transactionData) {
+    console.log(`🖨️ Printing printTransactionTickets King`);
     console.log('🖨️ Printing transaction tickets...');
     console.log('📄 Received data:', transactionData);
     
@@ -491,6 +496,7 @@ export class StarBSC10Printer {
   // Open Cash Receipt
   // -------------------------
   printOpenCashReceipt(cashierName, cashOnHand, sessionId) {
+    console.log(`🖨️ Printing printOpenCashReceipt King`);
     const buffer = Buffer.concat([
       Buffer.from([0x1B, 0x40]),         // init
       Buffer.from([0x1B, 0x61, 0x01]),   // center align
@@ -539,6 +545,7 @@ export class StarBSC10Printer {
   // Close Cash Receipt
   // -------------------------
   printCloseCashReceipt(cashierName, sessionId, openingCash, closingCash, dailyTransactions, dailyTotal) {
+    console.log(`🖨️ Printing printCloseCashReceipt King`);
     const buffer = Buffer.concat([
       Buffer.from([0x1B, 0x40]),         // init
       Buffer.from([0x1B, 0x61, 0x01]),   // center align
