@@ -33,7 +33,7 @@ app.use(express.static(__dirname));
 // Initialize printer and test mode
 const printer = new StarBSC10Printer();
 const testPrinter = new TestModePrinter();
-const isTestMode = process.env.PRINTER_TEST_MODE === 'true' || process.argv.includes('--test-mode');
+const isTestMode = false; // Disabled for actual printing
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -87,6 +87,11 @@ app.post('/print', async (req, res) => {
         }
 
         console.log(`🖨️ Printing ${type}:`, content);
+        console.log(`🔍 Print request details:`, {
+            type: type,
+            contentLength: content.length,
+            timestamp: new Date().toISOString()
+        });
         
         // Check if test mode is enabled
         if (isTestMode) {

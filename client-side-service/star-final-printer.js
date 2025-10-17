@@ -58,16 +58,29 @@ export class StarBSC10Printer {
     const tempFile = path.join(__dirname, 'text_print.txt');
     fs.writeFileSync(tempFile, text, 'utf8');
     
-    const cmd = `powershell -Command "Get-Content '${tempFile}' -Raw | Out-Printer -Name '${this.printerName}'`;
+    // Try PowerShell first, then fallback to direct USB
+    const psCmd = `powershell -Command "Get-Content '${tempFile}' -Raw | Out-Printer -Name '${this.printerName}'"`;
+    const directCmd = `copy /B "${tempFile}" "USB001"`;
     
     console.log(`🖨️ Printing text: ${text.substring(0, 50)}...`);
-    exec(cmd, (error) => {
+    
+    exec(psCmd, (error) => {
       if (error) {
-        console.error('❌ Text print error:', error.message);
+        console.log(`⚠️ PowerShell print failed, trying direct USB...`);
+        // Fallback to direct USB
+        exec(directCmd, (error2) => {
+          if (error2) {
+            console.error('❌ Both PowerShell and direct USB print failed:', error2.message);
+            console.error('💡 Check printer connection and sharing settings');
+          } else {
+            console.log('✅ Text sent to printer via direct USB');
+          }
+          try { fs.unlinkSync(tempFile); } catch {}
+        });
       } else {
-        console.log('✅ Text sent to printer');
+        console.log('✅ Text sent to printer via PowerShell');
+        try { fs.unlinkSync(tempFile); } catch {}
       }
-      try { fs.unlinkSync(tempFile); } catch {}
     });
   }
 
