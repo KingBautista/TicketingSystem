@@ -13,6 +13,7 @@ import CashierSidebar from '../pages/cashier/CashierSidebar.jsx';
 import TransactionList from '../pages/cashier/TransactionList.jsx';
 import { clientDisplay } from '../utils/displayUtils.js';
 import { printerConnectionDebugger } from '../utils/debug-printer-connection.js';
+import { clientPrinter } from '../utils/printerUtils.js';
 
 export default function CashierLayout() {
   // Check for cashier session token in localStorage to persist session
@@ -46,10 +47,7 @@ export default function CashierLayout() {
   const handleFrontendPrinting = async (printData) => {
     try {
       console.log('🖨️ Starting frontend printing with data:', printData);
-      
-      // Import the client printer utility
-      const { clientPrinter } = await import('../utils/printerUtils.js');
-      console.log('📦 Client printer utility imported successfully');
+      console.log('📦 Using imported clientPrinter utility');
       
       // Print the transaction using client printer service
       console.log('🔄 Calling clientPrinter.printTransaction...');
