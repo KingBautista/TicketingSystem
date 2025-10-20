@@ -9,7 +9,7 @@ export const DEPLOYMENT_CONFIG = {
     
     // Direct service URL - using the laptop's IP where printer is connected
     // Change this to your laptop's IP address where the printer is connected
-    serviceUrl: 'http://192.168.0.176:3001', // Update this to your laptop's IP
+    serviceUrl: 'http://localhost:3001', // Update this to your laptop's IP
     
     // Timeout settings
     connectionTimeout: 10000, // 10 seconds (increased for network requests)
