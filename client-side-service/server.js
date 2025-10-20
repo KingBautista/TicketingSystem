@@ -34,7 +34,11 @@ app.use(express.static(__dirname));
 // Initialize printer and test mode
 const printer = new StarBSC10Printer();
 const testPrinter = new TestModePrinter();
-const isTestMode = false; // Disabled for actual printing
+const isTestMode = false;
+
+// Track recent print requests to prevent duplicates
+const recentPrints = new Map();
+const PRINT_DEDUP_WINDOW = 5000; // 5 seconds // Disabled for actual printing
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -136,6 +140,34 @@ app.post('/print', async (req, res) => {
             });
         }
 
+        // Create a unique key for this print request
+        const printKey = `${type}-${content.substring(0, 50)}-${Date.now()}`;
+        const now = Date.now();
+        
+        // Check for duplicate requests within the dedup window
+        for (const [key, timestamp] of recentPrints.entries()) {
+            if (now - timestamp < PRINT_DEDUP_WINDOW) {
+                if (key.includes(type) && key.includes(content.substring(0, 50))) {
+                    console.log(`⚠️ Duplicate print request detected, ignoring: ${type}`);
+                    return res.json({ 
+                        success: true, 
+                        message: 'Duplicate request ignored',
+                        duplicate: true 
+                    });
+                }
+            }
+        }
+        
+        // Add this request to recent prints
+        recentPrints.set(printKey, now);
+        
+        // Clean up old entries
+        for (const [key, timestamp] of recentPrints.entries()) {
+            if (now - timestamp > PRINT_DEDUP_WINDOW) {
+                recentPrints.delete(key);
+            }
+        }
+
         console.log(`🖨️ Printing ${type}:`, content);
         console.log(`🔍 Print request details:`, {
             type: type,
@@ -159,11 +191,11 @@ app.post('/print', async (req, res) => {
         let result;
         switch (type) {
             case 'bold':
-                printer.printBoldText(content);
+                await printer.printBoldText(content);
                 result = { method: 'printBoldText', success: true };
                 break;
             case 'qr':
-                printer.printQRCode(content);
+                await printer.printQRCode(content);
                 result = { method: 'printQRCode', success: true };
                 break;
             case 'qrimg':
@@ -172,14 +204,14 @@ app.post('/print', async (req, res) => {
                 break;
             case 'transaction':
                 // Handle transaction printing using direct method
-                result = await new Promise((resolve, reject) => {
+                result = await new Promise(async (resolve, reject) => {
                     try {
                         // Parse the JSON content first to validate it
                         const transactionData = JSON.parse(content);
                         console.log('📄 Parsed transaction data:', transactionData);
                         
                         // Use the direct printTransactionTickets method
-                        printer.printTransactionTickets(content);
+                        await printer.printTransactionTickets(content);
                         resolve({ method: 'printTransactionTickets', success: true });
                     } catch (error) {
                         console.error('❌ Transaction printing error:', error);
@@ -216,30 +248,23 @@ app.post('/print', async (req, res) => {
                 });
                 break;
             case 'opencash':
-                // Handle open cash printing using the star-final-printer.js script
-                result = await new Promise((resolve, reject) => {
-                    const openCashProcess = spawn('node', ['star-final-printer.js', 'opencash', content], {
-                        cwd: __dirname
-                    });
-                    
-                    let output = '';
-                    let errorOutput = '';
-                    
-                    openCashProcess.stdout.on('data', (data) => {
-                        output += data.toString();
-                    });
-                    
-                    openCashProcess.stderr.on('data', (data) => {
-                        errorOutput += data.toString();
-                    });
-                    
-                    openCashProcess.on('close', (code) => {
-                        if (code === 0) {
-                            resolve({ output, success: true });
-                        } else {
-                            reject(new Error(errorOutput || 'Open cash printing failed'));
-                        }
-                    });
+                // Handle open cash printing using direct method
+                result = await new Promise(async (resolve, reject) => {
+                    try {
+                        // Parse the open cash data
+                        const openCashData = content.split(',');
+                        const cashierName = openCashData[0] || 'Unknown';
+                        const cashOnHand = openCashData[1] || '0';
+                        const sessionId = openCashData[2] || '0';
+                        
+                        console.log(`🖨️ Printing Open Cash - Cashier: ${cashierName}, Amount: ₱${cashOnHand}, Session: #${sessionId}`);
+                        
+                        await printer.printOpenCashReceipt(cashierName, cashOnHand, sessionId);
+                        resolve({ method: 'printOpenCashReceipt', success: true });
+                    } catch (error) {
+                        console.error('❌ Open cash printing error:', error);
+                        reject(error);
+                    }
                 });
                 break;
             default:

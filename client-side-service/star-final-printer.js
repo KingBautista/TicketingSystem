@@ -55,57 +55,140 @@ export class StarBSC10Printer {
   // -------------------------
   async printRaw(buffer) {
     console.log(`🖨️ Sending RAW data to printer: ${this.printerName}`);
+    console.log(`📊 Buffer size: ${buffer.length} bytes`);
+    console.log(`📊 Buffer preview: ${buffer.toString('hex').substring(0, 32)}...`);
     
     try {
-      // Use the detected working port
-      if (this.workingPort) {
-        console.log(`🔍 Using detected port: ${this.workingPort}`);
-        try {
-          await this.detector.printToWorkingPort(buffer);
+      // Convert ESC/POS buffer to readable text for printing
+      console.log('🔄 Converting ESC/POS to text format...');
+      
+      // Extract text content from the buffer (skip ESC/POS commands)
+      let textContent = '';
+      let i = 0;
+      
+      while (i < buffer.length) {
+        const byte = buffer[i];
+        
+        // Skip ESC/POS commands and extract printable text
+        if (byte >= 0x20 && byte <= 0x7E) {
+          // Printable ASCII character
+          textContent += String.fromCharCode(byte);
+        } else if (byte === 0x0A) {
+          // Line feed
+          textContent += '\n';
+        } else if (byte === 0x0D) {
+          // Carriage return
+          textContent += '\r';
+        }
+        // Skip other control characters
+        
+        i++;
+      }
+      
+      // If we found text content, print it
+      if (textContent.trim()) {
+        console.log(`📝 Extracted text: ${textContent.substring(0, 100)}...`);
+        
+        const textFile = path.join(__dirname, 'extracted_text.txt');
+        fs.writeFileSync(textFile, textContent, 'utf8');
+        
+        const psCmd = `powershell -Command "Get-Content '${textFile}' -Raw | Out-Printer -Name '${this.printerName}'"`;
+        console.log(`📤 Executing: ${psCmd}`);
+        
+        const textSuccess = await new Promise((resolve) => {
+          exec(psCmd, (error, stdout, stderr) => {
+            if (error) {
+              console.log(`❌ Text print failed: ${error.message}`);
+              resolve(false);
+            } else {
+              console.log(`✅ Text sent to printer successfully`);
+              resolve(true);
+            }
+          });
+        });
+        
+        // Clean up
+        try { fs.unlinkSync(textFile); } catch {}
+        
+        if (textSuccess) {
+          console.log('🎯 Print job completed successfully!');
           return; // Success!
-        } catch (portError) {
-          console.log(`⚠️ Port ${this.workingPort} failed, re-detecting...`);
-          this.workingPort = null; // Clear failed port
         }
       }
       
-      // Try to detect port again (or for first time)
-      console.log('🔍 Detecting printer port...');
-      const result = await this.detector.initialize();
-      if (result.success) {
-        this.workingPort = result.port;
-        console.log(`✅ Found new working port: ${this.workingPort}`);
-        try {
-          await this.detector.printToWorkingPort(buffer);
-          return; // Success!
-        } catch (detectionError) {
-          console.log(`⚠️ Detected port ${this.workingPort} also failed, trying fallback...`);
-        }
+      // Fallback: Try direct USB method
+      console.log('🔄 Fallback: Trying direct USB method...');
+      const tempFile = path.join(__dirname, 'raw_print.bin');
+      fs.writeFileSync(tempFile, buffer, 'binary');
+      
+      const directCmd = `copy /B "${tempFile}" "USB001"`;
+      console.log(`📤 Executing: ${directCmd}`);
+      
+      const usbSuccess = await new Promise((resolve) => {
+        exec(directCmd, (error, stdout, stderr) => {
+          if (error) {
+            console.log(`❌ Direct USB failed: ${error.message}`);
+            resolve(false);
+          } else {
+            console.log(`✅ Raw data sent to printer via USB001`);
+            resolve(true);
+          }
+        });
+      });
+      
+      // Clean up
+      try { fs.unlinkSync(tempFile); } catch {}
+      
+      if (usbSuccess) {
+        console.log('🎯 Print job completed successfully!');
+        return; // Success!
       }
       
-      // Final fallback: try all common ports
-      console.log('🔄 Trying fallback method with all ports...');
+      // Final fallback
+      console.log('🔄 Final fallback: Trying other methods...');
       await this.printRawFallback(buffer);
       
     } catch (error) {
       console.error('❌ All print methods failed:', error.message);
+      console.error('📱 Full error:', error);
       // Try one more time with fallback
       await this.printRawFallback(buffer);
     }
   }
 
   /**
-   * Fallback printing method - tries all possible ports
+   * Fallback printing method - tries PowerShell first, then USB ports
    */
   async printRawFallback(buffer) {
     const tempFile = path.join(__dirname, 'raw_print.bin');
     fs.writeFileSync(tempFile, buffer, 'binary');
     
+    console.log('🔄 Trying PowerShell printing first...');
+    
+    // Try PowerShell first (like printText does)
+    const psCmd = `powershell -Command "Get-Content '${tempFile}' -Raw -Encoding Byte | ForEach-Object { [System.Console]::OpenStandardOutput().Write([byte]$_); } | Out-Printer -Name '${this.printerName}'"`;
+    
+    const psSuccess = await new Promise((resolve) => {
+      exec(psCmd, (error, stdout, stderr) => {
+        if (error) {
+          console.log(`⚠️ PowerShell print failed: ${error.message}`);
+          resolve(false);
+        } else {
+          console.log(`✅ Raw data sent to printer via PowerShell`);
+          resolve(true);
+        }
+      });
+    });
+    
+    if (psSuccess) {
+      try { fs.unlinkSync(tempFile); } catch {}
+      return;
+    }
+    
+    console.log('🔄 PowerShell failed, trying direct USB ports...');
+    
     // Try all possible USB ports
     const allPorts = ['USB001', 'USB002', 'USB003', 'USB004', 'USB005', 'USB006', 'USB007', 'USB008'];
-    const shareCmd = `copy /B "${tempFile}" "\\\\localhost\\${this.printerName}"`;
-    
-    console.log('🔄 Trying all USB ports systematically...');
     
     for (const port of allPorts) {
       try {
@@ -142,6 +225,8 @@ export class StarBSC10Printer {
     
     // Final fallback: try printer share
     console.log('🔄 Trying printer share as last resort...');
+    const shareCmd = `copy /B "${tempFile}" "\\\\localhost\\${this.printerName}"`;
+    
     return new Promise((resolve) => {
       exec(shareCmd, (error, stdout, stderr) => {
         if (error) {
@@ -195,7 +280,7 @@ export class StarBSC10Printer {
   // -------------------------
   // Bold text with ESC/POS commands
   // -------------------------
-  printBoldText(text) {
+  async printBoldText(text) {
     console.log(`🖨️ Printing printBoldText King`);
 
     const buffer = Buffer.concat([
@@ -208,13 +293,13 @@ export class StarBSC10Printer {
       Buffer.from([0x1D, 0x21, 0x00]),   // normal size
       Buffer.from([0x1B, 0x64, 0x02])    // feed 2 lines (no cut)
     ]);
-    this.printRaw(buffer);
+    await this.printRaw(buffer);
   }
 
   // -------------------------
   // QR code using ESC/POS commands (bigger size)
   // -------------------------
-  printQRCode(data) {
+  async printQRCode(data) {
     console.log(`🖨️ Printing printQRCode King`);
     // ESC/POS QR code commands
     const buffer = Buffer.concat([
@@ -234,7 +319,7 @@ export class StarBSC10Printer {
       Buffer.from('\n\n', 'ascii')
     ]);
     
-    this.printRaw(buffer);
+    await this.printRaw(buffer);
     console.log(`🖨️ Printing QR code (size 10): ${data}`);
   }
 
@@ -295,7 +380,7 @@ export class StarBSC10Printer {
   async printSingleQRReceipt(qrData, qrNumber) {
     // Print QR code first, then the receipt format
     console.log(`🖨️ Printing QR code ${qrNumber} first...`);
-    this.printQRCode(qrData);
+    await this.printQRCode(qrData);
     
     // Wait a moment, then print receipt format
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -326,7 +411,7 @@ export class StarBSC10Printer {
     ]);
     
     // Print the receipt format
-    this.printRaw(buffer);
+    await this.printRaw(buffer);
     
     console.log(`✅ QR receipt ${qrNumber} completed`);
   }
@@ -406,7 +491,7 @@ export class StarBSC10Printer {
       ]);
       
       // Send the main receipt information
-      this.printRaw(buffer);
+      await this.printRaw(buffer);
       
       console.log('✅ Complete receipt sample finished');
       
@@ -424,7 +509,7 @@ export class StarBSC10Printer {
     for (let i = 0; i < qrDataArray.length; i++) {
       const data = qrDataArray[i];
       console.log(`🖨️ Printing QR code ${i + 1}: ${data}`);
-      this.printQRCode(data);
+      await this.printQRCode(data);
       
       // Add delay between QR codes (except for the last one)
       if (i < qrDataArray.length - 1) {
@@ -479,7 +564,7 @@ export class StarBSC10Printer {
         console.log(`🖨️ Printing QR ticket ${i + 1}: ${qrCode}`);
         
         // Print QR code first
-        this.printQRCode(qrCode);
+        await this.printQRCode(qrCode);
         await delay(500);
         
         // Print ticket format
@@ -508,7 +593,7 @@ export class StarBSC10Printer {
           Buffer.from([0x1D, 0x56, 0x00])    // full cut
         ]);
         
-        this.printRaw(ticketBuffer);
+        await this.printRaw(ticketBuffer);
         await delay(500);
       }
       
@@ -573,7 +658,7 @@ export class StarBSC10Printer {
         Buffer.from([0x1D, 0x56, 0x00])    // full cut
       ]);
       
-      this.printRaw(receiptBuffer);
+      await this.printRaw(receiptBuffer);
       
       console.log('✅ Transaction tickets printing completed');
       
@@ -603,7 +688,7 @@ export class StarBSC10Printer {
   // -------------------------
   // Open Cash Receipt
   // -------------------------
-  printOpenCashReceipt(cashierName, cashOnHand, sessionId) {
+  async printOpenCashReceipt(cashierName, cashOnHand, sessionId) {
     console.log(`🖨️ Printing printOpenCashReceipt King`);
     const buffer = Buffer.concat([
       Buffer.from([0x1B, 0x40]),         // init
@@ -645,14 +730,14 @@ export class StarBSC10Printer {
       Buffer.from([0x1D, 0x56, 0x00])    // full cut
     ]);
     
-    this.printRaw(buffer);
+    await this.printRaw(buffer);
     console.log(`🖨️ Printing Open Cash Receipt - Cashier: ${cashierName}, Amount: ₱${cashOnHand}, Session: #${sessionId}`);
   }
 
   // -------------------------
   // Close Cash Receipt
   // -------------------------
-  printCloseCashReceipt(cashierName, sessionId, openingCash, closingCash, dailyTransactions, dailyTotal) {
+  async printCloseCashReceipt(cashierName, sessionId, openingCash, closingCash, dailyTransactions, dailyTotal) {
     console.log(`🖨️ Printing printCloseCashReceipt King`);
     const buffer = Buffer.concat([
       Buffer.from([0x1B, 0x40]),         // init
@@ -719,7 +804,7 @@ export class StarBSC10Printer {
       Buffer.from([0x1D, 0x56, 0x00])    // full cut
     ]);
     
-    this.printRaw(buffer);
+    await this.printRaw(buffer);
     console.log(`🖨️ Printing Close Cash Report - Cashier: ${cashierName}, Session: #${sessionId}, Closing Cash: ₱${closingCash}`);
   }
 
