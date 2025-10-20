@@ -67,14 +67,14 @@ export default function PrintCloseCashModal({
                       {transaction.discounts.map(d => (
                         <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span>- {d.discount_name}</span>
-                          <span>{d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `₱${d.discount_value}`}</span>
+                          <span>{d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `P${d.discount_value}`}</span>
                         </div>
                       ))}
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dotted #000', paddingTop: 2, marginTop: 2 }}>
                     <span>Total:</span>
-                    <span>₱{parseFloat(transaction.total).toFixed(2)}</span>
+                    <span>P{parseFloat(transaction.total).toFixed(2)}</span>
                   </div>
                   {idx < dailyTransactions.length - 1 && (
                     <div style={{ borderBottom: '1px dashed #000', margin: '8px 0', fontSize: '0.8em' }}>--------------------------------</div>
@@ -88,7 +88,7 @@ export default function PrintCloseCashModal({
               <div style={{ fontSize: '0.85em' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                   <span>Opening Cash:</span>
-                  <span>₱{Number(cashOnHand || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>P{Number(cashOnHand || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                   <span>Total Transactions:</span>
@@ -96,11 +96,11 @@ export default function PrintCloseCashModal({
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                   <span>Total Sales:</span>
-                  <span>₱{Number(dailyTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>P{Number(dailyTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dotted #000', paddingTop: 4, marginTop: 4 }}>
                   <span>Closing Cash:</span>
-                  <span>₱{Number(closingCash || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span>P{Number(closingCash || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
             </div>

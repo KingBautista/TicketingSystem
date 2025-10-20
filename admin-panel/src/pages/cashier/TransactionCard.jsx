@@ -43,7 +43,7 @@ export default function TransactionCard({
             <label className="form-label">Select Rate</label>
             <select className="form-select form-select-lg" value={rateId} onChange={e => setRateId(e.target.value ? Number(e.target.value) : '')} required>
               <option value="">Select Rate</option>
-              {rates.map(r => <option key={r.id} value={r.id}>{r.name} (₱{r.price})</option>)}
+              {rates.map(r => <option key={r.id} value={r.id}>{r.name} (P{r.price})</option>)}
             </select>
           </div>
           <div className="mb-3">
@@ -59,14 +59,14 @@ export default function TransactionCard({
                   style={{ fontSize: 13, padding: '0.25em 0.7em', whiteSpace: 'nowrap', minWidth: 0 }}
                 >
                   <FontAwesomeIcon icon={solidIconMap.percent} className="me-1" />
-                  {d.discount_name} ({d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `₱${d.discount_value}`})
+                  {d.discount_name} ({d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `P${d.discount_value}`})
                 </button>
               ))}
             </div>
           </div>
           <div className="mb-3">
             <label className="form-label">Total Amount</label>
-            <div className="h4">{rateId ? `₱${total.toFixed(2)}` : '₱0.00'}</div>
+            <div className="h4">{rateId ? `P${total.toFixed(2)}` : 'P0.00'}</div>
           </div>
           <div className="mb-3">
             <label className="form-label">Paid Amount</label>
@@ -74,7 +74,7 @@ export default function TransactionCard({
           </div>
           <div className="mb-4">
             <label className="form-label">Change Due</label>
-            <div className="h4">₱{changeDue.toFixed(2)}</div>
+            <div className="h4">P{changeDue.toFixed(2)}</div>
           </div>
           <div className="d-flex justify-content-end">
             <button className="btn btn-success px-3" type="submit" style={{ background: '#00c292', border: 'none', fontSize: 15, height: 32, minHeight: 32 }}>

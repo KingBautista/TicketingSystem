@@ -195,11 +195,11 @@ app.post('/print', async (req, res) => {
                 result = { method: 'printBoldText', success: true };
                 break;
             case 'qr':
-                await printer.printQRCode(content);
+                await printer.printQRCode(content, { size: 2 });
                 result = { method: 'printQRCode', success: true };
                 break;
             case 'qrimg':
-                await printer.printQRCodeAsImage(content);
+                await printer.printQRCodeAsImage(content, { size: 20 });
                 result = { method: 'printQRCodeAsImage', success: true };
                 break;
             case 'transaction':
@@ -257,7 +257,7 @@ app.post('/print', async (req, res) => {
                         const cashOnHand = openCashData[1] || '0';
                         const sessionId = openCashData[2] || '0';
                         
-                        console.log(`🖨️ Printing Open Cash - Cashier: ${cashierName}, Amount: ₱${cashOnHand}, Session: #${sessionId}`);
+                        console.log(`🖨️ Printing Open Cash - Cashier: ${cashierName}, Amount: P${cashOnHand}, Session: #${sessionId}`);
                         
                         await printer.printOpenCashReceipt(cashierName, cashOnHand, sessionId);
                         resolve({ method: 'printOpenCashReceipt', success: true });

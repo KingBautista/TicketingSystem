@@ -93,7 +93,7 @@ export default function TransactionList() {
                     <div className="card bg-success text-white">
                       <div className="card-body text-center">
                         <h5 className="card-title">Total Amount</h5>
-                        <h3 className="mb-0">₱{summary.total.toFixed(2)}</h3>
+                        <h3 className="mb-0">P{summary.total.toFixed(2)}</h3>
                       </div>
                     </div>
                   </div>
@@ -124,7 +124,7 @@ export default function TransactionList() {
                           <td>{new Date(transaction.created_at).toLocaleTimeString()}</td>
                           <td>{transaction.rate?.name}</td>
                           <td>{transaction.quantity}</td>
-                          <td>₱{parseFloat(transaction.total).toFixed(2)}</td>
+                          <td>P{parseFloat(transaction.total).toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>

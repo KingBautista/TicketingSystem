@@ -29,7 +29,7 @@ export default function Discounts() {
             return `${value || 0}%`;
           } else if (type === 'amount' || type === 'fixed') {
             const numericValue = parseFloat(value);
-            return `₱${isNaN(numericValue) ? '0.00' : numericValue.toFixed(2)}`;
+            return `P${isNaN(numericValue) ? '0.00' : numericValue.toFixed(2)}`;
           } else {
             // Fallback for unknown types
             return value || '0';

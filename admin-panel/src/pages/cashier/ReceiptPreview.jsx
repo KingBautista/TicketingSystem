@@ -128,9 +128,9 @@ export default function ReceiptPreview({
             <div><span style={{ fontWeight: 'bold' }}>DATE:</span> {new Date().toLocaleString()}</div>
             <div><span style={{ fontWeight: 'bold' }}>RATE:</span> {rate?.name || 'No Rate Selected'}</div>
             <div><span style={{ fontWeight: 'bold' }}>QTY:</span> {quantity}</div>
-            <div><span style={{ fontWeight: 'bold' }}>TOTAL:</span> ₱{total.toFixed(2)}</div>
-            <div><span style={{ fontWeight: 'bold' }}>PAID:</span> ₱{paidAmount || total.toFixed(2)}</div>
-            <div><span style={{ fontWeight: 'bold' }}>CHANGE:</span> ₱{changeDue || '0.00'}</div>
+            <div><span style={{ fontWeight: 'bold' }}>TOTAL:</span> P{total.toFixed(2)}</div>
+            <div><span style={{ fontWeight: 'bold' }}>PAID:</span> P{paidAmount || total.toFixed(2)}</div>
+            <div><span style={{ fontWeight: 'bold' }}>CHANGE:</span> P{changeDue || '0.00'}</div>
             <div><span style={{ fontWeight: 'bold' }}>CASHIER:</span> {user?.user_login || 'N/A'}</div>
             <div><span style={{ fontWeight: 'bold' }}>SESSION:</span> #{sessionId || 'N/A'}</div>
             <div><span style={{ fontWeight: 'bold' }}>TXN ID:</span> #{Math.floor(Math.random() * 10000)}</div>
@@ -141,7 +141,7 @@ export default function ReceiptPreview({
             {appliedDiscounts.map(d => (
               <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>{d.discount_name}</span>
-                <span>{d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `₱${d.discount_value}`}</span>
+                <span>{d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `P${d.discount_value}`}</span>
                 <button
                   type="button"
                   className="btn btn-link text-danger p-0 ms-1"

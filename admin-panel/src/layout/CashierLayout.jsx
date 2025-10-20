@@ -134,7 +134,7 @@ export default function CashierLayout() {
       // Use frontend display utilities instead of Laravel backend
       clientDisplay.showCustomMessage(
         `Promoter: ${promoter.name}`.substring(0, 20),
-        `Total: ₱${total.toFixed(2)}`.substring(0, 20)
+        `Total: P${total.toFixed(2)}`.substring(0, 20)
       ).catch(err => {
         console.error('PD-300 display error:', err);
       });

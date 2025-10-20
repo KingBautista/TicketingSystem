@@ -58,7 +58,7 @@ export default function PrintOpenCashModal({
           <div className="modal-body text-center p-3">
             <h6 className="mb-3">Cashier: {cashierName}</h6>
             <div>Date: {new Date().toLocaleString()}</div>
-            <div>Cash on Hand: <strong>₱{parseFloat(cashOnHand).toFixed(2)}</strong></div>
+            <div>Cash on Hand: <strong>P{parseFloat(cashOnHand).toFixed(2)}</strong></div>
             <div>Session ID: #{sessionId}</div>
             {divider}
             <div className="text-muted">--- End of Receipt ---</div>

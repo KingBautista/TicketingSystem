@@ -60,7 +60,7 @@ class CashierController extends Controller
         $data = $request->validated();
         $session = $this->service->openSession($data);
         
-        $this->logCreate("Opened cashier session with cash on hand: ₱{$data['cash_on_hand']}", $session);
+        $this->logCreate("Opened cashier session with cash on hand: P{$data['cash_on_hand']}", $session);
         
         return new CashierSessionResource($session);
     }
@@ -101,7 +101,7 @@ class CashierController extends Controller
         $data = $request->validated();
         $session = $this->service->closeSession($data);
         
-        $this->logUpdate("Closed cashier session with closing cash: ₱{$data['closing_cash']}", null, $session->toArray());
+        $this->logUpdate("Closed cashier session with closing cash: P{$data['closing_cash']}", null, $session->toArray());
         
         return new CashierSessionResource($session);
     }
@@ -147,7 +147,7 @@ class CashierController extends Controller
         $data = $request->validated();
         $transaction = $this->service->storeTransaction($data);
         
-        $this->logCreate("Created transaction: ₱{$data['total']} for {$data['quantity']} tickets", $transaction);
+        $this->logCreate("Created transaction: P{$data['total']} for {$data['quantity']} tickets", $transaction);
         
         // Return transaction with all related data for frontend printing
         $transactionWithData = \App\Models\CashierTransaction::with([
@@ -244,7 +244,7 @@ class CashierController extends Controller
         $transactions = $this->service->getDailyTransactions($cashierId, $sessionId);
         $total = $transactions->sum('total');
         
-        $this->logAudit('VIEW', "Viewed daily transactions for cashier ID: {$cashierId}, session ID: {$sessionId}, total: ₱{$total}");
+        $this->logAudit('VIEW', "Viewed daily transactions for cashier ID: {$cashierId}, session ID: {$sessionId}, total: P{$total}");
         
         return response()->json([
             'transactions' => $transactions,
@@ -262,7 +262,7 @@ class CashierController extends Controller
         $transactions = $this->service->getTodayTransactions($cashierId);
         $total = $transactions->sum('total');
         
-        $this->logAudit('VIEW', "Viewed today's transactions for cashier ID: {$cashierId}, total: ₱{$total}");
+        $this->logAudit('VIEW', "Viewed today's transactions for cashier ID: {$cashierId}, total: P{$total}");
         
         return response()->json([
             'transactions' => $transactions,

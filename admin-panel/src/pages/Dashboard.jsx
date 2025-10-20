@@ -191,7 +191,7 @@ export default function Dashboard() {
 													<tr key={i}>
 														<td>{cashier.name}</td>
 														<td>{cashier.total_transactions}</td>
-														<td>₱{parseFloat(cashier.total_sales || 0).toLocaleString()}</td>
+														<td>P{parseFloat(cashier.total_sales || 0).toLocaleString()}</td>
 													</tr>
 												))
 											) : (
@@ -248,7 +248,7 @@ export default function Dashboard() {
 						<div className="card-body">
 							<FontAwesomeIcon icon={solidIconMap.save} className="mb-2 text-success" size="2x" />
 							<h5 className="card-title">Total Sales</h5>
-							<p className="card-text fs-4 fw-bold">₱{parseFloat(dashboardData.statistics?.total_sales || 0).toLocaleString()}</p>
+							<p className="card-text fs-4 fw-bold">P{parseFloat(dashboardData.statistics?.total_sales || 0).toLocaleString()}</p>
 						</div>
 					</div>
 				</div>
@@ -257,7 +257,7 @@ export default function Dashboard() {
 						<div className="card-body">
 							<FontAwesomeIcon icon={solidIconMap.file} className="mb-2 text-dark" size="2x" />
 							<h5 className="card-title">Today's Sales</h5>
-							<p className="card-text fs-4 fw-bold">₱{parseFloat(dashboardData.statistics?.today_sales || 0).toLocaleString()}</p>
+							<p className="card-text fs-4 fw-bold">P{parseFloat(dashboardData.statistics?.today_sales || 0).toLocaleString()}</p>
 						</div>
 					</div>
 				</div>

@@ -191,7 +191,7 @@ class RateController extends BaseController
             $data = $request->validated();
             $rate = Rate::create($data);
             
-            $this->logCreate("Created new rate: {$rate->name} (₱{$rate->price})", $rate);
+            $this->logCreate("Created new rate: {$rate->name} (P{$rate->price})", $rate);
             
             return new RateResource($rate);
         } catch (\Exception $e) {
@@ -207,7 +207,7 @@ class RateController extends BaseController
             $oldData = $rate->toArray();
             $rate->update($data);
             
-            $this->logUpdate("Updated rate: {$rate->name} (₱{$rate->price})", $oldData, $rate->toArray());
+            $this->logUpdate("Updated rate: {$rate->name} (P{$rate->price})", $oldData, $rate->toArray());
             
             return new RateResource($rate);
         } catch (\Exception $e) {

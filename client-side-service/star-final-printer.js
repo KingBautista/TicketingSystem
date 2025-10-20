@@ -2,6 +2,7 @@
 
 import { exec } from 'child_process';
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import QRCode from 'qrcode';
@@ -11,1002 +12,755 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class StarBSC10Printer {
-  constructor() {
-    this.printerName = 'Star BSC10';
+  constructor(options = {}) {
+    this.printerName = options.printerName || 'Star BSC10';
     this.detector = printerDetector;
     this.workingPort = null;
-    console.log('🔍 Creating Final Star BSC10 Printer (RAW mode)...');
+    this.tempFiles = new Set();
+    this.esc80mmCommand = Buffer.from([0x1D, 0x57, 128, 2]); // GS W nL nH -> ~640 dots (~80mm @ ~8dots/mm)
+    console.log('🔍 Creating Final Star BSC10 Printer (RAW mode + image QR)...');
     
     // Initialize printer detection
-    this.initializePrinter();
+    this.initializePrinter().catch(err => {
+      console.warn('⚠️ initializePrinter failed:', err?.message || err);
+    });
   }
 
-  /**
-   * Initialize printer detection
-   */
   async initializePrinter() {
     try {
+      if (!this.detector || !this.detector.initialize) {
+        console.log('⚠️ No printer detector available, skipping auto-detect');
+        return { success: false, message: 'no-detector' };
+      }
       const result = await this.detector.initialize();
       if (result.success) {
         this.workingPort = result.port;
         console.log(`✅ Printer initialized on port: ${this.workingPort}`);
+        return { success: true, port: this.workingPort };
       } else {
         console.log(`⚠️ Printer detection failed: ${result.message}`);
-        this.workingPort = null; // Reset port if detection failed
+        this.workingPort = null;
+        return { success: false, message: result.message };
       }
     } catch (error) {
       console.log(`⚠️ Printer initialization error: ${error.message}`);
-      this.workingPort = null; // Reset port on error
+      this.workingPort = null;
+      return { success: false, message: error.message };
     }
   }
 
-  /**
-   * Force re-detection of printer port
-   */
   async redetectPrinter() {
     console.log('🔄 Re-detecting printer port...');
-    this.workingPort = null; // Clear current port
-    await this.initializePrinter();
-    return this.workingPort;
+    this.workingPort = null;
+    return (await this.initializePrinter()).port || null;
+  }
+
+  // Utility to create a temp file path and remember it for cleanup
+  _tempPath(filename) {
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}-${filename}`;
+    const p = path.join(__dirname, name);
+    this.tempFiles.add(p);
+    return p;
+  }
+
+  // Cleanup tracked temp files (best-effort)
+  async _cleanupTemp(filePath) {
+    try {
+      if (filePath) {
+        await fsPromises.unlink(filePath).catch(() => {});
+        this.tempFiles.delete(filePath);
+      }
+    } catch (e) {}
   }
 
   // -------------------------
-  // RAW ESC/POS printing (for bold text, formatting)
+  // Low-level raw printing
   // -------------------------
   async printRaw(buffer) {
-    console.log(`🖨️ Sending RAW data to printer: ${this.printerName}`);
-    console.log(`📊 Buffer size: ${buffer.length} bytes`);
-    console.log(`📊 Buffer preview: ${buffer.toString('hex').substring(0, 32)}...`);
-    
-    try {
-      // Convert ESC/POS buffer to readable text for printing
-      console.log('🔄 Converting ESC/POS to text format...');
-      
-      // Extract text content from the buffer (skip ESC/POS commands)
-      let textContent = '';
-      let i = 0;
-      
-      while (i < buffer.length) {
-        const byte = buffer[i];
-        
-        // Skip ESC/POS commands and extract printable text
-        if (byte >= 0x20 && byte <= 0x7E) {
-          // Printable ASCII character
-          textContent += String.fromCharCode(byte);
-        } else if (byte === 0x0A) {
-          // Line feed
-          textContent += '\n';
-        } else if (byte === 0x0D) {
-          // Carriage return
-          textContent += '\r';
-        }
-        // Skip other control characters
-        
-        i++;
-      }
-      
-      // If we found text content, print it
-      if (textContent.trim()) {
-        console.log(`📝 Extracted text: ${textContent.substring(0, 100)}...`);
-        
-        const textFile = path.join(__dirname, 'extracted_text.txt');
-        fs.writeFileSync(textFile, textContent, 'utf8');
-        
-        const psCmd = `powershell -Command "Get-Content '${textFile}' -Raw | Out-Printer -Name '${this.printerName}'"`;
-        console.log(`📤 Executing: ${psCmd}`);
-        
-        const textSuccess = await new Promise((resolve) => {
-          exec(psCmd, (error, stdout, stderr) => {
-            if (error) {
-              console.log(`❌ Text print failed: ${error.message}`);
-              resolve(false);
+    console.log(`🖨️ printRaw invoked — buffer ${buffer.length} bytes`);
+
+    // Ensure ESC/POS width enforcement at start
+    // Prepend init and width, only if not present
+    let outBuffer = buffer;
+
+    // If buffer doesn't start with init (0x1B 0x40), prepend it
+    if (!(buffer[0] === 0x1B && buffer[1] === 0x40)) {
+      outBuffer = Buffer.concat([Buffer.from([0x1B, 0x40]), this.esc80mmCommand, buffer]);
             } else {
-              console.log(`✅ Text sent to printer successfully`);
-              resolve(true);
-            }
-          });
-        });
-        
-        // Clean up
-        try { fs.unlinkSync(textFile); } catch {}
-        
-        if (textSuccess) {
-          console.log('🎯 Print job completed successfully!');
-          return; // Success!
-        }
-      }
-      
-      // Fallback: Try direct USB method
-      console.log('🔄 Fallback: Trying direct USB method...');
-      const tempFile = path.join(__dirname, 'raw_print.bin');
-      fs.writeFileSync(tempFile, buffer, 'binary');
-      
-      const directCmd = `copy /B "${tempFile}" "USB001"`;
-      console.log(`📤 Executing: ${directCmd}`);
-      
-      const usbSuccess = await new Promise((resolve) => {
-        exec(directCmd, (error, stdout, stderr) => {
+      outBuffer = Buffer.concat([buffer.slice(0, 2), this.esc80mmCommand, buffer.slice(2)]);
+    }
+
+    // Add printer initialization sequence for Star BSC10
+    const initSequence = Buffer.from([
+      0x1B, 0x40,  // Initialize printer
+      0x1B, 0x61, 0x00,  // Left align
+      0x1B, 0x45, 0x00,  // Normal text
+      0x1D, 0x21, 0x00,  // Normal size
+    ]);
+    
+    outBuffer = Buffer.concat([initSequence, outBuffer]);
+
+    // Try PowerShell byte printing (Out-Printer expects objects; we'll write bytes to file then send via PrintDocument)
+    const tempFile = this._tempPath('raw_print.bin');
+    try {
+      await fsPromises.writeFile(tempFile, outBuffer, { encoding: 'binary' });
+
+      const psPath = this._tempPath('print_raw_bytes.ps1');
+      const psScript = `
+Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms
+
+$printer = "${this.printerName}"
+$imageBytes = [System.IO.File]::ReadAllBytes("${tempFile.replace(/'/g, "''")}")
+
+# We'll write bytes to a MemoryStream and render them as text using a fixed-width font on the page.
+$ms = New-Object System.IO.MemoryStream(, $imageBytes)
+
+# Convert to string (assume ascii/utf8 where printable)
+try {
+  $text = [System.Text.Encoding]::ASCII.GetString($imageBytes)
+} catch {
+  $text = [System.Text.Encoding]::UTF8.GetString($imageBytes)
+}
+
+$doc = New-Object System.Drawing.Printing.PrintDocument
+$doc.PrinterSettings.PrinterName = $printer
+$doc.PrintController = New-Object System.Drawing.Printing.StandardPrintController
+
+$font = New-Object System.Drawing.Font("Consolas",8)
+
+$doc.add_PrintPage({
+  param($sender, $e)
+  $bounds = $e.MarginBounds
+  # print text in the printable area - left align
+  $point = New-Object System.Drawing.PointF($bounds.X, $bounds.Y)
+  $e.Graphics.DrawString($text, $font, [System.Drawing.Brushes]::Black, $point)
+  $null
+})
+
+try {
+  $doc.Print()
+} catch {
+  Write-Error $_.Exception.Message
+  exit 1
+}
+`;
+
+      await fsPromises.writeFile(psPath, psScript, 'utf8');
+
+      const cmd = `powershell -ExecutionPolicy Bypass -File "${psPath}"`;
+      console.log('📤 Executing PowerShell raw byte print...');
+    const psSuccess = await new Promise((resolve) => {
+        exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
           if (error) {
-            console.log(`❌ Direct USB failed: ${error.message}`);
+            console.log('⚠️ PowerShell raw print failed:', error.message);
             resolve(false);
           } else {
-            console.log(`✅ Raw data sent to printer via USB001`);
+            console.log('✅ PowerShell raw print likely succeeded');
             resolve(true);
           }
         });
       });
       
-      // Clean up
-      try { fs.unlinkSync(tempFile); } catch {}
-      
-      if (usbSuccess) {
-        console.log('🎯 Print job completed successfully!');
-        return; // Success!
-      }
-      
-      // Final fallback
-      console.log('🔄 Final fallback: Trying other methods...');
-      await this.printRawFallback(buffer);
-      
-    } catch (error) {
-      console.error('❌ All print methods failed:', error.message);
-      console.error('📱 Full error:', error);
-      // Try one more time with fallback
-      await this.printRawFallback(buffer);
-    }
-  }
+      // cleanup
+      await this._cleanupTemp(tempFile);
+      await this._cleanupTemp(psPath);
 
-  /**
-   * Fallback printing method - tries PowerShell first, then USB ports
-   */
-  async printRawFallback(buffer) {
-    const tempFile = path.join(__dirname, 'raw_print.bin');
-    fs.writeFileSync(tempFile, buffer, 'binary');
-    
-    console.log('🔄 Trying PowerShell printing first...');
-    
-    // Try PowerShell first (like printText does)
-    const psCmd = `powershell -Command "Get-Content '${tempFile}' -Raw -Encoding Byte | ForEach-Object { [System.Console]::OpenStandardOutput().Write([byte]$_); } | Out-Printer -Name '${this.printerName}'"`;
-    
-    const psSuccess = await new Promise((resolve) => {
-      exec(psCmd, (error, stdout, stderr) => {
-        if (error) {
-          console.log(`⚠️ PowerShell print failed: ${error.message}`);
-          resolve(false);
-        } else {
-          console.log(`✅ Raw data sent to printer via PowerShell`);
+      if (psSuccess) return true;
+    } catch (error) {
+      console.warn('⚠️ printRaw PowerShell attempt failed:', error?.message || error);
+      try { await this._cleanupTemp(tempFile); } catch {}
+    }
+
+    // Fallback: try copying to known USB ports or printer share
+    const fallbackTemp = this._tempPath('raw_print_fallback.bin');
+    await fsPromises.writeFile(fallbackTemp, outBuffer, 'binary');
+
+    // Use the working port first if available
+    if (this.workingPort) {
+      try {
+        const copyCmd = `copy /B "${fallbackTemp}" "${this.workingPort}"`;
+        console.log(`🔄 Using working port: ${this.workingPort}`);
+        console.log(`📤 Executing: ${copyCmd}`);
+        const ok = await new Promise((resolve) => {
+          exec(copyCmd, { windowsHide: true }, (error, stdout, stderr) => {
+            if (!error) {
+              console.log(`✅ Raw data sent to printer via ${this.workingPort}`);
           resolve(true);
+            } else {
+              console.log(`❌ Working port ${this.workingPort} failed: ${error.message}`);
+              resolve(false);
         }
       });
     });
-    
-    if (psSuccess) {
-      try { fs.unlinkSync(tempFile); } catch {}
-      return;
+        if (ok) {
+          console.log(`🎯 Print job completed successfully!`);
+          await this._cleanupTemp(fallbackTemp);
+          return true;
+        }
+      } catch (e) {
+        console.log(`❌ Working port ${this.workingPort} error: ${e.message}`);
+      }
     }
-    
-    console.log('🔄 PowerShell failed, trying direct USB ports...');
-    
-    // Try all possible USB ports
-    const allPorts = ['USB001', 'USB002', 'USB003', 'USB004', 'USB005', 'USB006', 'USB007', 'USB008'];
-    
-    for (const port of allPorts) {
+
+    // Try other USB ports as fallback
+    const usbPorts = ['USB001','USB002','USB003','USB004','USB005','USB006','USB007','USB008'];
+    for (const port of usbPorts) {
       try {
-        const directCmd = `copy /B "${tempFile}" "${port}"`;
-        console.log(`🔄 Testing port: ${port}`);
-        
-        const success = await new Promise((resolve) => {
-          exec(directCmd, (error, stdout, stderr) => {
+        const copyCmd = `copy /B "${fallbackTemp}" "${port}"`;
+        console.log(`🔄 Trying copy to ${port} ...`);
+        const ok = await new Promise((resolve) => {
+          exec(copyCmd, { windowsHide: true }, (error, stdout, stderr) => {
             if (!error) {
-              console.log(`✅ SUCCESS! Printer found on port: ${port}`);
-              console.log(`📱 Output: ${stdout}`);
+              console.log(`✅ copy to ${port} succeeded`);
               resolve(true);
             } else {
-              console.log(`❌ Port ${port} failed: ${error.message}`);
+              // console.log(`❌ ${port} failed: ${error.message}`);
               resolve(false);
             }
           });
         });
-        
-        if (success) {
-          // Update the working port for future use
-          this.workingPort = port;
-          console.log(`🎯 Updated working port to: ${port}`);
-          
-          // Clean up temp file
-          try { fs.unlinkSync(tempFile); } catch {}
-          return;
+        if (ok) {
+          console.log(`🎯 Print job completed successfully!`);
+          await this._cleanupTemp(fallbackTemp);
+          return true;
         }
-        
-      } catch (error) {
-        console.log(`❌ Port ${port} error: ${error.message}`);
+      } catch (e) {
+        // continue
       }
     }
-    
-    // Final fallback: try printer share
-    console.log('🔄 Trying printer share as last resort...');
-    const shareCmd = `copy /B "${tempFile}" "\\\\localhost\\${this.printerName}"`;
-    
-    return new Promise((resolve) => {
-      exec(shareCmd, (error, stdout, stderr) => {
-        if (error) {
-          console.error('❌ All print methods failed:', error.message);
-          console.error('💡 Check printer connection and USB port');
-          console.error('💡 Try moving printer to different USB port');
-          resolve(false);
-        } else {
-          console.log('✅ Raw data sent to printer via share');
+
+    // Final fallback: try share
+    try {
+      const shareCmd = `copy /B "${fallbackTemp}" "\\\\localhost\\${this.printerName}"`;
+      console.log('🔄 Trying printer share copy ...');
+      const shareOk = await new Promise((resolve) => {
+        exec(shareCmd, { windowsHide: true }, (error, stdout, stderr) => {
+            if (!error) {
+            console.log('✅ copy to share succeeded');
           resolve(true);
+            } else {
+            console.log('❌ printer share failed:', error?.message || stderr);
+              resolve(false);
         }
-        // Clean up temp file
-        try { fs.unlinkSync(tempFile); } catch {}
       });
     });
+      await this._cleanupTemp(fallbackTemp);
+      return shareOk;
+    } catch (e) {
+      console.error('❌ All fallback methods failed:', e?.message || e);
+      try { await this._cleanupTemp(fallbackTemp); } catch {}
+      return false;
+    }
   }
 
   // -------------------------
-  // Plain text printing
+  // Print text using Out-Printer (primary) and fallback to USB copy
   // -------------------------
-  printText(text) {
-    const tempFile = path.join(__dirname, 'text_print.txt');
-    fs.writeFileSync(tempFile, text, 'utf8');
-    
-    // Try PowerShell first, then fallback to direct USB
-    const psCmd = `powershell -Command "Get-Content '${tempFile}' -Raw | Out-Printer -Name '${this.printerName}'"`;
-    const directCmd = `copy /B "${tempFile}" "USB001"`;
-    
-    console.log(`🖨️ Printing text: ${text.substring(0, 50)}...`);
-    
-    exec(psCmd, (error) => {
+  async printText(text) {
+    const tempFile = this._tempPath('text_print.txt');
+    await fsPromises.writeFile(tempFile, text, 'utf8');
+
+    // PowerShell direct text printing
+    const psPath = this._tempPath('print_text.ps1');
+    const psScript = `
+Add-Type -AssemblyName System.Drawing
+Add-Type -AssemblyName System.Windows.Forms
+
+$printer = "${this.printerName}"
+$text = Get-Content -Path "${tempFile}" -Raw
+
+$doc = New-Object System.Drawing.Printing.PrintDocument
+$doc.PrinterSettings.PrinterName = $printer
+$doc.PrintController = New-Object System.Drawing.Printing.StandardPrintController
+
+$font = New-Object System.Drawing.Font("Consolas",9)
+
+$doc.add_PrintPage({
+  param($sender, $e)
+  $bounds = $e.MarginBounds
+  $point = New-Object System.Drawing.PointF($bounds.X, $bounds.Y)
+  $e.Graphics.DrawString($text, $font, [System.Drawing.Brushes]::Black, $point)
+})
+
+try {
+  $doc.Print()
+} catch {
+  Write-Error $_.Exception.Message
+  exit 1
+}
+`;
+    await fsPromises.writeFile(psPath, psScript, 'utf8');
+
+    const cmd = `powershell -ExecutionPolicy Bypass -File "${psPath}"`;
+    console.log('🖨️ Sending text to printer via PowerShell...');
+    const success = await new Promise((resolve) => {
+      exec(cmd, { windowsHide: true }, async (error, stdout, stderr) => {
       if (error) {
-        console.log(`⚠️ PowerShell print failed, trying direct USB...`);
-        // Fallback to direct USB
-        exec(directCmd, (error2) => {
-          if (error2) {
-            console.error('❌ Both PowerShell and direct USB print failed:', error2.message);
-            console.error('💡 Check printer connection and sharing settings');
+          console.log('⚠️ PowerShell text print failed:', error?.message || stderr);
+          resolve(false);
           } else {
-            console.log('✅ Text sent to printer via direct USB');
-          }
-          try { fs.unlinkSync(tempFile); } catch {}
-        });
+          console.log('✅ PowerShell text print succeeded');
+          resolve(true);
+        }
+        // cleanup
+        try { await fsPromises.unlink(tempFile); } catch {}
+        try { await fsPromises.unlink(psPath); } catch {}
+      });
+    });
+
+    if (success) return true;
+
+    // Fallback: USB direct copy (first USB001)
+    const fallback = `copy /B "${tempFile}" "USB001"`;
+    return new Promise((resolve) => {
+      exec(fallback, { windowsHide: true }, async (error) => {
+        try { await fsPromises.unlink(tempFile); } catch {}
+      if (error) {
+          console.error('❌ USB direct text copy failed:', error.message);
+          resolve(false);
       } else {
-        console.log('✅ Text sent to printer via PowerShell');
-        try { fs.unlinkSync(tempFile); } catch {}
+          console.log('✅ USB direct text copy succeeded');
+          resolve(true);
       }
+        });
     });
   }
 
   // -------------------------
-  // Bold text with ESC/POS commands
+  // Print bold text (ESC/POS)
   // -------------------------
   async printBoldText(text) {
-    console.log(`🖨️ Printing printBoldText King`);
-
+    console.log('🖨️ printBoldText:', text);
     const buffer = Buffer.concat([
       Buffer.from([0x1B, 0x40]),         // init
+      this.esc80mmCommand,
       Buffer.from([0x1B, 0x61, 0x00]),   // left align
       Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
       Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
       Buffer.from(text + '\n', 'ascii'),
       Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
       Buffer.from([0x1D, 0x21, 0x00]),   // normal size
-      Buffer.from([0x1B, 0x64, 0x02])    // feed 2 lines (no cut)
+      Buffer.from([0x1B, 0x64, 0x02])    // feed 2 lines
     ]);
-    await this.printRaw(buffer);
+    return await this.printRaw(buffer);
   }
 
   // -------------------------
-  // QR code using ESC/POS commands (bigger size)
+  // QR code as IMAGE (preferred)
+  // -------------------------
+  async printQRCodeAsImage(data, opts = {}) {
+    console.log('🖨️ printQRCodeAsImage:', data);
+    const tempImage = this._tempPath('qr.png');
+    const qrSize = opts.size || 20; // pixels, very small for thermal printer
+    try {
+      await QRCode.toFile(tempImage, data, {
+      type: 'png', 
+        margin: 2,
+        width: qrSize,
+        color: { dark: '#000000', light: '#FFFFFF' }
+      });
+
+      // create PS1 script to print image centered and scaled to 80mm width
+      const psPath = this._tempPath('print_qr.ps1');
+      const safeImg = tempImage.replace(/'/g, "''");
+    const psScript = `
+      Add-Type -AssemblyName System.Drawing
+        Add-Type -AssemblyName System.Windows.Forms
+        $printer = "${this.printerName}"
+        $imagePath = "${safeImg}"
+
+        $image = [System.Drawing.Image]::FromFile($imagePath)
+        $doc = New-Object System.Drawing.Printing.PrintDocument
+        $doc.PrinterSettings.PrinterName = $printer
+        $doc.PrintController = New-Object System.Drawing.Printing.StandardPrintController
+
+        $doc.add_PrintPage({
+        param($sender, $e)
+          try {
+            # convert 20mm to inches (tiny QR code for 80mm paper)
+            $pageWidthInches = 20 / 25.4
+            $dpiX = $e.Graphics.DpiX
+            $destWidth = [int]($dpiX * $pageWidthInches)
+            # keep square QR
+            $destHeight = $destWidth
+
+            # center horizontally
+            $pageBounds = $e.PageBounds
+            $x = [int](($pageBounds.Width - $destWidth) / 2)
+            $y = 10
+
+            $e.Graphics.DrawImage($image, $x, $y, $destWidth, $destHeight)
+          } catch {
+            Write-Error $_.Exception.Message
+            exit 1
+          }
+        })
+
+        try {
+          $doc.Print()
+        } catch {
+          Write-Error $_.Exception.Message
+          exit 1
+        } finally {
+      $image.Dispose()
+        }
+        `;
+      await fsPromises.writeFile(psPath, psScript, 'utf8');
+
+      const cmd = `powershell -ExecutionPolicy Bypass -File "${psPath}"`;
+      const result = await new Promise((resolve) => {
+        exec(cmd, { windowsHide: true }, async (error, stdout, stderr) => {
+          // cleanup files
+          try { await fsPromises.unlink(tempImage); } catch {}
+          try { await fsPromises.unlink(psPath); } catch {}
+      if (error) {
+            console.error('❌ QR image print error:', error.message || stderr);
+            resolve(false);
+      } else {
+            console.log('✅ QR image printed via PowerShell');
+            resolve(true);
+          }
+        });
+      });
+
+      return result;
+    } catch (err) {
+      console.error('❌ QR image generation/print failed:', err?.message || err);
+      // attempt cleanup
+      try { await fsPromises.unlink(tempImage); } catch {}
+      return false;
+    }
+  }
+
+  // -------------------------
+  // ESC/POS QR code method (kept but not primary)
   // -------------------------
   async printQRCode(data) {
-    console.log(`🖨️ Printing printQRCode King`);
-    // ESC/POS QR code commands
-    const buffer = Buffer.concat([
+    console.log('🖨️ printQRCode (esc/pos) fallback:', data);
+    // Desktop printers sometimes won't accept these in non-RAW modes; kept for compatibility
+    const payload = Buffer.concat([
       Buffer.from([0x1B, 0x40]),         // init
+      this.esc80mmCommand,
       Buffer.from([0x1B, 0x61, 0x01]),   // center align
       
-      // QR code setup - bigger size (size 10 instead of 8)
-      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x0A]), // QR code: model 2, size 10
-      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30]), // QR code: error correction level L
-      
-      // QR code data
+      // QR code setup: store data then print
+      // Model and size
+      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x02]), // size 2 (smallest for 80mm)
+      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30]), // error correction L
+
+      // store data
       Buffer.from([0x1D, 0x28, 0x6B, data.length + 3, 0x00, 0x31, 0x50, 0x30]),
       Buffer.from(data, 'ascii'),
-      
-      // Print QR code
+
+      // print
       Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30]),
       Buffer.from('\n\n', 'ascii')
     ]);
-    
-    await this.printRaw(buffer);
-    console.log(`🖨️ Printing QR code (size 10): ${data}`);
+
+    return await this.printRaw(payload);
   }
 
   // -------------------------
-  // QR code as IMAGE (fixed square aspect ratio)
+  // Print a single QR receipt (uses image QR)
   // -------------------------
-  async printQRCodeAsImage(data) {
-    console.log(`🖨️ Printing printQRCodeAsImage King`);
-    const tempFile = path.join(__dirname, 'qr.png');
-    
-    // Create a square QR code with proper margins
-    const qrWidth = 200;  // Square size
-    const margin = 4;
-    
-    await QRCode.toFile(tempFile, data, { 
-      type: 'png', 
-      margin: margin,
-      width: qrWidth,
-      color: {
-        dark: '#000000',  // Black QR code
-        light: '#FFFFFF'  // White background
-      }
-    });
+  async printSingleQRReceipt(qrData, qrNumber = 1, metadata = {}) {
+    console.log(`🖨️ printSingleQRReceipt #${qrNumber}`);
+    // Preferred: image QR
+    const qrOk = await this.printQRCodeAsImage(qrData);
+    if (!qrOk) {
+      console.log('⚠️ Image QR failed, trying ESC/POS QR fallback');
+      await this.printQRCode(qrData);
+    }
 
-    // Use PowerShell to print image with proper sizing
-    const psScript = `
-      Add-Type -AssemblyName System.Drawing
-      $image = [System.Drawing.Image]::FromFile("${tempFile}")
-      $printDoc = New-Object System.Drawing.Printing.PrintDocument
-      $printDoc.PrinterSettings.PrinterName = "${this.printerName}"
-      $printDoc.PrintController = New-Object System.Drawing.Printing.StandardPrintController
-      
-      $printDoc.PrintPage = {
-        param($sender, $e)
-        $e.Graphics.DrawImage($image, 0, 0, 200, 200)
-      }
-      
-      $printDoc.Print()
-      $printDoc.Dispose()
-      $image.Dispose()
-    `;
-    
-    const cmd = `powershell -Command "${psScript}"`;
-    
-    console.log(`🖨️ Printing QR as square image (${qrWidth}x${qrWidth}px): ${data}`);
-    exec(cmd, (error) => {
-      if (error) {
-        console.error('❌ QR image print error:', error.message);
-      } else {
-        console.log('✅ QR image sent to printer via PowerShell');
-      }
-    });
+    // short delay
+    await new Promise(r => setTimeout(r, 250));
+
+    // then print simple receipt as text (driver will use width)
+    const text = [
+      metadata.promoterName || 'Promoter',
+      metadata.date || new Date().toLocaleString(),
+      `Code: ${qrData}`,
+      '',
+      'Single use only',
+      '',
+      ''
+    ].join('\n');
+
+    await this.printText(text);
+    // feed and cut via ESC/POS raw to ensure cut
+    await this.printRaw(Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00])); // feed + cut
   }
 
   // -------------------------
-  // Print single QR code receipt
-  // -------------------------
-  async printSingleQRReceipt(qrData, qrNumber) {
-    // Print QR code first, then the receipt format
-    console.log(`🖨️ Printing QR code ${qrNumber} first...`);
-    await this.printQRCode(qrData);
-    
-    // Wait a moment, then print receipt format
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const buffer = Buffer.concat([
-      Buffer.from([0x1B, 0x40]),         // init
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      
-      // Promoter name
-      Buffer.from('Promoter 24\n', 'ascii'),
-      Buffer.from('\n', 'ascii'),
-      
-      // Date and time
-      Buffer.from('8/27/2025, 11:55:04 PM\n', 'ascii'),
-      Buffer.from('\n', 'ascii'),
-      
-      // Code in text
-      Buffer.from(`Code: ${qrData}\n`, 'ascii'),
-      Buffer.from('\n', 'ascii'),
-      
-      // Single use only label
-      Buffer.from('Single use only\n', 'ascii'),
-      Buffer.from('\n\n', 'ascii'),
-      
-      // Feed and cut
-      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
-      Buffer.from([0x1D, 0x56, 0x00])    // full cut
-    ]);
-    
-    // Print the receipt format
-    await this.printRaw(buffer);
-    
-    console.log(`✅ QR receipt ${qrNumber} completed`);
-  }
-
-  // -------------------------
-  // Complete receipt sample (3 QR receipts + main receipt)
+  // Print main receipt sample (uses image QR for QR parts)
   // -------------------------
   async printReceiptSample() {
-    console.log('🖨️ Printing complete receipt sample...');
-    
+    console.log('🖨️ printReceiptSample starting...');
     try {
-      // Helper function to add delay
-      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-      
-      // Print 3 separate QR code receipts
-      console.log('🖨️ Printing QR code receipts...');
-      
-      // QR Receipt 1
+      const delay = ms => new Promise(r => setTimeout(r, ms));
+      // Print 3 QR receipts
       await this.printSingleQRReceipt('PROMOTER24-2025-08-27-235115-1', 1);
-      await delay(500);
-      
-      // QR Receipt 2
+      await delay(400);
       await this.printSingleQRReceipt('PROMOTER24-2025-08-27-235115-2', 2);
-      await delay(500);
-      
-      // QR Receipt 3
+      await delay(400);
       await this.printSingleQRReceipt('PROMOTER24-2025-08-27-235115-3', 3);
-      await delay(500);
-      
-      // Now print the main receipt information
-      console.log('🖨️ Printing main receipt information...');
-      
-      const buffer = Buffer.concat([
-        Buffer.from([0x1B, 0x40]),         // init
-        Buffer.from([0x1B, 0x61, 0x01]),   // center align
-        
-        // Header
-        Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
-        Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
-        Buffer.from('RECEIPT\n', 'ascii'),
-        Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
-        Buffer.from([0x1D, 0x21, 0x00]),   // normal size
-        
-        // Promoter
-        Buffer.from('Promoter: Promoter 24\n', 'ascii'),
-        Buffer.from('\n', 'ascii'),
-        
-        // Date and time
-        Buffer.from('8/27/2025, 11:51:15 PM\n', 'ascii'),
-        Buffer.from('Single use only\n', 'ascii'),
-        Buffer.from('\n', 'ascii'),
-        
-        // Separator
-        Buffer.from('----------------------------------------\n', 'ascii'),
-        
-        // Details (left align)
-        Buffer.from([0x1B, 0x61, 0x00]),   // left align
-        Buffer.from('PROMOTER: Promoter 24\n', 'ascii'),
-        Buffer.from('DATE: 8/27/2025, 11:51:15 PM\n', 'ascii'),
-        Buffer.from('RATE: Regular Ticket\n', 'ascii'),
-        Buffer.from('QTY: 1\n', 'ascii'),
-        Buffer.from('TOTAL: P100.00\n', 'ascii'),
-        Buffer.from('DISCOUNTS:\n', 'ascii'),
-        Buffer.from('None\n', 'ascii'),
-        
-        // Separator
-        Buffer.from('----------------------------------------\n', 'ascii'),
-        
-        // Footer (center align)
-        Buffer.from([0x1B, 0x61, 0x01]),   // center align
-        Buffer.from('Thank you!\n', 'ascii'),
-        Buffer.from('\n\n', 'ascii'),
-        
-        // Feed and cut
-        Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
-        Buffer.from([0x1D, 0x56, 0x00])    // full cut
-      ]);
-      
-      // Send the main receipt information
-      await this.printRaw(buffer);
-      
-      console.log('✅ Complete receipt sample finished');
-      
-    } catch (error) {
-      console.error('❌ Error printing receipt:', error);
+      await delay(400);
+
+      // Main receipt (text)
+      const lines = [
+        'RECEIPT',
+        '',
+        'Promoter: Promoter 24',
+        new Date().toLocaleString(),
+        'Single use only',
+        '----------------------------------------',
+        'PROMOTER: Promoter 24',
+        'RATE: Regular Ticket',
+        'QTY: 1',
+        'TOTAL: P100.00',
+        'DISCOUNTS:',
+        'None',
+        '----------------------------------------',
+        'Thank you!',
+        '',
+        ''
+      ];
+      await this.printText(lines.join('\n'));
+      // cut
+      await this.printRaw(Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00]));
+      console.log('✅ printReceiptSample completed');
+    } catch (err) {
+      console.error('❌ printReceiptSample error:', err);
     }
   }
 
   // -------------------------
-  // Print multiple QR codes
-  // -------------------------
-  async printMultipleQRCodes(qrDataArray) {
-    console.log(`🖨️ Printing ${qrDataArray.length} QR codes...`);
-    
-    for (let i = 0; i < qrDataArray.length; i++) {
-      const data = qrDataArray[i];
-      console.log(`🖨️ Printing QR code ${i + 1}: ${data}`);
-      await this.printQRCode(data);
-      
-      // Add delay between QR codes (except for the last one)
-      if (i < qrDataArray.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-    }
-    
-    console.log('✅ Multiple QR codes completed');
-  }
-
-  // -------------------------
-  // Print Transaction Tickets (Official)
+  // Print transaction tickets (main entry used by your service)
   // -------------------------
   async printTransactionTickets(transactionData) {
-    console.log(`🖨️ Printing printTransactionTickets King`);
-    console.log('🖨️ Printing transaction tickets...');
-    console.log('📄 Received data:', transactionData);
-    
+    console.log('🖨️ printTransactionTickets invoked');
     try {
-      // Parse transaction data - handle both string and object
-      let data;
+      let data = transactionData;
       if (typeof transactionData === 'string') {
-        console.log('📄 Parsing JSON string...');
         data = JSON.parse(transactionData);
-      } else {
-        console.log('📄 Using object directly...');
-        data = transactionData;
       }
+
       const {
         transactionId,
-        promoterName,
-        rateName,
-        quantity,
-        total,
-        paidAmount,
-        change,
-        cashierName,
-        sessionId,
-        discounts,
-        tickets, // Array of QR codes
-        createdAt
+        promoterName = 'Promoter',
+        rateName = 'Rate',
+        quantity = 1,
+        total = 0,
+        paidAmount = 0,
+        change = 0,
+        cashierName = 'cashier',
+        sessionId = '0',
+        discounts = [],
+        tickets = [],
+        createdAt = new Date().toISOString()
       } = data;
       
-      // Helper function to add delay
-      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-      
-      // Print individual QR code tickets first
-      console.log(`🖨️ Printing ${tickets.length} QR code tickets...`);
-      
+      // print QR tickets first (image-based)
       for (let i = 0; i < tickets.length; i++) {
-        const qrCode = tickets[i];
-        console.log(`🖨️ Printing QR ticket ${i + 1}: ${qrCode}`);
-        
-        // Print QR code first
-        await this.printQRCode(qrCode);
-        await delay(500);
-        
-        // Print ticket format
-        const ticketBuffer = Buffer.concat([
-          Buffer.from([0x1B, 0x40]),         // init
-          Buffer.from([0x1B, 0x61, 0x01]),   // center align
-          
-          // Promoter name
-          Buffer.from(`${promoterName}\n`, 'ascii'),
-          Buffer.from('\n', 'ascii'),
-          
-          // Date and time
-          Buffer.from(`${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
-          Buffer.from('\n', 'ascii'),
-          
-          // Code in text
-          Buffer.from(`Code: ${qrCode}\n`, 'ascii'),
-          Buffer.from('\n', 'ascii'),
-          
-          // Single use only label
-          Buffer.from('Single use only\n', 'ascii'),
-          Buffer.from('\n\n', 'ascii'),
-          
-          // Feed and cut
-          Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
-          Buffer.from([0x1D, 0x56, 0x00])    // full cut
-        ]);
-        
-        await this.printRaw(ticketBuffer);
-        await delay(500);
-      }
-      
-      // Now print the main receipt information
-      console.log('🖨️ Printing main transaction receipt...');
-      
-      const receiptBuffer = Buffer.concat([
-        Buffer.from([0x1B, 0x40]),         // init
-        Buffer.from([0x1B, 0x61, 0x01]),   // center align
-        
-        // Header
-        Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
-        Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
-        Buffer.from('RECEIPT\n', 'ascii'),
-        Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
-        Buffer.from([0x1D, 0x21, 0x00]),   // normal size
-        
-        // Promoter
-        Buffer.from(`Promoter: ${promoterName}\n`, 'ascii'),
-        Buffer.from('\n', 'ascii'),
-        
-        // Date and time
-        Buffer.from(`${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
-        Buffer.from('Single use only\n', 'ascii'),
-        Buffer.from('\n', 'ascii'),
-        
-        // Separator
-        Buffer.from('----------------------------------------\n', 'ascii'),
-        
-        // Details (left align)
-        Buffer.from([0x1B, 0x61, 0x00]),   // left align
-        Buffer.from(`PROMOTER: ${promoterName}\n`, 'ascii'),
-        Buffer.from(`DATE: ${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
-        Buffer.from(`RATE: ${rateName}\n`, 'ascii'),
-        Buffer.from(`QTY: ${quantity}\n`, 'ascii'),
-        Buffer.from(`TOTAL: ₱${parseFloat(total).toFixed(2)}\n`, 'ascii'),
-        Buffer.from(`PAID: ₱${parseFloat(paidAmount).toFixed(2)}\n`, 'ascii'),
-        Buffer.from(`CHANGE: ₱${parseFloat(change).toFixed(2)}\n`, 'ascii'),
-        Buffer.from(`CASHIER: ${cashierName}\n`, 'ascii'),
-        Buffer.from(`SESSION: #${sessionId}\n`, 'ascii'),
-        Buffer.from(`TXN ID: #${transactionId}\n`, 'ascii'),
-        
-        // Discounts section
-        Buffer.from('DISCOUNTS:\n', 'ascii'),
-        ...(discounts && discounts.length > 0 
-          ? discounts.map(discount => 
-              Buffer.from(`${discount.discount_name}: ${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `₱${discount.discount_value}`}\n`, 'ascii')
-            )
-          : [Buffer.from('None\n', 'ascii')]
-        ),
-        
-        // Separator
-        Buffer.from('----------------------------------------\n', 'ascii'),
-        
-        // Footer (center align)
-        Buffer.from([0x1B, 0x61, 0x01]),   // center align
-        Buffer.from('Thank you!\n', 'ascii'),
-        Buffer.from('\n\n', 'ascii'),
-        
-        // Feed and cut
-        Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
-        Buffer.from([0x1D, 0x56, 0x00])    // full cut
-      ]);
-      
-      await this.printRaw(receiptBuffer);
-      
-      console.log('✅ Transaction tickets printing completed');
-      
-    } catch (error) {
-      console.error('❌ Error printing transaction tickets:', error);
-      console.error('📄 Raw transaction data that failed:', transactionData);
-      console.error('📄 Data type:', typeof transactionData);
-      console.error('📄 Data length:', transactionData ? transactionData.length : 'N/A');
-      
-      // Try to identify the JSON issue
-      if (typeof transactionData === 'string') {
-        try {
-          // Try to find the problematic character
-          const lines = transactionData.split('\n');
-          lines.forEach((line, index) => {
-            if (line.length > 250) {
-              console.error(`📄 Long line ${index + 1}:`, line.substring(250, 270));
-            }
-          });
-        } catch (e) {
-          console.error('📄 Could not analyze JSON structure');
+        const qr = tickets[i];
+        console.log(`🖨️ printing QR ticket ${i + 1} / ${tickets.length}`);
+        const ok = await this.printQRCodeAsImage(qr);
+        if (!ok) {
+          console.log('⚠️ QR image print failed — trying ESC/POS fallback');
+          await this.printQRCode(qr);
         }
+
+        await new Promise(r => setTimeout(r, 300));
+
+        // print the ticket text below the QR
+        const ticketText = [
+          promoterName,
+          new Date(createdAt).toLocaleString(),
+          `Code: ${qr}`,
+          '',
+          'Single use only',
+          ''
+        ].join('\n');
+
+        await this.printText(ticketText);
+        await new Promise(r => setTimeout(r, 200));
       }
+
+      // Now print main receipt
+      const receiptLines = [
+        'RECEIPT',
+        '',
+        `Promoter: ${promoterName}`,
+        new Date(createdAt).toLocaleString(),
+        'Single use only',
+        '----------------------------------------',
+        `PROMOTER: ${promoterName}`,
+        `DATE: ${new Date(createdAt).toLocaleString()}`,
+        `RATE: ${rateName}`,
+        `QTY: ${quantity}`,
+        `TOTAL: P${parseFloat(total).toFixed(2)}`,
+        `PAID: P${parseFloat(paidAmount).toFixed(2)}`,
+        `CHANGE: P${parseFloat(change).toFixed(2)}`,
+        `CASHIER: ${cashierName}`,
+        `SESSION: #${sessionId}`,
+        `TXN ID: #${transactionId}`,
+        'DISCOUNTS:',
+        ...(discounts && discounts.length > 0 ? discounts.map(d => `${d.discount_name}: ${d.discount_value}`) : ['None']),
+        '----------------------------------------',
+        'Thank you!',
+        '',
+        ''
+      ];
+
+      await this.printText(receiptLines.join('\n'));
+      // cut
+      await this.printRaw(Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00]));
+      console.log('✅ Transaction printed successfully');
+    } catch (error) {
+      console.error('❌ Error printing transaction tickets:', error?.message || error);
+      // try to log raw input for debugging
+      console.error('📄 Raw input:', transactionData);
     }
   }
 
   // -------------------------
-  // Open Cash Receipt
+  // Other convenience methods
   // -------------------------
   async printOpenCashReceipt(cashierName, cashOnHand, sessionId) {
-    console.log(`🖨️ Printing printOpenCashReceipt King`);
-    const buffer = Buffer.concat([
-      Buffer.from([0x1B, 0x40]),         // init
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      
-      // Header - Bold and Double Size
-      Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
-      Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
+    const buf = Buffer.concat([
+      Buffer.from([0x1B, 0x40]), this.esc80mmCommand,
+      Buffer.from([0x1B, 0x61, 0x01]),
       Buffer.from('OPEN CASH RECEIPT\n', 'ascii'),
-      Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
-      Buffer.from([0x1D, 0x21, 0x00]),   // normal size
-      Buffer.from('\n', 'ascii'),
-      
-      // Cashier name
-      Buffer.from(`Cashier: ${cashierName}\n`, 'ascii'),
-      Buffer.from('\n', 'ascii'),
-      
-      // Date and time
-      Buffer.from(`Date: ${new Date().toLocaleString()}\n`, 'ascii'),
-      Buffer.from('\n', 'ascii'),
-      
-      // Cash on Hand
-      Buffer.from(`Cash on Hand: ₱${parseFloat(cashOnHand).toFixed(2)}\n`, 'ascii'),
-      Buffer.from('\n', 'ascii'),
-      
-      // Session ID
-      Buffer.from(`Session ID: #${sessionId}\n`, 'ascii'),
-      Buffer.from('\n', 'ascii'),
-      
-      // Separator
-      Buffer.from('----------------------------------------\n', 'ascii'),
-      
-      // End of Receipt
-      Buffer.from('--- End of Receipt ---\n', 'ascii'),
-      Buffer.from('\n\n', 'ascii'),
-      
-      // Feed and cut
-      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
-      Buffer.from([0x1D, 0x56, 0x00])    // full cut
+      Buffer.from(`Cashier: ${cashierName}\n\n`, 'ascii'),
+      Buffer.from(`Date: ${new Date().toLocaleString()}\n\n`, 'ascii'),
+      Buffer.from(`Cash on Hand: P${parseFloat(cashOnHand).toFixed(2)}\n\n`, 'ascii'),
+      Buffer.from('--- End of Receipt ---\n\n', 'ascii'),
+      Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00])
     ]);
-    
-    await this.printRaw(buffer);
-    console.log(`🖨️ Printing Open Cash Receipt - Cashier: ${cashierName}, Amount: ₱${cashOnHand}, Session: #${sessionId}`);
+    return await this.printRaw(buf);
   }
 
-  // -------------------------
-  // Close Cash Receipt
-  // -------------------------
-  async printCloseCashReceipt(cashierName, sessionId, openingCash, closingCash, dailyTransactions, dailyTotal) {
-    console.log(`🖨️ Printing printCloseCashReceipt King`);
-    const buffer = Buffer.concat([
-      Buffer.from([0x1B, 0x40]),         // init
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      
-      // Header - Bold and Double Size
-      Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
-      Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
+  async printCloseCashReceipt(cashierName, sessionId, openingCash, closingCash, dailyTransactions = [], dailyTotal = 0) {
+    const header = Buffer.concat([
+      Buffer.from([0x1B, 0x40]), this.esc80mmCommand,
+      Buffer.from([0x1B, 0x61, 0x01]),
       Buffer.from('CLOSE CASH REPORT\n', 'ascii'),
-      Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
-      Buffer.from([0x1D, 0x21, 0x00]),   // normal size
-      Buffer.from('\n', 'ascii'),
-      
-      // Separator line (matching actual print - equal signs)
-      Buffer.from('==============================\n', 'ascii'),
-      
-      // Date and time
-      Buffer.from(`Date: ${new Date().toLocaleString()}\n`, 'ascii'),
-      Buffer.from(`Cashier: ${cashierName}\n`, 'ascii'),
-      Buffer.from(`Session: #${sessionId}\n`, 'ascii'),
-      Buffer.from('==============================\n', 'ascii'),
-      Buffer.from('------------------------------\n', 'ascii'),
-      
-      // Daily Transactions Section
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      Buffer.from('*** DAILY TRANSACTIONS ***\n', 'ascii'),
-      Buffer.from([0x1B, 0x61, 0x00]),   // left align
-      Buffer.from('\n', 'ascii'),
-      
-      // Print each transaction (matching actual print format)
-      ...dailyTransactions.map((transaction, idx) => [
-        Buffer.from(`Transaction #${transaction.id}\n`, 'ascii'),
-        Buffer.from(`Time: ${new Date(transaction.created_at).toLocaleTimeString()}\n`, 'ascii'),
-        Buffer.from(`${transaction.rate?.name || 'N/A'}                    x${transaction.quantity}\n`, 'ascii'),
-        ...(transaction.discounts?.length > 0 
-          ? transaction.discounts.map(discount => 
-              Buffer.from(`- ${discount.discount_name}               ₱${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `${discount.discount_value}`}\n`, 'ascii')
-            )
-          : []
-        ),
-        Buffer.from(`Total:                        ₱${parseFloat(transaction.total).toFixed(2)}\n`, 'ascii'),
-        ...(idx < dailyTransactions.length - 1 ? [Buffer.from('--------------------------------\n', 'ascii')] : [])
-      ]).flat(),
-      
-      // Summary Section
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      Buffer.from('*** SUMMARY ***\n', 'ascii'),
-      Buffer.from([0x1B, 0x61, 0x00]),   // left align
-      Buffer.from('\n', 'ascii'),
-      
-      Buffer.from(`Opening Cash:                 ₱${parseFloat(openingCash).toFixed(2)}\n`, 'ascii'),
-      Buffer.from(`Total Transactions:            ${dailyTransactions.length}\n`, 'ascii'),
-      Buffer.from(`Total Sales:                  ₱${parseFloat(dailyTotal).toFixed(2)}\n`, 'ascii'),
-      Buffer.from(`Closing Cash:                 ₱${parseFloat(closingCash).toFixed(2)}\n`, 'ascii'),
-      Buffer.from('--------------------------------\n', 'ascii'),
-      
-      // End of Report
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      Buffer.from('--- End of Report ---\n', 'ascii'),
-      Buffer.from('\n\n', 'ascii'),
-      
-      // Feed and cut
-      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
-      Buffer.from([0x1D, 0x56, 0x00])    // full cut
+      Buffer.from('\n', 'ascii')
     ]);
-    
-    await this.printRaw(buffer);
-    console.log(`🖨️ Printing Close Cash Report - Cashier: ${cashierName}, Session: #${sessionId}, Closing Cash: ₱${closingCash}`);
+    // reduce complexity: print report as text (PowerShell printText will use margins)
+    const lines = [
+      'CLOSE CASH REPORT',
+      `Date: ${new Date().toLocaleString()}`,
+      `Cashier: ${cashierName}`,
+      `Session: #${sessionId}`,
+      '----------------------------------------',
+      `Opening Cash: P${parseFloat(openingCash).toFixed(2)}`,
+      `Closing Cash: P${parseFloat(closingCash).toFixed(2)}`,
+      `Total Transactions: ${dailyTransactions.length}`,
+      `Total Sales: P${parseFloat(dailyTotal).toFixed(2)}`,
+      '----------------------------------------',
+      '',
+      '--- End of Report ---',
+      '',
+      ''
+    ];
+    await this.printText(lines.join('\n'));
+    await this.printRaw(Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00]));
   }
 
-  // -------------------------
-  // Close Cash Sample (like receipt sample)
-  // -------------------------
-  printCloseCashSample() {
-    console.log('🖨️ Printing close cash sample...');
-    
-    const buffer = Buffer.concat([
-      Buffer.from([0x1B, 0x40]),         // init
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      
-      // Header - Bold and Double Size
-      Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
-      Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
-      Buffer.from('CLOSE CASH REPORT\n', 'ascii'),
-      Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
-      Buffer.from([0x1D, 0x21, 0x00]),   // normal size
-      Buffer.from('\n', 'ascii'),
-      
-      // Separator line (matching actual print - equal signs)
-      Buffer.from('==============================\n', 'ascii'),
-      
-      // Date and time
-      Buffer.from(`Date: ${new Date().toLocaleString()}\n`, 'ascii'),
-      Buffer.from(`Cashier: sales\n`, 'ascii'),
-      Buffer.from(`Session: #23\n`, 'ascii'),
-      Buffer.from('==============================\n', 'ascii'),
-      Buffer.from('------------------------------\n', 'ascii'),
-      
-      // Daily Transactions Section
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      Buffer.from('*** DAILY TRANSACTIONS ***\n', 'ascii'),
-      Buffer.from([0x1B, 0x61, 0x00]),   // left align
-      Buffer.from('\n', 'ascii'),
-      
-      // Sample transaction 1 (matching actual print)
-      Buffer.from(`Transaction #164\n`, 'ascii'),
-      Buffer.from(`Time: 11:34:43 PM\n`, 'ascii'),
-      Buffer.from(`VIP Ticket                    x2\n`, 'ascii'),
-      Buffer.from(`- VIP Discount                ₱25.00\n`, 'ascii'),
-      Buffer.from(`Total:                        ₱475.00\n`, 'ascii'),
-      Buffer.from('--------------------------------\n', 'ascii'),
-      
-      // Sample transaction 2 (matching actual print)
-      Buffer.from(`Transaction #165\n`, 'ascii'),
-      Buffer.from(`Time: 11:35:12 PM\n`, 'ascii'),
-      Buffer.from(`Regular Ticket                x4\n`, 'ascii'),
-      Buffer.from(`- Senior Discount             ₱30.00\n`, 'ascii'),
-      Buffer.from(`Total:                        ₱370.00\n`, 'ascii'),
-      Buffer.from('--------------------------------\n', 'ascii'),
-      
-      // Summary Section
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      Buffer.from('*** SUMMARY ***\n', 'ascii'),
-      Buffer.from([0x1B, 0x61, 0x00]),   // left align
-      Buffer.from('\n', 'ascii'),
-      
-      Buffer.from(`Opening Cash:                 ₱2,000.00\n`, 'ascii'),
-      Buffer.from(`Total Transactions:           2\n`, 'ascii'),
-      Buffer.from(`Total Sales:                  ₱845.00\n`, 'ascii'),
-      Buffer.from(`Closing Cash:                 ₱6,000.00\n`, 'ascii'),
-      Buffer.from('--------------------------------\n', 'ascii'),
-      
-      // End of Report
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      Buffer.from('--- End of Report ---\n', 'ascii'),
-      Buffer.from('\n\n', 'ascii'),
-      
-      // Feed and cut
-      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
-      Buffer.from([0x1D, 0x56, 0x00])    // full cut
-    ]);
-    
-    this.printRaw(buffer);
-    console.log('✅ Close cash sample printed successfully');
-  }
-
-  // -------------------------
-  // Final cut command
-  // -------------------------
   printCut() {
-    const buffer = Buffer.concat([
-      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
-      Buffer.from([0x1D, 0x56, 0x00])    // full cut
-    ]);
-    this.printRaw(buffer);
+    return this.printRaw(Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00]));
   }
 
-  // -------------------------
-  // Simple test
-  // -------------------------
   printTest() {
-    this.printText('Hello from Star BSC10 Printer!\n');
-    this.printText('Test completed successfully.\n\n');
+    return this.printText('Hello from Star BSC10 Printer!\nTest completed successfully.\n\n');
   }
 }
 
 // -------------------------
-// Command line interface
+// CLI — keep for backwards compatibility
 // -------------------------
 const printer = new StarBSC10Printer();
 const command = process.argv[2];
-const data = process.argv[3] || '';
+const data = process.argv.slice(3).join(' ');
 
+async function cli() {
 switch (command) {
   case 'test':
-    printer.printTest();
+      await printer.printTest();
     break;
   case 'bold':
-    printer.printBoldText(data || 'HELLO BIG WORLD');
+      await printer.printBoldText(data || 'HELLO BIG WORLD');
     break;
   case 'qr':
-    printer.printQRCode(data || 'TEST123');
+      await printer.printQRCode(data || 'TEST123');
     break;
   case 'qrimg':
-    printer.printQRCodeAsImage(data || 'TEST123');
+      await printer.printQRCodeAsImage(data || 'TEST123');
     break;
   case 'qrreceipt':
-    printer.printSingleQRReceipt(data || 'TEST123', 1);
+      await printer.printSingleQRReceipt(data || 'TEST123', 1);
     break;
   case 'multiqr':
-    const qrDataArray = data ? data.split(',') : ['TEST1', 'TEST2', 'TEST3'];
-    printer.printMultipleQRCodes(qrDataArray);
+      {
+        const arr = data ? data.split(',') : ['TEST1','TEST2','TEST3'];
+        await printer.printMultipleQRCodes(arr);
+      }
     break;
   case 'receipt':
-    printer.printReceiptSample();
+      await printer.printReceiptSample();
     break;
   case 'opencash':
-    const openCashData = data ? data.split(',') : ['sales', '5000.00', '16'];
-    printer.printOpenCashReceipt(openCashData[0], openCashData[1], openCashData[2]);
+      {
+        const parts = data ? data.split(',') : ['sales','5000.00','16'];
+        await printer.printOpenCashReceipt(parts[0], parts[1], parts[2]);
+      }
     break;
   case 'closecash':
-    // For close cash, we need to pass JSON data with all the details
-    try {
-      let closeCashData;
-      
-      // If no data provided, use sample data
+      {
       if (!data || data.trim() === '') {
         printer.printCloseCashSample();
-        break;
-      }
-      
-      // Check if data is a file path
-      if (data.endsWith('.json')) {
-        const fs = await import('fs');
-        const fileData = fs.readFileSync(data, 'utf8');
-        closeCashData = JSON.parse(fileData);
       } else {
-        closeCashData = JSON.parse(data);
-      }
-      
-      printer.printCloseCashReceipt(
-        closeCashData.cashierName,
-        closeCashData.sessionId,
-        closeCashData.openingCash,
-        closeCashData.closingCash,
-        closeCashData.dailyTransactions,
-        closeCashData.dailyTotal
-      );
-    } catch (error) {
-      console.error('❌ Error parsing close cash data:', error);
-      console.log('📄 Expected format: JSON with cashierName, sessionId, openingCash, closingCash, dailyTransactions, dailyTotal');
+          try {
+            const payload = data.endsWith('.json') ? JSON.parse(await fsPromises.readFile(data, 'utf8')) : JSON.parse(data);
+            await printer.printCloseCashReceipt(
+              payload.cashierName,
+              payload.sessionId,
+              payload.openingCash,
+              payload.closingCash,
+              payload.dailyTransactions,
+              payload.dailyTotal
+            );
+          } catch (err) {
+            console.error('❌ Error parsing close cash data:', err.message || err);
+          }
+        }
     }
     break;
   case 'transaction':
-    // Reconstruct the JSON from the remaining arguments
+      {
     const jsonData = process.argv.slice(3).join(' ');
-    console.log('📄 Raw JSON data received:', jsonData);
-    
-    // Try to fix common JSON issues
     let fixedJson = jsonData;
-    
-    // Add quotes around property names if missing
-    fixedJson = fixedJson.replace(/(\w+):/g, '"$1":');
-    
-    // Add quotes around string values if missing
+        fixedJson = fixedJson.replace(/(\w+):/g, '"$1":'); // best-effort fix
     fixedJson = fixedJson.replace(/:\s*([^",\{\}\[\]\d][^,\{\}\[\]]*[^",\{\}\[\]\d\s])/g, ':"$1"');
-    
-    console.log('📄 Fixed JSON data:', fixedJson);
-    
-    try {
-      printer.printTransactionTickets(fixedJson);
-    } catch (error) {
-      console.error('❌ Error in transaction printing:', error);
+        try {
+          await printer.printTransactionTickets(fixedJson);
+        } catch (e) {
+          console.error('❌ transaction error:', e);
+        }
     }
     break;
   case 'transactionfile':
-    // Read JSON from file
-    const jsonFilePath = process.argv[3];
-    console.log('📄 Reading JSON from file:', jsonFilePath);
-    
-    try {
-      const fileContent = fs.readFileSync(jsonFilePath, 'utf8');
-      console.log('📄 File content:', fileContent);
-      printer.printTransactionTickets(fileContent);
-      
-      // Clean up temp file
-      try { fs.unlinkSync(jsonFilePath); } catch {}
-    } catch (error) {
-      console.error('❌ Error reading transaction file:', error);
+      {
+        const filePath = process.argv[3];
+        try {
+          const content = await fsPromises.readFile(filePath, 'utf8');
+          await printer.printTransactionTickets(content);
+          try { await fsPromises.unlink(filePath); } catch {}
+        } catch (err) {
+          console.error('❌ transactionfile error:', err.message || err);
+        }
     }
     break;
   default:
@@ -1024,3 +778,15 @@ switch (command) {
     console.log('  node star-final-printer.js transactionfile "JSON_FILE_PATH"');
     break;
 }
+
+  // cleanup any tracked temps (best-effort)
+  try {
+    for (const f of printer.tempFiles) {
+      try { await fsPromises.unlink(f); } catch {}
+    }
+  } catch (e) {}
+}
+
+cli().catch(err => {
+  console.error('❌ CLI runtime error:', err);
+});
