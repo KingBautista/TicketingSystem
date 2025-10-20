@@ -1,0 +1,19 @@
+
+================================
+           LONG TEXT TEST
+================================
+
+This is a very long line that
+should be wrapped to fit within
+80mm width and not overflow to
+the next line. It should be
+properly formatted.
+
+Another very long line with lots
+of text that should be wrapped
+properly to fit within the 80mm
+thermal printer width.
+
+================================
+
+

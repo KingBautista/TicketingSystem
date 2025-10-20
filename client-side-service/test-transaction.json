@@ -1,0 +1,14 @@
+{
+  "transactionId": 999,
+  "promoterName": "Test Promoter",
+  "rateName": "Regular Ticket",
+  "quantity": 1,
+  "total": "100.00",
+  "paidAmount": "100.00",
+  "change": "0.00",
+  "cashierName": "Test Cashier",
+  "sessionId": "TEST-001",
+  "discounts": [],
+  "tickets": ["QR-TEST-001", "QR-TEST-002"],
+  "createdAt": "2025-01-27T10:30:00Z"
+}
