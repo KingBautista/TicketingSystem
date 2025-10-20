@@ -5,6 +5,7 @@
 /public/storage
 /storage/*.key
 /vendor
+/client-side-service
 .env
 .env.backup
 .env.production

@@ -153,6 +153,28 @@ export class PrinterConnectionDebugger {
     }
 
     /**
+     * Test printer re-detection
+     */
+    async testPrinterRedetection() {
+        console.log('\n🔄 Testing Printer Re-detection...');
+        try {
+            const result = await this.deploymentChecker.executeRequest('/printer/redetect', { method: 'POST' });
+            if (result.success) {
+                console.log('✅ Printer re-detection successful');
+                console.log('📊 New port:', result.data.port);
+                console.log('📋 Message:', result.data.message);
+                return result;
+            } else {
+                console.log('❌ Printer re-detection failed:', result.error);
+                return result;
+            }
+        } catch (error) {
+            console.log('❌ Printer re-detection error:', error.message);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
      * Get service configuration info
      */
     getServiceInfo() {

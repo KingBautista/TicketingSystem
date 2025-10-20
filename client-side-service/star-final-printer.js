@@ -5,68 +5,157 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import QRCode from 'qrcode';
+import { printerDetector } from './printer-detector.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class StarBSC10Printer {
   constructor() {
-    this.printerName = 'Star BSC10'; // Default printer name
-    this.usbPort = null; // Will be auto-detected
+    this.printerName = 'Star BSC10';
+    this.detector = printerDetector;
+    this.workingPort = null;
     console.log('🔍 Creating Final Star BSC10 Printer (RAW mode)...');
-    this.detectUsbPort();
+    
+    // Initialize printer detection
+    this.initializePrinter();
   }
 
-  // Auto-detect USB port and printer name
-  detectUsbPort() {
-    // Test with USB001 to verify port detection is working
-    this.printerName = 'POS-80';
-    this.usbPort = 'USB001'; // Testing with USB001
-    console.log(`🧪 Testing with USB001 - Using configured printer: ${this.printerName} on ${this.usbPort}`);
-    
-    // Optional: Try to verify the printer exists
+  /**
+   * Initialize printer detection
+   */
+  async initializePrinter() {
     try {
-      const { execSync } = require('child_process');
-      execSync('powershell -Command "Get-WmiObject -Class Win32_Printer | Where-Object {$_.Name -eq \'POS-80\'}"', { encoding: 'utf8' });
-      console.log(`✅ Printer ${this.printerName} verified in Windows`);
+      const result = await this.detector.initialize();
+      if (result.success) {
+        this.workingPort = result.port;
+        console.log(`✅ Printer initialized on port: ${this.workingPort}`);
+      } else {
+        console.log(`⚠️ Printer detection failed: ${result.message}`);
+        this.workingPort = null; // Reset port if detection failed
+      }
     } catch (error) {
-      console.log(`⚠️ Could not verify printer ${this.printerName}, but will try to use it anyway`);
+      console.log(`⚠️ Printer initialization error: ${error.message}`);
+      this.workingPort = null; // Reset port on error
     }
+  }
+
+  /**
+   * Force re-detection of printer port
+   */
+  async redetectPrinter() {
+    console.log('🔄 Re-detecting printer port...');
+    this.workingPort = null; // Clear current port
+    await this.initializePrinter();
+    return this.workingPort;
   }
 
   // -------------------------
   // RAW ESC/POS printing (for bold text, formatting)
   // -------------------------
-  printRaw(buffer) {
+  async printRaw(buffer) {
+    console.log(`🖨️ Sending RAW data to printer: ${this.printerName}`);
+    
+    try {
+      // Use the detected working port
+      if (this.workingPort) {
+        console.log(`🔍 Using detected port: ${this.workingPort}`);
+        try {
+          await this.detector.printToWorkingPort(buffer);
+          return; // Success!
+        } catch (portError) {
+          console.log(`⚠️ Port ${this.workingPort} failed, re-detecting...`);
+          this.workingPort = null; // Clear failed port
+        }
+      }
+      
+      // Try to detect port again (or for first time)
+      console.log('🔍 Detecting printer port...');
+      const result = await this.detector.initialize();
+      if (result.success) {
+        this.workingPort = result.port;
+        console.log(`✅ Found new working port: ${this.workingPort}`);
+        try {
+          await this.detector.printToWorkingPort(buffer);
+          return; // Success!
+        } catch (detectionError) {
+          console.log(`⚠️ Detected port ${this.workingPort} also failed, trying fallback...`);
+        }
+      }
+      
+      // Final fallback: try all common ports
+      console.log('🔄 Trying fallback method with all ports...');
+      await this.printRawFallback(buffer);
+      
+    } catch (error) {
+      console.error('❌ All print methods failed:', error.message);
+      // Try one more time with fallback
+      await this.printRawFallback(buffer);
+    }
+  }
+
+  /**
+   * Fallback printing method - tries all possible ports
+   */
+  async printRawFallback(buffer) {
     const tempFile = path.join(__dirname, 'raw_print.bin');
     fs.writeFileSync(tempFile, buffer, 'binary');
     
-    // Try direct USB port first, then fallback to share
-    const directCmd = `copy /B "${tempFile}" "${this.usbPort || 'USB001'}"`;
+    // Try all possible USB ports
+    const allPorts = ['USB001', 'USB002', 'USB003', 'USB004', 'USB005', 'USB006', 'USB007', 'USB008'];
     const shareCmd = `copy /B "${tempFile}" "\\\\localhost\\${this.printerName}"`;
     
-    console.log(`🖨️ Sending RAW data to printer: ${this.printerName}`);
+    console.log('🔄 Trying all USB ports systematically...');
     
-    // Try direct USB port first
-    exec(directCmd, (error, stdout, stderr) => {
-      if (error) {
-        console.log(`⚠️ Direct USB print failed, trying printer share...`);
-        // Fallback to printer share
-        exec(shareCmd, (error2, stdout2, stderr2) => {
-          if (error2) {
-            console.error('❌ Both direct USB and share print failed:', error2.message);
-            console.error('💡 Try enabling printer sharing or check printer connection');
-          } else {
-            console.log('✅ Raw data sent to printer via share');
-          }
+    for (const port of allPorts) {
+      try {
+        const directCmd = `copy /B "${tempFile}" "${port}"`;
+        console.log(`🔄 Testing port: ${port}`);
+        
+        const success = await new Promise((resolve) => {
+          exec(directCmd, (error, stdout, stderr) => {
+            if (!error) {
+              console.log(`✅ SUCCESS! Printer found on port: ${port}`);
+              console.log(`📱 Output: ${stdout}`);
+              resolve(true);
+            } else {
+              console.log(`❌ Port ${port} failed: ${error.message}`);
+              resolve(false);
+            }
+          });
+        });
+        
+        if (success) {
+          // Update the working port for future use
+          this.workingPort = port;
+          console.log(`🎯 Updated working port to: ${port}`);
+          
           // Clean up temp file
           try { fs.unlinkSync(tempFile); } catch {}
-        });
-      } else {
-        console.log('✅ Raw data sent to printer via direct USB');
+          return;
+        }
+        
+      } catch (error) {
+        console.log(`❌ Port ${port} error: ${error.message}`);
+      }
+    }
+    
+    // Final fallback: try printer share
+    console.log('🔄 Trying printer share as last resort...');
+    return new Promise((resolve) => {
+      exec(shareCmd, (error, stdout, stderr) => {
+        if (error) {
+          console.error('❌ All print methods failed:', error.message);
+          console.error('💡 Check printer connection and USB port');
+          console.error('💡 Try moving printer to different USB port');
+          resolve(false);
+        } else {
+          console.log('✅ Raw data sent to printer via share');
+          resolve(true);
+        }
         // Clean up temp file
         try { fs.unlinkSync(tempFile); } catch {}
-      }
+      });
     });
   }
 
@@ -79,7 +168,7 @@ export class StarBSC10Printer {
     
     // Try PowerShell first, then fallback to direct USB
     const psCmd = `powershell -Command "Get-Content '${tempFile}' -Raw | Out-Printer -Name '${this.printerName}'"`;
-    const directCmd = `copy /B "${tempFile}" "${this.usbPort || 'USB001'}"`;
+    const directCmd = `copy /B "${tempFile}" "USB001"`;
     
     console.log(`🖨️ Printing text: ${text.substring(0, 50)}...`);
     
