@@ -93,7 +93,7 @@ export class StarBSC10Printer {
     // Add printer initialization sequence for Star BSC10
     const initSequence = Buffer.from([
       0x1B, 0x40,  // Initialize printer
-      0x1B, 0x61, 0x00,  // Left align
+      0x1B, 0x61, 0x01,  // Center align
       0x1B, 0x45, 0x00,  // Normal text
       0x1D, 0x21, 0x00,  // Normal size
     ]);
@@ -131,9 +131,17 @@ $font = New-Object System.Drawing.Font("Consolas",8)
 
 $doc.add_PrintPage({
   param($sender, $e)
+  # Set margins for 80mm paper (3.15 inches)
+  $e.PageSettings.Margins.Left = 0.1
+  $e.PageSettings.Margins.Right = 0.1
+  $e.PageSettings.Margins.Top = 0.1
+  $e.PageSettings.Margins.Bottom = 0.1
   $bounds = $e.MarginBounds
-  # print text in the printable area - left align
-  $point = New-Object System.Drawing.PointF($bounds.X, $bounds.Y)
+  # center text for 80mm paper
+  $pageWidth = $bounds.Width
+  $textWidth = $e.Graphics.MeasureString($text, $font).Width
+  $x = [int](($pageWidth - $textWidth) / 2)
+  $point = New-Object System.Drawing.PointF($x, $bounds.Y)
   $e.Graphics.DrawString($text, $font, [System.Drawing.Brushes]::Black, $point)
   $null
 })
@@ -278,8 +286,17 @@ $font = New-Object System.Drawing.Font("Consolas",9)
 
 $doc.add_PrintPage({
   param($sender, $e)
+  # Set margins for 80mm paper (3.15 inches)
+  $e.PageSettings.Margins.Left = 0.1
+  $e.PageSettings.Margins.Right = 0.1
+  $e.PageSettings.Margins.Top = 0.1
+  $e.PageSettings.Margins.Bottom = 0.1
   $bounds = $e.MarginBounds
-  $point = New-Object System.Drawing.PointF($bounds.X, $bounds.Y)
+  # center text for 80mm paper
+  $pageWidth = $bounds.Width
+  $textWidth = $e.Graphics.MeasureString($text, $font).Width
+  $x = [int](($pageWidth - $textWidth) / 2)
+  $point = New-Object System.Drawing.PointF($x, $bounds.Y)
   $e.Graphics.DrawString($text, $font, [System.Drawing.Brushes]::Black, $point)
 })
 

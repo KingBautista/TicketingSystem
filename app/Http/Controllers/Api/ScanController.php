@@ -230,7 +230,7 @@ class ScanController extends BaseController
             // Failure response format for KQT300 device
             $responseData = [
                 'resultCode' => '0001', // 0001 = do not open door
-                'wavFileName' => '', // Play error sound (2.wav)
+                'wavFileName' => '2', // Play error sound (2.wav)
                 'msg' => $errorMessage ?: 'Access Denied',
                 'msgTimeout' => 3000
             ];
