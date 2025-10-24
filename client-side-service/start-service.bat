@@ -8,7 +8,7 @@ echo ========================================
 echo.
 echo Computer: %COMPUTERNAME%
 echo Service: Printer + Display + PD300
-echo Port: 4000
+echo Port: 3001
 echo.
 
 REM Check if Node.js is installed
@@ -45,9 +45,9 @@ if %errorlevel% neq 0 (
 
 echo.
 echo Service will be available at:
-echo   http://localhost:4000
-echo   http://%COMPUTERNAME%:4000
-echo   http://192.168.0.176:4000
+echo   http://localhost:3001
+echo   http://%COMPUTERNAME%:3001
+echo   http://192.168.0.88:3001
 echo   (Network IP will be detected automatically)
 echo.
 echo Press Ctrl+C to stop the service

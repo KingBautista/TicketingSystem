@@ -47,6 +47,12 @@ class PromoterService extends BaseService
         )->additional(['meta' => ['all' => $allPromoters, 'trashed' => $trashedPromoters]]);
     }
 
+    public function show($id)
+    {
+        $promoter = Promoter::with('schedules')->findOrFail($id);
+        return new PromoterResource($promoter);
+    }
+
     public function schedule($promoterId, $date, $isManual = false)
     {
         return PromoterSchedule::create([

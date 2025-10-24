@@ -269,48 +269,70 @@ try {
     const tempFile = this._tempPath('text_print.txt');
     await fsPromises.writeFile(tempFile, text, 'utf8');
 
-    // PowerShell direct text printing
+    // PowerShell direct text printing with better formatting
     const psPath = this._tempPath('print_text.ps1');
     const psScript = `
-Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName System.Windows.Forms
+      Add-Type -AssemblyName System.Drawing
+      Add-Type -AssemblyName System.Windows.Forms
 
-$printer = "${this.printerName}"
-$text = Get-Content -Path "${tempFile}" -Raw
+      $printer = "${this.printerName}"
+      $text = Get-Content -Path "${tempFile}" -Raw
 
-$doc = New-Object System.Drawing.Printing.PrintDocument
-$doc.PrinterSettings.PrinterName = $printer
-$doc.PrintController = New-Object System.Drawing.Printing.StandardPrintController
+      $doc = New-Object System.Drawing.Printing.PrintDocument
+      $doc.PrinterSettings.PrinterName = $printer
+      $doc.PrintController = New-Object System.Drawing.Printing.StandardPrintController
 
-$font = New-Object System.Drawing.Font("Consolas",9)
+      # Use a monospace font for better formatting
+      $font = New-Object System.Drawing.Font("Courier New", 8, [System.Drawing.FontStyle]::Regular)
 
-$doc.add_PrintPage({
-  param($sender, $e)
-  # Set margins for 80mm paper (3.15 inches)
-  $e.PageSettings.Margins.Left = 0.1
-  $e.PageSettings.Margins.Right = 0.1
-  $e.PageSettings.Margins.Top = 0.1
-  $e.PageSettings.Margins.Bottom = 0.1
-  $bounds = $e.MarginBounds
-  # center text for 80mm paper
-  $pageWidth = $bounds.Width
-  $textWidth = $e.Graphics.MeasureString($text, $font).Width
-  $x = [int](($pageWidth - $textWidth) / 2)
-  $point = New-Object System.Drawing.PointF($x, $bounds.Y)
-  $e.Graphics.DrawString($text, $font, [System.Drawing.Brushes]::Black, $point)
-})
+      $doc.add_PrintPage({
+        param($sender, $e)
+        # Set small margins for 80mm thermal paper (hundredths of an inch)
+        $e.PageSettings.Margins.Left = 5
+        $e.PageSettings.Margins.Right = 5
+        $e.PageSettings.Margins.Top = 5
+        $e.PageSettings.Margins.Bottom = 5
+        
+        $bounds = $e.MarginBounds
+        
+        # Centered text formatting
+        $sf = New-Object System.Drawing.StringFormat
+        $sf.Alignment = [System.Drawing.StringAlignment]::Center
+        $sf.LineAlignment = [System.Drawing.StringAlignment]::Near
+        
+        # Choose a monospace font size to fit 48 columns across the printable width
+        $fontSize = 9
+        $workingFont = New-Object System.Drawing.Font("Courier New", $fontSize, [System.Drawing.FontStyle]::Regular)
+        try {
+          while (($e.Graphics.MeasureString(("W" * 48), $workingFont).Width -gt $bounds.Width) -and ($fontSize -gt 6)) {
+            $workingFont.Dispose()
+            $fontSize--
+            $workingFont = New-Object System.Drawing.Font("Courier New", $fontSize, [System.Drawing.FontStyle]::Regular)
+          }
+        } catch {}
+        
+        $y = $bounds.Y
+        $lineHeight = [int]$workingFont.GetHeight($e.Graphics)
+        
+        # Split text into lines and draw each line centered within the width
+        $lines = $text -split [Environment]::NewLine
+        foreach ($line in $lines) {
+          $rect = New-Object System.Drawing.RectangleF($bounds.X, $y, $bounds.Width, $lineHeight)
+          $e.Graphics.DrawString($line, $workingFont, [System.Drawing.Brushes]::Black, $rect, $sf)
+          $y += $lineHeight
+        }
+      })
 
-try {
-  $doc.Print()
-} catch {
-  Write-Error $_.Exception.Message
-  exit 1
-}
-`;
+      try {
+        $doc.Print()
+      } catch {
+        Write-Error $_.Exception.Message
+        exit 1
+      }`;
     await fsPromises.writeFile(psPath, psScript, 'utf8');
 
     const cmd = `powershell -ExecutionPolicy Bypass -File "${psPath}"`;
-    console.log('🖨️ Sending text to printer via PowerShell...');
+    console.log('🖨️ Sending formatted text to printer via PowerShell...');
     const success = await new Promise((resolve) => {
       exec(cmd, { windowsHide: true }, async (error, stdout, stderr) => {
       if (error) {
@@ -381,48 +403,47 @@ try {
       // create PS1 script to print image centered and scaled to 80mm width
       const psPath = this._tempPath('print_qr.ps1');
       const safeImg = tempImage.replace(/'/g, "''");
-    const psScript = `
-      Add-Type -AssemblyName System.Drawing
-        Add-Type -AssemblyName System.Windows.Forms
-        $printer = "${this.printerName}"
-        $imagePath = "${safeImg}"
+      const psScript = `
+        Add-Type -AssemblyName System.Drawing
+          Add-Type -AssemblyName System.Windows.Forms
+          $printer = "${this.printerName}"
+          $imagePath = "${safeImg}"
 
-        $image = [System.Drawing.Image]::FromFile($imagePath)
-        $doc = New-Object System.Drawing.Printing.PrintDocument
-        $doc.PrinterSettings.PrinterName = $printer
-        $doc.PrintController = New-Object System.Drawing.Printing.StandardPrintController
+          $image = [System.Drawing.Image]::FromFile($imagePath)
+          $doc = New-Object System.Drawing.Printing.PrintDocument
+          $doc.PrinterSettings.PrinterName = $printer
+          $doc.PrintController = New-Object System.Drawing.Printing.StandardPrintController
 
-        $doc.add_PrintPage({
-        param($sender, $e)
+          $doc.add_PrintPage({
+          param($sender, $e)
+            try {
+              # convert 20mm to inches (tiny QR code for 80mm paper)
+              $pageWidthInches = 20 / 25.4
+              $dpiX = $e.Graphics.DpiX
+              $destWidth = [int]($dpiX * $pageWidthInches)
+              # keep square QR
+              $destHeight = $destWidth
+
+              # center horizontally
+              $pageBounds = $e.PageBounds
+              $x = [int](($pageBounds.Width - $destWidth) / 2)
+              $y = 10
+
+              $e.Graphics.DrawImage($image, $x, $y, $destWidth, $destHeight)
+            } catch {
+              Write-Error $_.Exception.Message
+              exit 1
+            }
+          })
+
           try {
-            # convert 20mm to inches (tiny QR code for 80mm paper)
-            $pageWidthInches = 20 / 25.4
-            $dpiX = $e.Graphics.DpiX
-            $destWidth = [int]($dpiX * $pageWidthInches)
-            # keep square QR
-            $destHeight = $destWidth
-
-            # center horizontally
-            $pageBounds = $e.PageBounds
-            $x = [int](($pageBounds.Width - $destWidth) / 2)
-            $y = 10
-
-            $e.Graphics.DrawImage($image, $x, $y, $destWidth, $destHeight)
+            $doc.Print()
           } catch {
             Write-Error $_.Exception.Message
             exit 1
-          }
-        })
-
-        try {
-          $doc.Print()
-        } catch {
-          Write-Error $_.Exception.Message
-          exit 1
-        } finally {
-      $image.Dispose()
-        }
-        `;
+          } finally {
+            $image.Dispose()
+          }`;  
       await fsPromises.writeFile(psPath, psScript, 'utf8');
 
       const cmd = `powershell -ExecutionPolicy Bypass -File "${psPath}"`;
@@ -505,8 +526,8 @@ try {
     ].join('\n');
 
     await this.printText(text);
-    // feed and cut via ESC/POS raw to ensure cut
-    await this.printRaw(Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00])); // feed + cut
+    // Add some spacing and cut line
+    await this.printText('\n\n--- End of Ticket ---\n\n\n'); // feed + cut
   }
 
   // -------------------------
@@ -544,8 +565,8 @@ try {
         ''
       ];
       await this.printText(lines.join('\n'));
-      // cut
-      await this.printRaw(Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00]));
+      // Add some spacing and cut line
+      await this.printText('\n\n--- End of Receipt ---\n\n\n');
       console.log('✅ printReceiptSample completed');
     } catch (err) {
       console.error('❌ printReceiptSample error:', err);
@@ -631,8 +652,8 @@ try {
       ];
 
       await this.printText(receiptLines.join('\n'));
-      // cut
-      await this.printRaw(Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00]));
+      // Add some spacing and cut line
+      await this.printText('\n\n--- End of Receipt ---\n\n\n');
       console.log('✅ Transaction printed successfully');
     } catch (error) {
       console.error('❌ Error printing transaction tickets:', error?.message || error);

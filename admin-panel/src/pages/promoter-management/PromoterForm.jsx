@@ -20,7 +20,6 @@ export default function PromoterForm() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
-  const [isManual, setIsManual] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -28,10 +27,12 @@ export default function PromoterForm() {
       setIsLoading(true);
       axiosClient.get(`/promoter-management/promoters/${id}`)
         .then(({ data }) => {
+          const promoterData = data.data || data; // Handle both wrapped and direct data
+          console.log('Promoter data received:', promoterData);
           setPromoter({
-            ...data,
-            status: data.status === 'Active',
-            schedules: data.schedules || [],
+            ...promoterData,
+            status: promoterData.status === 'Active',
+            schedules: promoterData.schedules || [],
           });
           setIsLoading(false);
         })
@@ -91,7 +92,7 @@ export default function PromoterForm() {
     axiosClient.post('/promoter-management/promoters/schedule', {
       promoter_id: promoter.id,
       date: scheduleDate,
-      is_manual: isManual,
+      is_manual: false, // Always set to false since manual override is hidden
     })
       .then(({ data }) => {
         setPromoter(prev => ({
@@ -99,12 +100,36 @@ export default function PromoterForm() {
           schedules: [...(prev.schedules || []), data.schedule],
         }));
         setScheduleDate('');
-        setIsManual(false);
         toastAction.current.showToast('Schedule added.', 'success');
       })
       .catch((errors) => {
         toastAction.current.showError(errors.response);
       });
+  };
+
+  // Delete schedule from database
+  const deleteSchedule = (scheduleId) => {
+    if (window.confirm('Are you sure you want to delete this schedule?')) {
+      console.log('Deleting schedule with ID:', scheduleId);
+      
+      // Use POST method with data in body for better compatibility
+      axiosClient.post('/promoter-management/promoters/schedule/delete', {
+        schedule_id: scheduleId
+      })
+        .then(({ data }) => {
+          console.log('Delete response:', data);
+          // Remove the schedule from local state
+          setPromoter(prev => ({
+            ...prev,
+            schedules: (prev.schedules || []).filter(s => s.id !== scheduleId),
+          }));
+          toastAction.current.showToast('Schedule deleted successfully.', 'success');
+        })
+        .catch((errors) => {
+          console.error('Delete error:', errors);
+          toastAction.current.showError(errors.response);
+        });
+    }
   };
 
   // Remove schedule date (local only, for new unsaved schedules)
@@ -167,7 +192,7 @@ export default function PromoterForm() {
             inputClass="col-sm-12 col-md-9"
           />
           <div className="row mb-3 align-items-end">
-            <div className="col-md-3">
+            <div className="col-md-6">
               <label className="form-label">Add Schedule Date</label>
               <input
                 type="date"
@@ -176,20 +201,14 @@ export default function PromoterForm() {
                 onChange={ev => setScheduleDate(ev.target.value)}
               />
             </div>
-            <div className="col-md-3">
-              <label className="form-label">Manual Override</label>
-              <input
-                type="checkbox"
-                className="form-check-input ms-2"
-                checked={isManual}
-                onChange={() => setIsManual(!isManual)}
-              />
-            </div>
-            <div className="col-md-3">
-              <button type="button" className="btn btn-success" onClick={addSchedule} disabled={!promoter.id || !scheduleDate}>
-                <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
-                Add Schedule
-              </button>
+            <div className="col-md-6">
+              <label className="form-label">&nbsp;</label>
+              <div>
+                <button type="button" className="btn btn-success" onClick={addSchedule} disabled={!promoter.id || !scheduleDate}>
+                  <FontAwesomeIcon icon={solidIconMap.plus} className="me-2" />
+                  Add Schedule
+                </button>
+              </div>
             </div>
           </div>
           <div className="mb-3">
@@ -198,9 +217,19 @@ export default function PromoterForm() {
               {(promoter.schedules || []).length === 0 && <li className="list-group-item">No schedules set.</li>}
               {(promoter.schedules || []).map(s => (
                 <li className="list-group-item d-flex justify-content-between align-items-center" key={s.id || s.date}>
-                  {s.date} {s.is_manual ? <span className="badge bg-warning ms-2">Manual</span> : ''}
-                  {/* Optionally, add remove button for unsaved schedules */}
-                  {/* <button className="btn btn-danger" onClick={() => removeSchedule(s.date)}>Remove</button> */}
+                  <div>
+                    <strong>{s.date}</strong>
+                  </div>
+                  {s.id && (
+                    <button 
+                      type="button" 
+                      className="btn btn-danger btn-sm" 
+                      onClick={() => deleteSchedule(s.id)}
+                      title="Delete this schedule"
+                    >
+                      <FontAwesomeIcon icon={solidIconMap.trash} />
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

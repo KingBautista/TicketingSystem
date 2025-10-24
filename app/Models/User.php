@@ -84,7 +84,7 @@ class User extends Authenticatable
 		'user_role',
 	];
 
-	public function getUserMetas()
+	public function userMetas()
 	{   
 		return $this->hasMany('App\Models\UserMeta', 'user_id', 'id');
 	}
@@ -123,7 +123,7 @@ class User extends Authenticatable
 	****************************************/
 	public function getUserDetailsAttribute()
 	{
-		return $this->getUserMetas()->pluck('meta_value', 'meta_key')->toArray();
+		return $this->userMetas()->pluck('meta_value', 'meta_key')->toArray();
 	}
 
 	public function getUserRoleAttribute()

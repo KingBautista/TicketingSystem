@@ -207,6 +207,7 @@ Route::middleware('auth:sanctum')->group(function () {
 			Route::delete('/{id}', [PromoterController::class, 'destroy'])->where('id', '[0-9]+');
 			Route::post('/schedule', [PromoterController::class, 'schedule']);
 			Route::post('/manual-update', [PromoterController::class, 'manualUpdate']);
+			Route::post('/schedule/delete', [PromoterController::class, 'deleteSchedule']);
 			Route::post('/bulk/delete', [PromoterController::class, 'bulkDelete']);
 			Route::post('/bulk/restore', [PromoterController::class, 'bulkRestore']);
 			Route::post('/bulk/force-delete', [PromoterController::class, 'bulkForceDelete']);
@@ -224,6 +225,9 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/sales', [SalesReportController::class, 'index']);
 		Route::post('/sales/export', [SalesReportController::class, 'export']);
 		Route::get('/sales/statistics', [SalesReportController::class, 'statistics']);
+		// Closing Reports Routes
+		Route::get('/closing', [SalesReportController::class, 'closing']);
+		Route::post('/closing/export', [SalesReportController::class, 'exportClosing']);
 	});
 
 	// Cashier Routes

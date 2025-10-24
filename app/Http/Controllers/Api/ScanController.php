@@ -142,7 +142,7 @@ class ScanController extends BaseController
                     }
                     
                     // Check VIP table
-                    $vip = \App\Models\VIP::where('card_number', $convertedCode)->first();
+                    $vip = \App\Models\VIP::where('card_number', $convertedCode)->where('is_active', 1)->first();
                     
                     if ($vip) {
                         // Check validity period

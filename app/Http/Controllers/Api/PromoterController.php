@@ -243,6 +243,21 @@ class PromoterController extends BaseController
         }
     }
 
+    public function deleteSchedule(Request $request)
+    {
+        try {
+            $scheduleId = $request->input('schedule_id');
+            $schedule = PromoterSchedule::findOrFail($scheduleId);
+            $schedule->delete();
+            
+            $this->logAudit('DELETE', "Deleted promoter schedule ID: {$scheduleId}");
+            
+            return response()->json(['message' => 'Schedule deleted successfully.']);
+        } catch (\Exception $e) {
+            return $this->messageService->responseError();
+        }
+    }
+
     public function getPromoterOfTheDay(Request $request)
     {
         try {

@@ -36,9 +36,11 @@ export default function UserForm() {
       setIsLoading(true);
       axiosClient.get(`/user-management/users/${id}`)
         .then(({ data }) => {
-          setUser(data);
+          const userData = data.data || data; // Handle both wrapped and direct data
+          console.log('User data received:', userData);
+          setUser(userData);
           setIsLoading(false);
-          setIsActive(data.user_status === 'Inactive' ? false : true);
+          setIsActive(userData.user_status === true || userData.user_status === 1);
         })
         .catch((errors) => {
           toastAction.current.showError(errors.response);

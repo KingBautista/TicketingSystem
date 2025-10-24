@@ -19,6 +19,16 @@ class CashierSession extends Model
         'status',
     ];
 
+    protected $casts = [
+        'opened_at' => 'datetime',
+        'closed_at' => 'datetime',
+    ];
+
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'cashier_id');
+    }
+
     public function transactions()
     {
         return $this->hasMany(CashierTransaction::class, 'session_id');

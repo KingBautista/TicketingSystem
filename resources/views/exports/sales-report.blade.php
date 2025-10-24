@@ -130,16 +130,33 @@
         </thead>
         <tbody>
             @forelse($transactions as $transaction)
+                @php
+                    // Get cashier full name (matching SalesReportResource logic)
+                    $cashierName = 'Unknown';
+                    if ($transaction->cashier) {
+                        $userDetails = $transaction->cashier->user_details;
+                        if (isset($userDetails['first_name']) || isset($userDetails['last_name'])) {
+                            $firstName = $userDetails['first_name'] ?? '';
+                            $lastName = $userDetails['last_name'] ?? '';
+                            $cashierName = trim($firstName . ' ' . $lastName);
+                        }
+                        
+                        // Fallback to user_login if no name is set
+                        if (empty($cashierName)) {
+                            $cashierName = $transaction->cashier->user_login;
+                        }
+                    }
+                @endphp
                 <tr>
-                    <td>{{ $transaction->id }}</td>
-                    <td>{{ $transaction->cashier_name ?? 'Unknown' }}</td>
+                    <td>{{ str_pad($transaction->id, 10, '0', STR_PAD_LEFT) }}</td>
+                    <td>{{ $cashierName }}</td>
                     <td>{{ $transaction->promoter_name ?? 'N/A' }}</td>
                     <td>{{ $transaction->rate_name ?? 'N/A' }}</td>
                     <td class="text-center">{{ $transaction->quantity }}</td>
                     <td class="text-right">{{ number_format($transaction->total, 2) }}</td>
                     <td class="text-right">{{ number_format($transaction->paid_amount, 2) }}</td>
                     <td class="text-right">{{ number_format($transaction->change, 2) }}</td>
-                    <td>{{ \Carbon\Carbon::parse($transaction->created_at)->format('Y-m-d H:i:s') }}</td>
+                    <td>{{ \Carbon\Carbon::parse($transaction->created_at)->format('Y-m-d') }}</td>
                 </tr>
             @empty
                 <tr>

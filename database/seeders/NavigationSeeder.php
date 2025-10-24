@@ -149,6 +149,14 @@ class NavigationSeeder extends Seeder
                 'active' => 1,
                 'show_in_menu' => 1
             ],
+            [
+                'name' => 'Closing Reports',
+                'slug' => 'reports/closing',
+                'icon' => 'fi-br-chart-line',
+                'parent_id' => $parents['reports']->id,
+                'active' => 1,
+                'show_in_menu' => 1
+            ],
 
             // Cashier Portal (standalone)
             // [

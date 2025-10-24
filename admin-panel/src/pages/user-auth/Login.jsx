@@ -249,11 +249,6 @@ export default function Login() {
 									}}
 								/>
 							</div>
-							
-							{/* Welcome Text */}
-							<h2 className="fw-bold mb-2 text-white" style={{ fontSize: '2.2rem' }}>
-								Welcome to HITEC
-							</h2>
 						</div>
 					</div>
 				</div>
