@@ -50,4 +50,5 @@ class CreateNavigationsTable extends Migration
     // Drop the table
     Schema::dropIfExists('navigations');
   }
+  
 }
