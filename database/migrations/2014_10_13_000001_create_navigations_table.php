@@ -44,15 +44,23 @@ class CreateNavigationsTable extends Migration
   {
     // First, drop the foreign key constraint from role_permissions that references navigations
     if (Schema::hasTable('role_permissions')) {
-      Schema::table('role_permissions', function (Blueprint $table) {
-        $table->dropForeign(['navigation_id']);
-      });
+      try {
+        Schema::table('role_permissions', function (Blueprint $table) {
+          $table->dropForeign(['navigation_id']);
+        });
+      } catch (Exception $e) {
+        // Constraint doesn't exist, continue
+      }
     }
 
     // Drop the foreign key constraint if it exists
-    Schema::table('navigations', function (Blueprint $table) {
-      $table->dropForeign(['parent_id']);
-    });
+    try {
+      Schema::table('navigations', function (Blueprint $table) {
+        $table->dropForeign(['parent_id']);
+      });
+    } catch (Exception $e) {
+      // Constraint doesn't exist, continue
+    }
 
     // Drop the table
     Schema::dropIfExists('navigations');

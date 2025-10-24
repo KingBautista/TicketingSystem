@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -32,12 +33,30 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Drop foreign key constraints first
-        Schema::table('role_permissions', function (Blueprint $table) {
-            $table->dropForeign(['role_id']);
-            $table->dropForeign(['navigation_id']);
-            $table->dropForeign(['permission_id']);
-        });
+        // Drop foreign key constraints first if they exist
+        try {
+            Schema::table('role_permissions', function (Blueprint $table) {
+                $table->dropForeign(['role_id']);
+            });
+        } catch (Exception $e) {
+            // Constraint doesn't exist, continue
+        }
+        
+        try {
+            Schema::table('role_permissions', function (Blueprint $table) {
+                $table->dropForeign(['navigation_id']);
+            });
+        } catch (Exception $e) {
+            // Constraint doesn't exist, continue
+        }
+        
+        try {
+            Schema::table('role_permissions', function (Blueprint $table) {
+                $table->dropForeign(['permission_id']);
+            });
+        } catch (Exception $e) {
+            // Constraint doesn't exist, continue
+        }
         
         Schema::dropIfExists('role_permissions');
     }
