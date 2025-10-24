@@ -32,6 +32,13 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Drop foreign key constraints first
+        Schema::table('role_permissions', function (Blueprint $table) {
+            $table->dropForeign(['role_id']);
+            $table->dropForeign(['navigation_id']);
+            $table->dropForeign(['permission_id']);
+        });
+        
         Schema::dropIfExists('role_permissions');
     }
 }; 
