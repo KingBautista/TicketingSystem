@@ -14,8 +14,9 @@ class CreateNavigationsTable extends Migration
    */
   public function up()
   {
-    // Create the 'navigations' table
-    Schema::create('navigations', function (Blueprint $table) {
+    // Create the 'navigations' table if it doesn't exist
+    if (!Schema::hasTable('navigations')) {
+      Schema::create('navigations', function (Blueprint $table) {
       $table->engine = 'InnoDB';
       $table->bigIncrements('id');
       $table->string('name'); // Name of the navigation item
@@ -32,7 +33,8 @@ class CreateNavigationsTable extends Migration
             ->references('id')
             ->on('navigations')
             ->onDelete('cascade'); // Cascade delete for child records
-    });
+      });
+    }
   }
 
   /**
@@ -53,7 +55,7 @@ class CreateNavigationsTable extends Migration
       }
     }
 
-    // Drop the foreign key constraint if it exists
+    // Drop the self-referencing foreign key constraint first
     try {
       Schema::table('navigations', function (Blueprint $table) {
         $table->dropForeign(['parent_id']);
