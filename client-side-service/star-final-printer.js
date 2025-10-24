@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 export class StarBSC10Printer {
   constructor(options = {}) {
-    this.printerName = options.printerName || 'Star BSC10';
+    this.printerName = options.printerName || 'StarBSC10';
     this.detector = printerDetector;
     this.workingPort = null;
     this.tempFiles = new Set();
@@ -79,185 +79,33 @@ export class StarBSC10Printer {
   async printRaw(buffer) {
     console.log(`🖨️ printRaw invoked — buffer ${buffer.length} bytes`);
 
-    // Ensure ESC/POS width enforcement at start
-    // Prepend init and width, only if not present
-    let outBuffer = buffer;
-
-    // If buffer doesn't start with init (0x1B 0x40), prepend it
-    if (!(buffer[0] === 0x1B && buffer[1] === 0x40)) {
-      outBuffer = Buffer.concat([Buffer.from([0x1B, 0x40]), this.esc80mmCommand, buffer]);
-            } else {
-      outBuffer = Buffer.concat([buffer.slice(0, 2), this.esc80mmCommand, buffer.slice(2)]);
-    }
-
-    // Add printer initialization sequence for Star BSC10
-    const initSequence = Buffer.from([
-      0x1B, 0x40,  // Initialize printer
-      0x1B, 0x61, 0x01,  // Center align
-      0x1B, 0x45, 0x00,  // Normal text
-      0x1D, 0x21, 0x00,  // Normal size
-    ]);
-    
-    outBuffer = Buffer.concat([initSequence, outBuffer]);
-
-    // Try PowerShell byte printing (Out-Printer expects objects; we'll write bytes to file then send via PrintDocument)
+    // Use the old working method: copy /B to printer share
     const tempFile = this._tempPath('raw_print.bin');
     try {
-      await fsPromises.writeFile(tempFile, outBuffer, { encoding: 'binary' });
-
-      const psPath = this._tempPath('print_raw_bytes.ps1');
-      const psScript = `
-Add-Type -AssemblyName System.Drawing
-Add-Type -AssemblyName System.Windows.Forms
-
-$printer = "${this.printerName}"
-$imageBytes = [System.IO.File]::ReadAllBytes("${tempFile.replace(/'/g, "''")}")
-
-# We'll write bytes to a MemoryStream and render them as text using a fixed-width font on the page.
-$ms = New-Object System.IO.MemoryStream(, $imageBytes)
-
-# Convert to string (assume ascii/utf8 where printable)
-try {
-  $text = [System.Text.Encoding]::ASCII.GetString($imageBytes)
-} catch {
-  $text = [System.Text.Encoding]::UTF8.GetString($imageBytes)
-}
-
-$doc = New-Object System.Drawing.Printing.PrintDocument
-$doc.PrinterSettings.PrinterName = $printer
-$doc.PrintController = New-Object System.Drawing.Printing.StandardPrintController
-
-$font = New-Object System.Drawing.Font("Consolas",8)
-
-$doc.add_PrintPage({
-  param($sender, $e)
-  # Set margins for 80mm paper (3.15 inches)
-  $e.PageSettings.Margins.Left = 0.1
-  $e.PageSettings.Margins.Right = 0.1
-  $e.PageSettings.Margins.Top = 0.1
-  $e.PageSettings.Margins.Bottom = 0.1
-  $bounds = $e.MarginBounds
-  # center text for 80mm paper
-  $pageWidth = $bounds.Width
-  $textWidth = $e.Graphics.MeasureString($text, $font).Width
-  $x = [int](($pageWidth - $textWidth) / 2)
-  $point = New-Object System.Drawing.PointF($x, $bounds.Y)
-  $e.Graphics.DrawString($text, $font, [System.Drawing.Brushes]::Black, $point)
-  $null
-})
-
-try {
-  $doc.Print()
-} catch {
-  Write-Error $_.Exception.Message
-  exit 1
-}
-`;
-
-      await fsPromises.writeFile(psPath, psScript, 'utf8');
-
-      const cmd = `powershell -ExecutionPolicy Bypass -File "${psPath}"`;
-      console.log('📤 Executing PowerShell raw byte print...');
-    const psSuccess = await new Promise((resolve) => {
-        exec(cmd, { windowsHide: true }, (error, stdout, stderr) => {
+      await fsPromises.writeFile(tempFile, buffer, { encoding: 'binary' });
+      
+      // Use copy /B to send raw binary to printer share (like the old working method)
+      const cmd = `copy /B "${tempFile}" "\\\\localhost\\${this.printerName}"`;
+      
+      console.log(`🖨️ Sending RAW data to printer: ${this.printerName}`);
+      const result = await new Promise((resolve) => {
+        exec(cmd, (error, stdout, stderr) => {
           if (error) {
-            console.log('⚠️ PowerShell raw print failed:', error.message);
+            console.error('❌ Raw print error:', error.message);
             resolve(false);
           } else {
-            console.log('✅ PowerShell raw print likely succeeded');
+            console.log('✅ Raw data sent to printer');
             resolve(true);
           }
+          // Clean up temp file
+          try { fs.unlinkSync(tempFile); } catch {}
         });
       });
-      
-      // cleanup
-      await this._cleanupTemp(tempFile);
-      await this._cleanupTemp(psPath);
 
-      if (psSuccess) return true;
+      return result;
     } catch (error) {
-      console.warn('⚠️ printRaw PowerShell attempt failed:', error?.message || error);
+      console.error('❌ Error in printRaw:', error);
       try { await this._cleanupTemp(tempFile); } catch {}
-    }
-
-    // Fallback: try copying to known USB ports or printer share
-    const fallbackTemp = this._tempPath('raw_print_fallback.bin');
-    await fsPromises.writeFile(fallbackTemp, outBuffer, 'binary');
-
-    // Use the working port first if available
-    if (this.workingPort) {
-      try {
-        const copyCmd = `copy /B "${fallbackTemp}" "${this.workingPort}"`;
-        console.log(`🔄 Using working port: ${this.workingPort}`);
-        console.log(`📤 Executing: ${copyCmd}`);
-        const ok = await new Promise((resolve) => {
-          exec(copyCmd, { windowsHide: true }, (error, stdout, stderr) => {
-            if (!error) {
-              console.log(`✅ Raw data sent to printer via ${this.workingPort}`);
-          resolve(true);
-            } else {
-              console.log(`❌ Working port ${this.workingPort} failed: ${error.message}`);
-              resolve(false);
-        }
-      });
-    });
-        if (ok) {
-          console.log(`🎯 Print job completed successfully!`);
-          await this._cleanupTemp(fallbackTemp);
-          return true;
-        }
-      } catch (e) {
-        console.log(`❌ Working port ${this.workingPort} error: ${e.message}`);
-      }
-    }
-
-    // Try other USB ports as fallback
-    const usbPorts = ['USB001','USB002','USB003','USB004','USB005','USB006','USB007','USB008'];
-    for (const port of usbPorts) {
-      try {
-        const copyCmd = `copy /B "${fallbackTemp}" "${port}"`;
-        console.log(`🔄 Trying copy to ${port} ...`);
-        const ok = await new Promise((resolve) => {
-          exec(copyCmd, { windowsHide: true }, (error, stdout, stderr) => {
-            if (!error) {
-              console.log(`✅ copy to ${port} succeeded`);
-              resolve(true);
-            } else {
-              // console.log(`❌ ${port} failed: ${error.message}`);
-              resolve(false);
-            }
-          });
-        });
-        if (ok) {
-          console.log(`🎯 Print job completed successfully!`);
-          await this._cleanupTemp(fallbackTemp);
-          return true;
-        }
-      } catch (e) {
-        // continue
-      }
-    }
-
-    // Final fallback: try share
-    try {
-      const shareCmd = `copy /B "${fallbackTemp}" "\\\\localhost\\${this.printerName}"`;
-      console.log('🔄 Trying printer share copy ...');
-      const shareOk = await new Promise((resolve) => {
-        exec(shareCmd, { windowsHide: true }, (error, stdout, stderr) => {
-            if (!error) {
-            console.log('✅ copy to share succeeded');
-          resolve(true);
-            } else {
-            console.log('❌ printer share failed:', error?.message || stderr);
-              resolve(false);
-        }
-      });
-    });
-      await this._cleanupTemp(fallbackTemp);
-      return shareOk;
-    } catch (e) {
-      console.error('❌ All fallback methods failed:', e?.message || e);
-      try { await this._cleanupTemp(fallbackTemp); } catch {}
       return false;
     }
   }
@@ -301,7 +149,7 @@ try {
         $sf.LineAlignment = [System.Drawing.StringAlignment]::Near
         
         # Choose a monospace font size to fit 48 columns across the printable width
-        $fontSize = 9
+        $fontSize = 8
         $workingFont = New-Object System.Drawing.Font("Courier New", $fontSize, [System.Drawing.FontStyle]::Regular)
         try {
           while (($e.Graphics.MeasureString(("W" * 48), $workingFont).Width -gt $bounds.Width) -and ($fontSize -gt 6)) {
@@ -314,12 +162,40 @@ try {
         $y = $bounds.Y
         $lineHeight = [int]$workingFont.GetHeight($e.Graphics)
         
-        # Split text into lines and draw each line centered within the width
+        # Split text into lines and handle each line appropriately
         $lines = $text -split [Environment]::NewLine
         foreach ($line in $lines) {
-          $rect = New-Object System.Drawing.RectangleF($bounds.X, $y, $bounds.Width, $lineHeight)
-          $e.Graphics.DrawString($line, $workingFont, [System.Drawing.Brushes]::Black, $rect, $sf)
-          $y += $lineHeight
+          # Handle different line types
+          if ($line.Trim() -eq "") {
+            # Empty line - just add spacing
+            $y += $lineHeight
+          } elseif ($line.Trim() -eq "OPEN CASH RECEIPT" -or $line.Trim() -eq "--- End of Receipt ---") {
+            # Center these specific lines
+            $centerFormat = New-Object System.Drawing.StringFormat
+            $centerFormat.Alignment = [System.Drawing.StringAlignment]::Center
+            $centerFormat.LineAlignment = [System.Drawing.StringAlignment]::Near
+            $rect = New-Object System.Drawing.RectangleF($bounds.X, $y, $bounds.Width, $lineHeight)
+            $e.Graphics.DrawString($line.Trim(), $workingFont, [System.Drawing.Brushes]::Black, $rect, $centerFormat)
+            $y += $lineHeight
+          } elseif ($line.Contains("Cash on Hand:")) {
+            # Bold the amount for cash on hand
+            $boldFont = New-Object System.Drawing.Font("Courier New", $fontSize, [System.Drawing.FontStyle]::Bold)
+            $leftFormat = New-Object System.Drawing.StringFormat
+            $leftFormat.Alignment = [System.Drawing.StringAlignment]::Near
+            $leftFormat.LineAlignment = [System.Drawing.StringAlignment]::Near
+            $rect = New-Object System.Drawing.RectangleF($bounds.X, $y, $bounds.Width, $lineHeight)
+            $e.Graphics.DrawString($line, $boldFont, [System.Drawing.Brushes]::Black, $rect, $leftFormat)
+            $boldFont.Dispose()
+            $y += $lineHeight
+          } else {
+            # Regular left-aligned text
+            $leftFormat = New-Object System.Drawing.StringFormat
+            $leftFormat.Alignment = [System.Drawing.StringAlignment]::Near
+            $leftFormat.LineAlignment = [System.Drawing.StringAlignment]::Near
+            $rect = New-Object System.Drawing.RectangleF($bounds.X, $y, $bounds.Width, $lineHeight)
+            $e.Graphics.DrawString($line, $workingFont, [System.Drawing.Brushes]::Black, $rect, $leftFormat)
+            $y += $lineHeight
+          }
         }
       })
 
@@ -475,7 +351,7 @@ try {
   // ESC/POS QR code method (kept but not primary)
   // -------------------------
   async printQRCode(data) {
-    console.log('🖨️ printQRCode (esc/pos) fallback:', data);
+    console.log('🖨️ printQRCode (esc/pos) size 12:', data);
     // Desktop printers sometimes won't accept these in non-RAW modes; kept for compatibility
     const payload = Buffer.concat([
       Buffer.from([0x1B, 0x40]),         // init
@@ -483,9 +359,9 @@ try {
       Buffer.from([0x1B, 0x61, 0x01]),   // center align
       
       // QR code setup: store data then print
-      // Model and size
-      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x02]), // size 2 (smallest for 80mm)
-      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30]), // error correction L
+      // Model and size - even bigger size (size 12 for better visibility)
+      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x0C]), // QR code: model 2, size 12
+      Buffer.from([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30]), // error correction level L
 
       // store data
       Buffer.from([0x1D, 0x28, 0x6B, data.length + 3, 0x00, 0x31, 0x50, 0x30]),
@@ -574,91 +450,166 @@ try {
   }
 
   // -------------------------
-  // Print transaction tickets (main entry used by your service)
+  // Print Transaction Tickets (Official)
   // -------------------------
   async printTransactionTickets(transactionData) {
-    console.log('🖨️ printTransactionTickets invoked');
+    console.log('🖨️ ===== PRINT TRANSACTION TICKETS CALLED =====');
+    console.log('🖨️ Received data:', transactionData);
+    console.log(`🖨️ Printer Name: ${this.printerName}`);
+    console.log('🖨️ ===========================================');
+    
     try {
-      let data = transactionData;
-      if (typeof transactionData === 'string') {
-        data = JSON.parse(transactionData);
-      }
-
+      // Parse transaction data
+      const data = JSON.parse(transactionData);
       const {
         transactionId,
-        promoterName = 'Promoter',
-        rateName = 'Rate',
-        quantity = 1,
-        total = 0,
-        paidAmount = 0,
-        change = 0,
-        cashierName = 'cashier',
-        sessionId = '0',
-        discounts = [],
-        tickets = [],
-        createdAt = new Date().toISOString()
+        promoterName,
+        rateName,
+        quantity,
+        total,
+        paidAmount,
+        change,
+        cashierName,
+        sessionId,
+        discounts,
+        tickets, // Array of QR codes
+        createdAt
       } = data;
       
-      // print QR tickets first (image-based)
+      console.log('🖨️ Parsed transaction data:');
+      console.log('🖨️ - Transaction ID:', transactionId);
+      console.log('🖨️ - Promoter:', promoterName);
+      console.log('🖨️ - Rate:', rateName);
+      console.log('🖨️ - Quantity:', quantity);
+      console.log('🖨️ - Total: ₱' + total);
+      console.log('🖨️ - Tickets count:', tickets.length);
+      console.log('🖨️ ===========================================');
+      
+      // Helper function to add delay
+      const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+      
+      // Print individual QR code tickets first
+      console.log(`🖨️ ===== PRINTING ${tickets.length} QR CODE TICKETS =====`);
+      
       for (let i = 0; i < tickets.length; i++) {
-        const qr = tickets[i];
-        console.log(`🖨️ printing QR ticket ${i + 1} / ${tickets.length}`);
-        const ok = await this.printQRCodeAsImage(qr);
-        if (!ok) {
-          console.log('⚠️ QR image print failed — trying ESC/POS fallback');
-          await this.printQRCode(qr);
-        }
-
-        await new Promise(r => setTimeout(r, 300));
-
-        // print the ticket text below the QR
-        const ticketText = [
-          promoterName,
-          new Date(createdAt).toLocaleString(),
-          `Code: ${qr}`,
-          '',
-          'Single use only',
-          ''
-        ].join('\n');
-
-        await this.printText(ticketText);
-        await new Promise(r => setTimeout(r, 200));
+        const qrCode = tickets[i];
+        console.log(`🖨️ ===== QR TICKET ${i + 1}/${tickets.length} =====`);
+        console.log(`🖨️ QR Code: ${qrCode}`);
+        console.log(`🖨️ Calling printQRCode...`);
+        
+        // Print QR code first
+        this.printQRCode(qrCode);
+        await delay(500);
+        
+        console.log(`🖨️ QR code printed, now printing ticket format...`);
+        
+        // Print ticket format
+        const ticketBuffer = Buffer.concat([
+          Buffer.from([0x1B, 0x40]),         // init
+          Buffer.from([0x1B, 0x61, 0x01]),   // center align
+          
+          // Promoter name
+          Buffer.from(`${promoterName}\n`, 'ascii'),
+          Buffer.from('\n', 'ascii'),
+          
+          // Date and time
+          Buffer.from(`${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
+          Buffer.from('\n', 'ascii'),
+          
+          // Code in text
+          Buffer.from(`Code: ${qrCode}\n`, 'ascii'),
+          Buffer.from('\n', 'ascii'),
+          
+          // Single use only label
+          Buffer.from('Single use only\n', 'ascii'),
+          Buffer.from('\n\n', 'ascii'),
+          
+          // Feed and cut
+          Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+          Buffer.from([0x1D, 0x56, 0x00])    // full cut
+        ]);
+        
+        console.log(`🖨️ Ticket buffer created: ${ticketBuffer.length} bytes`);
+        console.log(`🖨️ Calling printRaw for ticket format...`);
+        
+        this.printRaw(ticketBuffer);
+        await delay(500);
+        
+        console.log(`🖨️ ===== QR TICKET ${i + 1} COMPLETED =====`);
       }
-
-      // Now print main receipt
-      const receiptLines = [
-        'RECEIPT',
-        '',
-        `Promoter: ${promoterName}`,
-        new Date(createdAt).toLocaleString(),
-        'Single use only',
-        '----------------------------------------',
-        `PROMOTER: ${promoterName}`,
-        `DATE: ${new Date(createdAt).toLocaleString()}`,
-        `RATE: ${rateName}`,
-        `QTY: ${quantity}`,
-        `TOTAL: P${parseFloat(total).toFixed(2)}`,
-        `PAID: P${parseFloat(paidAmount).toFixed(2)}`,
-        `CHANGE: P${parseFloat(change).toFixed(2)}`,
-        `CASHIER: ${cashierName}`,
-        `SESSION: #${sessionId}`,
-        `TXN ID: #${transactionId}`,
-        'DISCOUNTS:',
-        ...(discounts && discounts.length > 0 ? discounts.map(d => `${d.discount_name}: ${d.discount_value}`) : ['None']),
-        '----------------------------------------',
-        'Thank you!',
-        '',
-        ''
-      ];
-
-      await this.printText(receiptLines.join('\n'));
-      // Add some spacing and cut line
-      await this.printText('\n\n--- End of Receipt ---\n\n\n');
-      console.log('✅ Transaction printed successfully');
+      
+      // Now print the main receipt information
+      console.log('🖨️ ===== PRINTING MAIN TRANSACTION RECEIPT =====');
+      console.log('🖨️ Creating receipt buffer...');
+      
+      const receiptBuffer = Buffer.concat([
+        Buffer.from([0x1B, 0x40]),         // init
+        Buffer.from([0x1B, 0x61, 0x01]),   // center align
+        
+        // Header
+        Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
+        Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
+        Buffer.from('RECEIPT\n', 'ascii'),
+        Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
+        Buffer.from([0x1D, 0x21, 0x00]),   // normal size
+        
+        // Promoter
+        Buffer.from(`Promoter: ${promoterName}\n`, 'ascii'),
+        Buffer.from('\n', 'ascii'),
+        
+        // Date and time
+        Buffer.from(`${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
+        Buffer.from('Single use only\n', 'ascii'),
+        Buffer.from('\n', 'ascii'),
+        
+        // Separator
+        Buffer.from('----------------------------------------\n', 'ascii'),
+        
+        // Details (left align)
+        Buffer.from([0x1B, 0x61, 0x00]),   // left align
+        Buffer.from(`PROMOTER: ${promoterName}\n`, 'ascii'),
+        Buffer.from(`DATE: ${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
+        Buffer.from(`RATE: ${rateName}\n`, 'ascii'),
+        Buffer.from(`QTY: ${quantity}\n`, 'ascii'),
+        Buffer.from(`TOTAL: ₱${parseFloat(total).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`PAID: ₱${parseFloat(paidAmount).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`CHANGE: ₱${parseFloat(change).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`CASHIER: ${cashierName}\n`, 'ascii'),
+        Buffer.from(`SESSION: #${sessionId}\n`, 'ascii'),
+        Buffer.from(`TXN ID: #${transactionId}\n`, 'ascii'),
+        
+        // Discounts section
+        Buffer.from('DISCOUNTS:\n', 'ascii'),
+        ...(discounts && discounts.length > 0 
+          ? discounts.map(discount => 
+              Buffer.from(`${discount.discount_name}: ${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `₱${discount.discount_value}`}\n`, 'ascii')
+            )
+          : [Buffer.from('None\n', 'ascii')]
+        ),
+        
+        // Separator
+        Buffer.from('----------------------------------------\n', 'ascii'),
+        
+        // Footer (center align)
+        Buffer.from([0x1B, 0x61, 0x01]),   // center align
+        Buffer.from('Thank you!\n', 'ascii'),
+        Buffer.from('\n\n', 'ascii'),
+        
+        // Feed and cut
+        Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+        Buffer.from([0x1D, 0x56, 0x00])    // full cut
+      ]);
+      
+      console.log(`🖨️ Receipt buffer created: ${receiptBuffer.length} bytes`);
+      console.log(`🖨️ Calling printRaw for main receipt...`);
+      
+      this.printRaw(receiptBuffer);
+      
+      console.log('🖨️ ===== TRANSACTION TICKETS PRINTING COMPLETED =====');
+      console.log('✅ Transaction tickets printing completed');
+      
     } catch (error) {
-      console.error('❌ Error printing transaction tickets:', error?.message || error);
-      // try to log raw input for debugging
-      console.error('📄 Raw input:', transactionData);
+      console.error('❌ Error printing transaction tickets:', error);
     }
   }
 
@@ -666,45 +617,148 @@ try {
   // Other convenience methods
   // -------------------------
   async printOpenCashReceipt(cashierName, cashOnHand, sessionId) {
-    const buf = Buffer.concat([
-      Buffer.from([0x1B, 0x40]), this.esc80mmCommand,
-      Buffer.from([0x1B, 0x61, 0x01]),
+    console.log(`🖨️ ===== PRINT OPEN CASH RECEIPT CALLED =====`);
+    console.log(`🖨️ Cashier: ${cashierName}`);
+    console.log(`🖨️ Amount: P${cashOnHand}`);
+    console.log(`🖨️ Session: #${sessionId}`);
+    console.log(`🖨️ Printer Name: ${this.printerName}`);
+    console.log(`🖨️ ==========================================`);
+    
+    // Use the working format from the old file
+    const buffer = Buffer.concat([
+      Buffer.from([0x1B, 0x40]),         // init
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      
+      // Header - Bold and Double Size
+      Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
+      Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
       Buffer.from('OPEN CASH RECEIPT\n', 'ascii'),
-      Buffer.from(`Cashier: ${cashierName}\n\n`, 'ascii'),
-      Buffer.from(`Date: ${new Date().toLocaleString()}\n\n`, 'ascii'),
-      Buffer.from(`Cash on Hand: P${parseFloat(cashOnHand).toFixed(2)}\n\n`, 'ascii'),
-      Buffer.from('--- End of Receipt ---\n\n', 'ascii'),
-      Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00])
+      Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
+      Buffer.from([0x1D, 0x21, 0x00]),   // normal size
+      Buffer.from('\n', 'ascii'),
+      
+      // Cashier name
+      Buffer.from(`Cashier: ${cashierName}\n`, 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Date and time
+      Buffer.from(`Date: ${new Date().toLocaleString()}\n`, 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Cash on Hand
+      Buffer.from(`Cash on Hand: ₱${parseFloat(cashOnHand).toFixed(2)}\n`, 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Session ID
+      Buffer.from(`Session ID: #${sessionId}\n`, 'ascii'),
+      Buffer.from('\n', 'ascii'),
+      
+      // Separator
+      Buffer.from('----------------------------------------\n', 'ascii'),
+      
+      // End of Receipt
+      Buffer.from('--- End of Receipt ---\n', 'ascii'),
+      Buffer.from('\n\n', 'ascii'),
+      
+      // Feed and cut
+      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+      Buffer.from([0x1D, 0x56, 0x00])    // full cut
     ]);
-    return await this.printRaw(buf);
+    
+    console.log(`🖨️ Buffer created: ${buffer.length} bytes`);
+    console.log(`🖨️ Calling printRaw...`);
+    
+    const result = await this.printRaw(buffer);
+    
+    console.log(`🖨️ printRaw result: ${result ? 'SUCCESS' : 'FAILED'}`);
+    console.log(`🖨️ ===== END PRINT OPEN CASH RECEIPT =====`);
+    
+    return result;
   }
 
   async printCloseCashReceipt(cashierName, sessionId, openingCash, closingCash, dailyTransactions = [], dailyTotal = 0) {
-    const header = Buffer.concat([
-      Buffer.from([0x1B, 0x40]), this.esc80mmCommand,
-      Buffer.from([0x1B, 0x61, 0x01]),
+    console.log('🖨️ ===== PRINT CLOSE CASH RECEIPT CALLED =====');
+    console.log(`🖨️ Cashier: ${cashierName}`);
+    console.log(`🖨️ Session: #${sessionId}`);
+    console.log(`🖨️ Opening Cash: ₱${openingCash}`);
+    console.log(`🖨️ Closing Cash: ₱${closingCash}`);
+    console.log(`🖨️ Daily Transactions: ${dailyTransactions.length}`);
+    console.log(`🖨️ Daily Total: ₱${dailyTotal}`);
+    console.log(`🖨️ Printer Name: ${this.printerName}`);
+    console.log('🖨️ ===========================================');
+    
+    const buffer = Buffer.concat([
+      Buffer.from([0x1B, 0x40]),         // init
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      
+      // Header - Bold and Double Size
+      Buffer.from([0x1B, 0x45, 0x01]),   // bold ON
+      Buffer.from([0x1D, 0x21, 0x11]),   // double width + height
       Buffer.from('CLOSE CASH REPORT\n', 'ascii'),
-      Buffer.from('\n', 'ascii')
+      Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
+      Buffer.from([0x1D, 0x21, 0x00]),   // normal size
+      Buffer.from('\n', 'ascii'),
+      
+      // Separator line (matching actual print - equal signs)
+      Buffer.from('==============================\n', 'ascii'),
+      
+      // Date and time
+      Buffer.from(`Date: ${new Date().toLocaleString()}\n`, 'ascii'),
+      Buffer.from(`Cashier: ${cashierName}\n`, 'ascii'),
+      Buffer.from(`Session: #${sessionId}\n`, 'ascii'),
+      Buffer.from('==============================\n', 'ascii'),
+      Buffer.from('------------------------------\n', 'ascii'),
+      
+      // Daily Transactions Section
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      Buffer.from('*** DAILY TRANSACTIONS ***\n', 'ascii'),
+      Buffer.from([0x1B, 0x61, 0x00]),   // left align
+      Buffer.from('\n', 'ascii'),
+      
+      // Print each transaction (matching actual print format)
+      ...dailyTransactions.map((transaction, idx) => [
+        Buffer.from(`Transaction #${transaction.id}\n`, 'ascii'),
+        Buffer.from(`Time: ${new Date(transaction.created_at).toLocaleTimeString()}\n`, 'ascii'),
+        Buffer.from(`${transaction.rate?.name || 'N/A'}                    x${transaction.quantity}\n`, 'ascii'),
+        ...(transaction.discounts?.length > 0 
+          ? transaction.discounts.map(discount => 
+              Buffer.from(`- ${discount.discount_name}               ₱${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `${discount.discount_value}`}\n`, 'ascii')
+            )
+          : []
+        ),
+        Buffer.from(`Total:                        ₱${parseFloat(transaction.total).toFixed(2)}\n`, 'ascii'),
+        ...(idx < dailyTransactions.length - 1 ? [Buffer.from('--------------------------------\n', 'ascii')] : [])
+      ]).flat(),
+      
+      // Summary Section
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      Buffer.from('*** SUMMARY ***\n', 'ascii'),
+      Buffer.from([0x1B, 0x61, 0x00]),   // left align
+      Buffer.from('\n', 'ascii'),
+      
+      Buffer.from(`Opening Cash:                 ₱${parseFloat(openingCash).toFixed(2)}\n`, 'ascii'),
+      Buffer.from(`Total Transactions:            ${dailyTransactions.length}\n`, 'ascii'),
+      Buffer.from(`Total Sales:                  ₱${parseFloat(dailyTotal).toFixed(2)}\n`, 'ascii'),
+      Buffer.from(`Closing Cash:                 ₱${parseFloat(closingCash).toFixed(2)}\n`, 'ascii'),
+      Buffer.from('--------------------------------\n', 'ascii'),
+      
+      // End of Report
+      Buffer.from([0x1B, 0x61, 0x01]),   // center align
+      Buffer.from('--- End of Report ---\n', 'ascii'),
+      Buffer.from('\n\n', 'ascii'),
+      
+      // Feed and cut
+      Buffer.from([0x1B, 0x64, 0x03]),   // feed 3 lines
+      Buffer.from([0x1D, 0x56, 0x00])    // full cut
     ]);
-    // reduce complexity: print report as text (PowerShell printText will use margins)
-    const lines = [
-      'CLOSE CASH REPORT',
-      `Date: ${new Date().toLocaleString()}`,
-      `Cashier: ${cashierName}`,
-      `Session: #${sessionId}`,
-      '----------------------------------------',
-      `Opening Cash: P${parseFloat(openingCash).toFixed(2)}`,
-      `Closing Cash: P${parseFloat(closingCash).toFixed(2)}`,
-      `Total Transactions: ${dailyTransactions.length}`,
-      `Total Sales: P${parseFloat(dailyTotal).toFixed(2)}`,
-      '----------------------------------------',
-      '',
-      '--- End of Report ---',
-      '',
-      ''
-    ];
-    await this.printText(lines.join('\n'));
-    await this.printRaw(Buffer.from([0x1B, 0x64, 0x03, 0x1D, 0x56, 0x00]));
+    
+    console.log(`🖨️ Close cash buffer created: ${buffer.length} bytes`);
+    console.log(`🖨️ Calling printRaw for close cash report...`);
+    
+    this.printRaw(buffer);
+    
+    console.log('🖨️ ===== CLOSE CASH RECEIPT PRINTING COMPLETED =====');
+    console.log(`🖨️ Printing Close Cash Report - Cashier: ${cashierName}, Session: #${sessionId}, Closing Cash: ₱${closingCash}`);
   }
 
   printCut() {
@@ -752,6 +806,8 @@ switch (command) {
   case 'opencash':
       {
         const parts = data ? data.split(',') : ['sales','5000.00','16'];
+        // Wait for printer initialization to complete
+        await printer.initializePrinter();
         await printer.printOpenCashReceipt(parts[0], parts[1], parts[2]);
       }
     break;
