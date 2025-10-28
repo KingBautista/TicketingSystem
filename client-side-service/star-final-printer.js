@@ -505,6 +505,7 @@ export class StarBSC10Printer {
         
         // Print ticket format
         const ticketBuffer = Buffer.concat([
+          Buffer.from([0x1B, 0x70, 0x00, 0x19, 0xFA]), // Cash drawer trigger
           Buffer.from([0x1B, 0x40]),         // init
           Buffer.from([0x1B, 0x61, 0x01]),   // center align
           
@@ -543,6 +544,7 @@ export class StarBSC10Printer {
       console.log('🖨️ Creating receipt buffer...');
       
       const receiptBuffer = Buffer.concat([
+        Buffer.from([0x1B, 0x70, 0x00, 0x19, 0xFA]), // Cash drawer trigger
         Buffer.from([0x1B, 0x40]),         // init
         Buffer.from([0x1B, 0x61, 0x01]),   // center align
         
@@ -626,6 +628,7 @@ export class StarBSC10Printer {
     
     // Use the working format from the old file
     const buffer = Buffer.concat([
+      Buffer.from([0x1B, 0x70, 0x00, 0x19, 0xFA]), // Cash drawer trigger
       Buffer.from([0x1B, 0x40]),         // init
       Buffer.from([0x1B, 0x61, 0x01]),   // center align
       
@@ -688,6 +691,7 @@ export class StarBSC10Printer {
     console.log('🖨️ ===========================================');
     
     const buffer = Buffer.concat([
+      Buffer.from([0x1B, 0x70, 0x00, 0x19, 0xFA]), // Cash drawer trigger
       Buffer.from([0x1B, 0x40]),         // init
       Buffer.from([0x1B, 0x61, 0x01]),   // center align
       
