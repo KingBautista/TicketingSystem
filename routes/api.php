@@ -276,6 +276,7 @@ Route::prefix('kqt300')->group(function () {
     Route::get('/stream-test', [ScanController::class, 'streamTest']);
     Route::post('/check', [ScanController::class, 'checkCode']);
     Route::post('/test-scan', [ScanController::class, 'testScan']);
+    Route::post('/debug-check', [ScanController::class, 'debugCheckCode']);
 });
 
 // Legacy access routes (for backward compatibility)
@@ -287,5 +288,6 @@ Route::prefix('access')->group(function () {
     Route::get('/stream-test', [ScanController::class, 'streamTest']);
     Route::post('/check', [ScanController::class, 'checkCode']);
     Route::post('/test-scan', [ScanController::class, 'testScan']);
+    Route::post('/debug-check', [ScanController::class, 'debugCheckCode']);
     Route::get('/health', [ScanController::class, 'health']);
 });

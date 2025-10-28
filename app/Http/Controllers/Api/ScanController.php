@@ -662,17 +662,13 @@ class ScanController extends BaseController
         $code = $request->input('code');
         
         if (!$code) {
-            $responseData = [
-                'resultCode' => '0001', // Do not open door
-                'wavFileName' => '2', // Play error sound
-                'msg' => 'No code provided',
-                'msgTimeout' => 3000
-            ];
-            
-            $response = 'code=0001&&desc=json&&' . json_encode($responseData);
-            
-            return response($response)
-                ->header('Content-Type', 'text/plain');
+            return response()->json([
+                'exists' => false,
+                'type' => null,
+                'is_valid' => false,
+                'message' => 'No code provided',
+                'details' => null
+            ]);
         }
 
         try {
@@ -681,29 +677,33 @@ class ScanController extends BaseController
             
             if ($cashierTicket) {
                 $isValid = !$cashierTicket->is_used;
-                $responseData = [
-                    'resultCode' => $isValid ? '0000' : '0001',
-                    'wavFileName' => $isValid ? '1' : '2',
-                    'msg' => $cashierTicket->is_used ? 'Ticket already used' : 'Ticket found and available',
-                    'msgTimeout' => 3000
-                ];
+                $message = $cashierTicket->is_used ? 'Ticket already used' : 'Ticket found and available';
                 
-                $response = 'code=' . ($isValid ? '0000' : '0001') . '&&desc=json&&' . json_encode($responseData);
-                
-                return response($response)
-                    ->header('Content-Type', 'text/plain');
+                return response()->json([
+                    'exists' => true,
+                    'type' => 'cashier_ticket',
+                    'is_valid' => $isValid,
+                    'message' => $message,
+                    'details' => [
+                        'transaction_id' => $cashierTicket->transaction_id,
+                        'qr_code' => $cashierTicket->qr_code,
+                        'is_used' => $cashierTicket->is_used,
+                        'created_at' => $cashierTicket->created_at,
+                        'note' => $cashierTicket->note
+                    ]
+                ]);
             }
 
             // Not a cashier ticket, check if it's a VIP card
-            // Convert from hex to decimal if it contains hex characters
-            if (preg_match('/[a-fA-F]/', $code)) {
+            // Convert from hex to decimal only if it's purely hex (no letters other than a-f)
+            if (preg_match('/^[0-9a-fA-F]+$/', $code) && preg_match('/[a-fA-F]/', $code)) {
                 $convertedCode = hexdec($code);
             } else {
                 $convertedCode = is_numeric($code) ? (int)$code : $code;
             }
             
             // Check VIP table
-            $vip = \App\Models\VIP::where('card_number', $convertedCode)->first();
+            $vip = \App\Models\VIP::where('card_number', $convertedCode)->where('is_active', 1)->first();
             
             if ($vip) {
                 // Check validity period
@@ -727,31 +727,36 @@ class ScanController extends BaseController
                     $message = 'VIP card has no validity period set';
                 }
 
-                $responseData = [
-                    'resultCode' => $isValid ? '0000' : '0001',
-                    'wavFileName' => $isValid ? '1' : '2',
-                    'msg' => $message,
-                    'msgTimeout' => 3000
-                ];
-                
-                $response = 'code=' . ($isValid ? '0000' : '0001') . '&&desc=json&&' . json_encode($responseData);
-                
-                return response($response)
-                    ->header('Content-Type', 'text/plain');
+                return response()->json([
+                    'exists' => true,
+                    'type' => 'vip_card',
+                    'is_valid' => $isValid,
+                    'message' => $message,
+                    'details' => [
+                        'id' => $vip->id,
+                        'name' => $vip->name,
+                        'card_number' => $vip->card_number,
+                        'original_code' => $code,
+                        'converted_code' => $convertedCode,
+                        'validity_start' => $vip->validity_start,
+                        'validity_end' => $vip->validity_end,
+                        'status' => $vip->status,
+                        'is_active' => $vip->is_active,
+                        'contact_number' => $vip->contact_number,
+                        'address' => $vip->address,
+                        'created_at' => $vip->created_at
+                    ]
+                ]);
             }
 
             // Code not found
-            $responseData = [
-                'resultCode' => '0001', // Do not open door
-                'wavFileName' => '2', // Play error sound
-                'msg' => 'Code not found in tickets or VIP cards',
-                'msgTimeout' => 3000
-            ];
-            
-            $response = 'code=0001&&desc=json&&' . json_encode($responseData);
-            
-            return response($response)
-                ->header('Content-Type', 'text/plain');
+            return response()->json([
+                'exists' => false,
+                'type' => null,
+                'is_valid' => false,
+                'message' => 'Code not found in tickets or VIP cards',
+                'details' => null
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Error checking code:', [
@@ -759,17 +764,13 @@ class ScanController extends BaseController
                 'code' => $code
             ]);
 
-            $responseData = [
-                'resultCode' => '0001', // Do not open door
-                'wavFileName' => '2', // Play error sound
-                'msg' => 'Error checking code: ' . $e->getMessage(),
-                'msgTimeout' => 3000
-            ];
-            
-            $response = 'code=0001&&desc=json&&' . json_encode($responseData);
-            
-            return response($response)
-                ->header('Content-Type', 'text/plain');
+            return response()->json([
+                'exists' => false,
+                'type' => null,
+                'is_valid' => false,
+                'message' => 'Error checking code: ' . $e->getMessage(),
+                'details' => null
+            ], 500);
         }
     }
 
@@ -883,5 +884,214 @@ class ScanController extends BaseController
     {
         // Calculate system uptime (placeholder)
         return '24h 30m 15s';
+    }
+
+    /**
+     * Test method to debug checkCode functionality
+     * 
+     * @OA\Post(
+     *     path="/api/kqt300/debug-check",
+     *     summary="Debug checkCode method",
+     *     description="Test method to debug database connections and searches",
+     *     tags={"KQT300 Device Integration"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="code", type="string", example="TEST123", description="Code to test")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Debug results",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="debug_info", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function debugCheckCode(Request $request)
+    {
+        $code = $request->input('code', 'TEST123');
+        $debugInfo = [
+            'input_code' => $code,
+            'timestamp' => now()->toISOString(),
+            'database_connection' => false,
+            'cashier_tickets_table' => [],
+            'vip_table' => [],
+            'cashier_ticket_search' => null,
+            'vip_search' => null,
+            'errors' => []
+        ];
+
+        try {
+            // Test database connection
+            \DB::connection()->getPdo();
+            $debugInfo['database_connection'] = true;
+            \Log::info('Database connection successful');
+
+            // Test CashierTicket table
+            try {
+                $cashierTickets = \App\Models\CashierTicket::all();
+                $debugInfo['cashier_tickets_table'] = [
+                    'total_count' => $cashierTickets->count(),
+                    'sample_records' => $cashierTickets->take(3)->map(function($ticket) {
+                        return [
+                            'id' => $ticket->id,
+                            'qr_code' => $ticket->qr_code,
+                            'is_used' => $ticket->is_used,
+                            'transaction_id' => $ticket->transaction_id,
+                            'created_at' => $ticket->created_at
+                        ];
+                    })->toArray()
+                ];
+
+                // Test search for the specific code
+                $cashierTicket = \App\Models\CashierTicket::where('qr_code', $code)->first();
+                $debugInfo['cashier_ticket_search'] = $cashierTicket ? [
+                    'found' => true,
+                    'id' => $cashierTicket->id,
+                    'qr_code' => $cashierTicket->qr_code,
+                    'is_used' => $cashierTicket->is_used,
+                    'transaction_id' => $cashierTicket->transaction_id
+                ] : ['found' => false];
+
+                \Log::info('CashierTicket table test completed', $debugInfo['cashier_ticket_search']);
+
+            } catch (\Exception $e) {
+                $debugInfo['errors'][] = 'CashierTicket error: ' . $e->getMessage();
+                \Log::error('CashierTicket table error:', ['error' => $e->getMessage()]);
+            }
+
+            // Test VIP table
+            try {
+                $vips = \App\Models\VIP::all();
+                $debugInfo['vip_table'] = [
+                    'total_count' => $vips->count(),
+                    'sample_records' => $vips->take(3)->map(function($vip) {
+                        return [
+                            'id' => $vip->id,
+                            'name' => $vip->name,
+                            'card_number' => $vip->card_number,
+                            'validity_start' => $vip->validity_start,
+                            'validity_end' => $vip->validity_end,
+                            'status' => $vip->status
+                        ];
+                    })->toArray()
+                ];
+
+                // Test search for the specific code (with hex conversion)
+                $convertedCode = (preg_match('/^[0-9a-fA-F]+$/', $code) && preg_match('/[a-fA-F]/', $code)) ? hexdec($code) : (is_numeric($code) ? (int)$code : $code);
+                $vip = \App\Models\VIP::where('card_number', $convertedCode)->where('is_active', 1)->first();
+                $debugInfo['vip_search'] = $vip ? [
+                    'found' => true,
+                    'id' => $vip->id,
+                    'name' => $vip->name,
+                    'card_number' => $vip->card_number,
+                    'original_code' => $code,
+                    'converted_code' => $convertedCode,
+                    'validity_start' => $vip->validity_start,
+                    'validity_end' => $vip->validity_end,
+                    'status' => $vip->status
+                ] : [
+                    'found' => false,
+                    'original_code' => $code,
+                    'converted_code' => $convertedCode
+                ];
+
+                \Log::info('VIP table test completed', $debugInfo['vip_search']);
+
+            } catch (\Exception $e) {
+                $debugInfo['errors'][] = 'VIP table error: ' . $e->getMessage();
+                \Log::error('VIP table error:', ['error' => $e->getMessage()]);
+            }
+
+            // Test the actual checkCode logic
+            try {
+                $testResult = $this->testCheckCodeLogic($code);
+                $debugInfo['check_code_result'] = $testResult;
+            } catch (\Exception $e) {
+                $debugInfo['errors'][] = 'checkCode logic error: ' . $e->getMessage();
+                \Log::error('checkCode logic error:', ['error' => $e->getMessage()]);
+            }
+
+        } catch (\Exception $e) {
+            $debugInfo['errors'][] = 'Database connection error: ' . $e->getMessage();
+            \Log::error('Database connection error:', ['error' => $e->getMessage()]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'debug_info' => $debugInfo
+        ]);
+    }
+
+    /**
+     * Test the checkCode logic without database calls
+     */
+    private function testCheckCodeLogic($code)
+    {
+        $result = [
+            'code' => $code,
+            'steps' => []
+        ];
+
+        // Step 1: Check if code is provided
+        if (!$code) {
+            $result['steps'][] = 'No code provided - would return error';
+            return $result;
+        }
+
+        // Step 2: Search CashierTicket
+        try {
+            $cashierTicket = \App\Models\CashierTicket::where('qr_code', $code)->first();
+            if ($cashierTicket) {
+                $result['steps'][] = 'Found in CashierTicket table';
+                $result['steps'][] = 'Ticket is_used: ' . ($cashierTicket->is_used ? 'true' : 'false');
+                $result['steps'][] = 'Would return: ' . ($cashierTicket->is_used ? '0001 (already used)' : '0000 (valid)');
+                return $result;
+            } else {
+                $result['steps'][] = 'Not found in CashierTicket table';
+            }
+        } catch (\Exception $e) {
+            $result['steps'][] = 'CashierTicket search error: ' . $e->getMessage();
+        }
+
+        // Step 3: Convert and search VIP
+        try {
+            $convertedCode = (preg_match('/^[0-9a-fA-F]+$/', $code) && preg_match('/[a-fA-F]/', $code)) ? hexdec($code) : (is_numeric($code) ? (int)$code : $code);
+            $result['steps'][] = 'Converted code: ' . $convertedCode;
+            
+            $vip = \App\Models\VIP::where('card_number', $convertedCode)->where('is_active', 1)->first();
+            if ($vip) {
+                $result['steps'][] = 'Found in VIP table';
+                $result['steps'][] = 'VIP name: ' . $vip->name;
+                $result['steps'][] = 'VIP validity_start: ' . $vip->validity_start;
+                $result['steps'][] = 'VIP validity_end: ' . $vip->validity_end;
+                
+                // Check validity
+                $now = now();
+                $validityStart = $vip->validity_start ? \Carbon\Carbon::parse($vip->validity_start) : null;
+                $validityEnd = $vip->validity_end ? \Carbon\Carbon::parse($vip->validity_end) : null;
+                
+                if ($validityStart && $validityEnd) {
+                    if ($now->between($validityStart, $validityEnd)) {
+                        $result['steps'][] = 'VIP card is valid - would return 0000';
+                    } else {
+                        $result['steps'][] = 'VIP card expired/not yet valid - would return 0001';
+                    }
+                } else {
+                    $result['steps'][] = 'VIP card has no validity period - would return 0001';
+                }
+                return $result;
+            } else {
+                $result['steps'][] = 'Not found in VIP table';
+            }
+        } catch (\Exception $e) {
+            $result['steps'][] = 'VIP search error: ' . $e->getMessage();
+        }
+
+        $result['steps'][] = 'Code not found anywhere - would return 0001';
+        return $result;
     }
 }

@@ -21,5 +21,6 @@ class VIP extends Model
         'validity_start',
         'validity_end',
         'status',
+        'is_active',
     ];
 } 

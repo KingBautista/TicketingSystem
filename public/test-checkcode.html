@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CheckCode Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .sample-codes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .sample-code {
+            background-color: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 12px;
+        }
+        .sample-code:hover {
+            background-color: #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CheckCode Debug Test</h1>
+        <p>This tool helps debug the checkCode functionality by testing database connections and searches.</p>
+        
+        <div class="form-group">
+            <label for="code">Code to Test:</label>
+            <input type="text" id="code" placeholder="Enter QR code or VIP card number" value="TEST123">
+        </div>
+        
+        <div class="form-group">
+            <label>Sample Codes (click to use):</label>
+            <div class="sample-codes">
+                <div class="sample-code" onclick="setCode('TEST123')">TEST123</div>
+                <div class="sample-code" onclick="setCode('313233343536')">313233343536 (hex)</div>
+                <div class="sample-code" onclick="setCode('123456')">123456 (decimal)</div>
+                <div class="sample-code" onclick="setCode('ABC123')">ABC123 (mixed)</div>
+                <div class="sample-code" onclick="setCode('NONEXISTENT')">NONEXISTENT</div>
+            </div>
+        </div>
+        
+        <button onclick="testDebugEndpoint()">Test Debug Endpoint</button>
+        <button onclick="testCheckCodeEndpoint()">Test CheckCode Endpoint</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>API Endpoints</h2>
+        <p><strong>Debug Endpoint:</strong> POST /api/kqt300/debug-check</p>
+        <p><strong>CheckCode Endpoint:</strong> POST /api/kqt300/check</p>
+        <p><strong>Legacy Debug:</strong> POST /api/access/debug-check</p>
+        <p><strong>Legacy CheckCode:</strong> POST /api/access/check</p>
+    </div>
+
+    <script>
+        function setCode(code) {
+            document.getElementById('code').value = code;
+        }
+
+        function clearResults() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'none';
+            resultDiv.innerHTML = '';
+        }
+
+        function showResult(content, isError = false) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result ' + (isError ? 'error' : 'success');
+            resultDiv.textContent = content;
+        }
+
+        async function testDebugEndpoint() {
+            const code = document.getElementById('code').value;
+            if (!code) {
+                showResult('Please enter a code to test', true);
+                return;
+            }
+
+            showResult('Testing debug endpoint...', false);
+            
+            try {
+                const response = await fetch('/api/kqt300/debug-check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code: code })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(JSON.stringify(data, null, 2), false);
+                } else {
+                    showResult(`Error ${response.status}: ${JSON.stringify(data, null, 2)}`, true);
+                }
+            } catch (error) {
+                showResult(`Network error: ${error.message}`, true);
+            }
+        }
+
+        async function testCheckCodeEndpoint() {
+            const code = document.getElementById('code').value;
+            if (!code) {
+                showResult('Please enter a code to test', true);
+                return;
+            }
+
+            showResult('Testing checkCode endpoint...', false);
+            
+            try {
+                const response = await fetch('/api/kqt300/check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code: code })
+                });
+
+                const data = await response.text();
+                
+                if (response.ok) {
+                    showResult(`Response: ${data}`, false);
+                } else {
+                    showResult(`Error ${response.status}: ${data}`, true);
+                }
+            } catch (error) {
+                showResult(`Network error: ${error.message}`, true);
+            }
+        }
+
+        // Load sample data on page load
+        window.onload = function() {
+            // You can add logic here to fetch sample data from the API
+            console.log('CheckCode Debug Test loaded');
+        };
+    </script>
+</body>
+</html>

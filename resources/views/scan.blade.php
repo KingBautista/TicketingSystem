@@ -804,8 +804,14 @@
          return;
        }
        
+       // Show loading state
+       resultDiv.style.display = 'block';
+       resultDiv.className = 'check-result';
+       messageDiv.innerHTML = '<strong>🔍 Checking code...</strong>';
+       detailsDiv.innerHTML = '';
+       
        try {
-        const response = await fetch(baseUrl + '/api/kqt300/check', {
+         const response = await fetch(baseUrl + '/api/kqt300/check', {
            method: 'POST',
            headers: {
              'Content-Type': 'application/json',
@@ -814,10 +820,14 @@
            body: JSON.stringify({ code: code })
          });
          
+         if (!response.ok) {
+           throw new Error(`HTTP error! status: ${response.status}`);
+         }
+         
          const data = await response.json();
+         console.log('CheckCode response:', data);
          
          // Show result
-         resultDiv.style.display = 'block';
          resultDiv.className = 'check-result';
          
          if (data.exists) {
@@ -835,26 +845,36 @@
          
          // Show details
          if (data.details) {
-           let detailsHtml = '<div style="margin-top: 10px;"><strong>Details:</strong><br>';
+           let detailsHtml = '<div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #667eea;"><strong>📋 Ticket Information:</strong><br>';
            
            if (data.type === 'cashier_ticket') {
              detailsHtml += `
-               <div style="margin-top: 5px;">
-                 <strong>Transaction ID:</strong> ${data.details.transaction_id}<br>
-                 <strong>Used:</strong> ${data.details.is_used ? 'Yes' : 'No'}<br>
-                 <strong>Created:</strong> ${new Date(data.details.created_at).toLocaleString()}<br>
-                 ${data.details.note ? `<strong>Note:</strong> ${data.details.note}` : ''}
+               <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
+                 <div><strong>QR Code:</strong><br><span style="font-family: monospace; background: #e9ecef; padding: 2px 6px; border-radius: 3px;">${data.details.qr_code}</span></div>
+                 <div><strong>Transaction ID:</strong><br>${data.details.transaction_id}</div>
+                 <div><strong>Status:</strong><br><span style="color: ${data.details.is_used ? '#dc3545' : '#28a745'}; font-weight: bold;">${data.details.is_used ? '❌ Used' : '✅ Available'}</span></div>
+                 <div><strong>Created:</strong><br>${new Date(data.details.created_at).toLocaleString()}</div>
+                 ${data.details.note ? `<div style="grid-column: 1 / -1;"><strong>Note:</strong><br>${data.details.note}</div>` : ''}
                </div>
              `;
            } else if (data.type === 'vip_card') {
              detailsHtml += `
-               <div style="margin-top: 5px;">
-                 <strong>Name:</strong> ${data.details.name}<br>
-                 <strong>Card Number:</strong> ${data.details.card_number}<br>
-                 <strong>Status:</strong> ${data.details.status}<br>
-                 <strong>Validity Start:</strong> ${data.details.validity_start ? new Date(data.details.validity_start).toLocaleDateString() : 'Not set'}<br>
-                 <strong>Validity End:</strong> ${data.details.validity_end ? new Date(data.details.validity_end).toLocaleDateString() : 'Not set'}<br>
-                 ${data.details.contact_number ? `<strong>Contact:</strong> ${data.details.contact_number}` : ''}
+               <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
+                 <div><strong>Name:</strong><br>${data.details.name}</div>
+                 <div><strong>Card Number:</strong><br><span style="font-family: monospace; background: #e9ecef; padding: 2px 6px; border-radius: 3px;">${data.details.card_number}</span></div>
+                 <div><strong>Status:</strong><br><span style="color: ${data.details.is_active ? '#28a745' : '#dc3545'}; font-weight: bold;">${data.details.is_active ? '✅ Active' : '❌ Inactive'}</span></div>
+                 <div><strong>VIP ID:</strong><br>#${data.details.id}</div>
+                 <div><strong>Validity Period:</strong><br>
+                   ${data.details.validity_start ? new Date(data.details.validity_start).toLocaleDateString() : 'Not set'} - 
+                   ${data.details.validity_end ? new Date(data.details.validity_end).toLocaleDateString() : 'Not set'}
+                 </div>
+                 <div><strong>Created:</strong><br>${new Date(data.details.created_at).toLocaleString()}</div>
+                 ${data.details.contact_number ? `<div><strong>Contact:</strong><br>${data.details.contact_number}</div>` : ''}
+                 ${data.details.address ? `<div style="grid-column: 1 / -1;"><strong>Address:</strong><br>${data.details.address}</div>` : ''}
+                 <div style="grid-column: 1 / -1; margin-top: 5px; padding: 8px; background: #e3f2fd; border-radius: 4px; font-size: 0.8rem;">
+                   <strong>Code Conversion:</strong><br>
+                   Original: <code>${data.details.original_code}</code> → Converted: <code>${data.details.converted_code}</code>
+                 </div>
                </div>
              `;
            }
@@ -869,8 +889,8 @@
          console.error('Error checking code:', error);
          resultDiv.style.display = 'block';
          resultDiv.className = 'check-result error';
-         messageDiv.innerHTML = '<strong>❌ Error checking code. Please try again.</strong>';
-         detailsDiv.innerHTML = '';
+         messageDiv.innerHTML = `<strong>❌ Error checking code: ${error.message}</strong>`;
+         detailsDiv.innerHTML = '<div style="margin-top: 10px; color: #6c757d; font-size: 0.9rem;">Please check your connection and try again.</div>';
        }
      }
   </script>
