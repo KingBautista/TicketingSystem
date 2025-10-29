@@ -509,8 +509,9 @@ export class StarBSC10Printer {
           Buffer.from([0x1B, 0x40]),         // init
           Buffer.from([0x1B, 0x61, 0x01]),   // center align
           
-          // Promoter name
+          // Promoter name and rate
           Buffer.from(`${promoterName}\n`, 'ascii'),
+          Buffer.from(`${rateName} (${parseFloat(total / quantity).toFixed(2)} each)\n`, 'ascii'),
           Buffer.from('\n', 'ascii'),
           
           // Date and time
@@ -555,8 +556,9 @@ export class StarBSC10Printer {
         Buffer.from([0x1B, 0x45, 0x00]),   // bold OFF
         Buffer.from([0x1D, 0x21, 0x00]),   // normal size
         
-        // Promoter
+        // Promoter and Rate
         Buffer.from(`Promoter: ${promoterName}\n`, 'ascii'),
+        Buffer.from(`Rate: ${rateName} (${parseFloat(total / quantity).toFixed(2)} each)\n`, 'ascii'),
         Buffer.from('\n', 'ascii'),
         
         // Date and time
