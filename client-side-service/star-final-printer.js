@@ -432,7 +432,7 @@ export class StarBSC10Printer {
         'PROMOTER: Promoter 24',
         'RATE: Regular Ticket',
         'QTY: 1',
-        'TOTAL: P100.00',
+        'TOTAL: 100.00',
         'DISCOUNTS:',
         'None',
         '----------------------------------------',
@@ -481,7 +481,7 @@ export class StarBSC10Printer {
       console.log('🖨️ - Promoter:', promoterName);
       console.log('🖨️ - Rate:', rateName);
       console.log('🖨️ - Quantity:', quantity);
-      console.log('🖨️ - Total: ₱' + total);
+      console.log('🖨️ - Total: ' + total);
       console.log('🖨️ - Tickets count:', tickets.length);
       console.log('🖨️ ===========================================');
       
@@ -573,9 +573,9 @@ export class StarBSC10Printer {
         Buffer.from(`DATE: ${new Date(createdAt).toLocaleString()}\n`, 'ascii'),
         Buffer.from(`RATE: ${rateName}\n`, 'ascii'),
         Buffer.from(`QTY: ${quantity}\n`, 'ascii'),
-        Buffer.from(`TOTAL: ₱${parseFloat(total).toFixed(2)}\n`, 'ascii'),
-        Buffer.from(`PAID: ₱${parseFloat(paidAmount).toFixed(2)}\n`, 'ascii'),
-        Buffer.from(`CHANGE: ₱${parseFloat(change).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`TOTAL: ${parseFloat(total).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`PAID: ${parseFloat(paidAmount).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`CHANGE: ${parseFloat(change).toFixed(2)}\n`, 'ascii'),
         Buffer.from(`CASHIER: ${cashierName}\n`, 'ascii'),
         Buffer.from(`SESSION: #${sessionId}\n`, 'ascii'),
         Buffer.from(`TXN ID: #${transactionId}\n`, 'ascii'),
@@ -584,7 +584,7 @@ export class StarBSC10Printer {
         Buffer.from('DISCOUNTS:\n', 'ascii'),
         ...(discounts && discounts.length > 0 
           ? discounts.map(discount => 
-              Buffer.from(`${discount.discount_name}: ${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `₱${discount.discount_value}`}\n`, 'ascii')
+              Buffer.from(`${discount.discount_name}: ${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `${discount.discount_value}`}\n`, 'ascii')
             )
           : [Buffer.from('None\n', 'ascii')]
         ),
@@ -649,7 +649,7 @@ export class StarBSC10Printer {
       Buffer.from('\n', 'ascii'),
       
       // Cash on Hand
-      Buffer.from(`Cash on Hand: ₱${parseFloat(cashOnHand).toFixed(2)}\n`, 'ascii'),
+      Buffer.from(`Cash on Hand: ${parseFloat(cashOnHand).toFixed(2)}\n`, 'ascii'),
       Buffer.from('\n', 'ascii'),
       
       // Session ID
@@ -683,14 +683,15 @@ export class StarBSC10Printer {
     console.log('🖨️ ===== PRINT CLOSE CASH RECEIPT CALLED =====');
     console.log(`🖨️ Cashier: ${cashierName}`);
     console.log(`🖨️ Session: #${sessionId}`);
-    console.log(`🖨️ Opening Cash: ₱${openingCash}`);
-    console.log(`🖨️ Closing Cash: ₱${closingCash}`);
+    console.log(`🖨️ Opening Cash: ${openingCash}`);
+    console.log(`🖨️ Closing Cash: ${closingCash}`);
     console.log(`🖨️ Daily Transactions: ${dailyTransactions.length}`);
-    console.log(`🖨️ Daily Total: ₱${dailyTotal}`);
+    console.log(`🖨️ Daily Total: ${dailyTotal}`);
     console.log(`🖨️ Printer Name: ${this.printerName}`);
     console.log('🖨️ ===========================================');
     
-    const buffer = Buffer.concat([
+    try {
+      const buffer = Buffer.concat([
       Buffer.from([0x1B, 0x70, 0x00, 0x19, 0xFA]), // Cash drawer trigger
       Buffer.from([0x1B, 0x40]),         // init
       Buffer.from([0x1B, 0x61, 0x01]),   // center align
@@ -726,11 +727,11 @@ export class StarBSC10Printer {
         Buffer.from(`${transaction.rate?.name || 'N/A'}                    x${transaction.quantity}\n`, 'ascii'),
         ...(transaction.discounts?.length > 0 
           ? transaction.discounts.map(discount => 
-              Buffer.from(`- ${discount.discount_name}               ₱${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `${discount.discount_value}`}\n`, 'ascii')
+              Buffer.from(`- ${discount.discount_name}               ${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `${discount.discount_value}`}\n`, 'ascii')
             )
           : []
         ),
-        Buffer.from(`Total:                        ₱${parseFloat(transaction.total).toFixed(2)}\n`, 'ascii'),
+        Buffer.from(`Total:                        ${parseFloat(transaction.total).toFixed(2)}\n`, 'ascii'),
         ...(idx < dailyTransactions.length - 1 ? [Buffer.from('--------------------------------\n', 'ascii')] : [])
       ]).flat(),
       
@@ -740,10 +741,10 @@ export class StarBSC10Printer {
       Buffer.from([0x1B, 0x61, 0x00]),   // left align
       Buffer.from('\n', 'ascii'),
       
-      Buffer.from(`Opening Cash:                 ₱${parseFloat(openingCash).toFixed(2)}\n`, 'ascii'),
+      Buffer.from(`Opening Cash:                 ${parseFloat(openingCash).toFixed(2)}\n`, 'ascii'),
       Buffer.from(`Total Transactions:            ${dailyTransactions.length}\n`, 'ascii'),
-      Buffer.from(`Total Sales:                  ₱${parseFloat(dailyTotal).toFixed(2)}\n`, 'ascii'),
-      Buffer.from(`Closing Cash:                 ₱${parseFloat(closingCash).toFixed(2)}\n`, 'ascii'),
+      Buffer.from(`Total Sales:                  ${parseFloat(dailyTotal).toFixed(2)}\n`, 'ascii'),
+      Buffer.from(`Closing Cash:                 ${parseFloat(closingCash).toFixed(2)}\n`, 'ascii'),
       Buffer.from('--------------------------------\n', 'ascii'),
       
       // End of Report
@@ -756,13 +757,20 @@ export class StarBSC10Printer {
       Buffer.from([0x1D, 0x56, 0x00])    // full cut
     ]);
     
-    console.log(`🖨️ Close cash buffer created: ${buffer.length} bytes`);
-    console.log(`🖨️ Calling printRaw for close cash report...`);
+      console.log(`🖨️ Close cash buffer created: ${buffer.length} bytes`);
+      console.log(`🖨️ Calling printRaw for close cash report...`);
     
-    this.printRaw(buffer);
-    
-    console.log('🖨️ ===== CLOSE CASH RECEIPT PRINTING COMPLETED =====');
-    console.log(`🖨️ Printing Close Cash Report - Cashier: ${cashierName}, Session: #${sessionId}, Closing Cash: ₱${closingCash}`);
+      const result = await this.printRaw(buffer);
+      
+      console.log(`🖨️ printRaw result: ${result ? 'SUCCESS' : 'FAILED'}`);
+      console.log('🖨️ ===== CLOSE CASH RECEIPT PRINTING COMPLETED =====');
+      console.log(`🖨️ Printing Close Cash Report - Cashier: ${cashierName}, Session: #${sessionId}, Closing Cash: ${closingCash}`);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Error printing close cash receipt:', error);
+      return false;
+    }
   }
 
   printCut() {
@@ -817,9 +825,9 @@ switch (command) {
     break;
   case 'closecash':
       {
-      if (!data || data.trim() === '') {
-        printer.printCloseCashSample();
-      } else {
+        if (!data || data.trim() === '') {
+         printer.printCloseCashSample();
+        } else {
           try {
             const payload = data.endsWith('.json') ? JSON.parse(await fsPromises.readFile(data, 'utf8')) : JSON.parse(data);
             await printer.printCloseCashReceipt(
