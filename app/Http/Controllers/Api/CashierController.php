@@ -301,4 +301,90 @@ class CashierController extends Controller
         }
     }
 
+    /**
+     * Re-print Transaction Receipt
+     * 
+     * @OA\Post(
+     *     path="/api/cashier/transactions/{transactionId}/reprint",
+     *     summary="Re-print a transaction receipt",
+     *     tags={"Cashier"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="transactionId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer"),
+     *         description="Transaction ID"
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Transaction data for printing",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Transaction data prepared for printing"),
+     *             @OA\Property(property="printData", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Transaction not found"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function reprintTransaction($transactionId)
+    {
+        try {
+            // Get transaction with all related data (same logic as storeTransaction)
+            $transaction = \App\Models\CashierTransaction::with([
+                'cashier:id,user_login',
+                'promoter:id,name',
+                'rate:id,name',
+                'discounts'
+            ])->findOrFail($transactionId);
+
+            // Get tickets for this transaction
+            $tickets = \App\Models\CashierTicket::where('transaction_id', $transactionId)
+                ->pluck('qr_code')
+                ->toArray();
+
+            // Prepare transaction data for frontend printing (same format as storeTransaction)
+            $transactionData = [
+                'transactionId' => $transaction->id,
+                'promoterName' => $transaction->promoter->name ?? 'N/A',
+                'rateName' => $transaction->rate->name ?? 'N/A',
+                'quantity' => $transaction->quantity,
+                'total' => $transaction->total,
+                'paidAmount' => $transaction->paid_amount,
+                'change' => $transaction->change,
+                'cashierName' => $transaction->cashier->user_login ?? 'N/A',
+                'sessionId' => $transaction->session_id ?? 'N/A',
+                'discounts' => $transaction->discounts->map(function($discount) {
+                    return [
+                        'discount_name' => $discount->discount_name,
+                        'discount_value' => $discount->pivot->discount_value,
+                        'discount_value_type' => $discount->discount_value_type ?? 'fixed'
+                    ];
+                })->toArray(),
+                'tickets' => $tickets,
+                'createdAt' => $transaction->created_at->toISOString()
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction data prepared for printing',
+                'printData' => $transactionData
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error preparing transaction for printing',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

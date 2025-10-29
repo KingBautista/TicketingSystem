@@ -228,7 +228,7 @@ class PrintController extends Controller
                 'promoter:id,name',
                 'rate:id,name',
                 'discounts',
-                'session:id,session_id'
+                'session:id'
             ])->findOrFail($transactionId);
 
             // Get tickets for this transaction

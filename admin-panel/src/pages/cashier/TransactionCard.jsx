@@ -29,7 +29,7 @@ export default function TransactionCard({
       <div className="card-header d-flex align-items-center profile-main-header" style={{ ...headerStyle, flexDirection: 'row', justifyContent: 'space-between', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
         <h4 className="mb-0" style={{ marginLeft: 0, fontWeight: 600, whiteSpace: 'nowrap', fontSize: 16, color: 'white' }}>Ticket Transaction</h4>
         <button className="btn btn-warning px-3" onClick={handleShowCloseCash} style={{ background: '#ffb400', border: 'none', color: '#321fdb', fontWeight: 600, whiteSpace: 'nowrap', height: 32, minHeight: 32, fontSize: 15 }}>
-          <FontAwesomeIcon icon={solidIconMap.moneyBill} className="me-2" />
+          <FontAwesomeIcon icon={solidIconMap.cashRegister} className="me-2" />
           Close Cash
         </button>
       </div>

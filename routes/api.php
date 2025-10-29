@@ -240,6 +240,7 @@ Route::middleware('auth:sanctum')->group(function () {
 		Route::get('/transactions/today', [CashierController::class, 'getTodayTransactions']);
 		Route::get('/sessions/{id}', [CashierController::class, 'getSession']);
 		Route::post('/send-to-display', [CashierController::class, 'sendToDisplay']);
+		Route::post('/transactions/{transactionId}/reprint', [CashierController::class, 'reprintTransaction']);
 	});
 
 	// Dashboard Routes
