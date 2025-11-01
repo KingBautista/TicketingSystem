@@ -176,16 +176,25 @@ class AuthController extends Controller
 	{
 		$credentials = $request->validated();
 
-		// Check if user exists with either user_email or user_login
+		// Check if user exists with either user_email or user_login (regardless of status)
 		$user = User::where(function($query) use ($credentials) {
 			$query->where('user_email', '=', $credentials['email'])
 				  ->orWhere('user_login', '=', $credentials['email']);
-		})->where('user_status', 1)->first();
+		})->first();
 
 		// Check if user exists
 		if (!$user) {
 			return response([
 				'errors' => ['Invalid email/username or password.'],
+				'status' => false,
+				'status_code' => 422,
+			], 422);
+		}
+
+		// Check if user is inactive
+		if ($user->user_status != 1) {
+			return response([
+				'errors' => ['User inactive. Please report to the administrator.'],
 				'status' => false,
 				'status_code' => 422,
 			], 422);

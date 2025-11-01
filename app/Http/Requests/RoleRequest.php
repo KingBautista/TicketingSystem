@@ -21,8 +21,14 @@ class RoleRequest extends FormRequest
    */
   public function rules(): array
   {
+    $id = $this->route('id');
+    $uniqueRule = 'required|string|max:255|unique:roles,name';
+    if ($id) {
+      $uniqueRule .= ','.$id;
+    }
+    
     return [
-      'name' => 'required|string|max:255|unique:roles,name,'.$this->id,
+      'name' => $uniqueRule,
       'permissions' => 'array|required', // Expecting a permissions array
       'active' => 'boolean', // Whether the role is active
     ];
@@ -39,3 +45,4 @@ class RoleRequest extends FormRequest
     ];
   }
 }
+    

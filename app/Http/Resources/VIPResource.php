@@ -31,8 +31,8 @@ class VIPResource extends JsonResource
 
     private function getValidityStatus()
     {
-        $now = Carbon::now();
-        $end = $this->validity_end ? Carbon::parse($this->validity_end) : null;
+        $now = Carbon::now()->startOfDay();
+        $end = $this->validity_end ? Carbon::parse($this->validity_end)->startOfDay() : null;
         if (!$end) return 'Unknown';
         $diff = $now->diffInDays($end, false);
         if ($diff > 5) return 'Good';

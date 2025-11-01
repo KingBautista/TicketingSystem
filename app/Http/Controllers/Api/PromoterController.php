@@ -269,6 +269,17 @@ class PromoterController extends BaseController
                 $this->logAudit('VIEW', "Viewed promoter of the day for date: {$date}");
                 return new \App\Http\Resources\PromoterResource($schedule->promoter);
             }
+            
+            // If no schedule found, get latest active promoter
+            $latestPromoter = Promoter::where('status', 1)
+                ->orderByDesc('created_at')
+                ->first();
+            
+            if ($latestPromoter) {
+                $this->logAudit('VIEW', "Viewed latest active promoter (no schedule for date: {$date})");
+                return new \App\Http\Resources\PromoterResource($latestPromoter);
+            }
+            
             return response()->json(['data' => null]);
         } catch (\Exception $e) {
             return $this->messageService->responseError();
