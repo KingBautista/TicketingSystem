@@ -49,6 +49,12 @@ export default function CashierLayout() {
       console.log('🖨️ Starting frontend printing with data:', printData);
       console.log('📦 Using imported clientPrinter utility');
       
+      // Cancel any ongoing display sequence
+      if (displaySequenceControl) {
+        displaySequenceControl.cancel();
+        setDisplaySequenceControl(null);
+      }
+      
       // Print the transaction using client printer service
       console.log('🔄 Calling clientPrinter.printTransaction...');
       const printSuccess = await clientPrinter.printTransaction(printData);
@@ -56,13 +62,34 @@ export default function CashierLayout() {
       
       if (printSuccess) {
         console.log('✅ Transaction printed successfully via client printer service');
+        
+        // Show "Thank You" after printing is complete
+        setTimeout(() => {
+          clientDisplay.showThankYou().catch(err => {
+            console.error('PD-300 display thank you error:', err);
+          });
+        }, 500); // Small delay to ensure printer finished
       } else {
         console.error('❌ Failed to print transaction via client printer service');
         toastRef.current.showToast('Transaction saved but printing failed.', 'warning');
+        
+        // Still show thank you even if printing failed
+        setTimeout(() => {
+          clientDisplay.showThankYou().catch(err => {
+            console.error('PD-300 display thank you error:', err);
+          });
+        }, 500);
       }
     } catch (error) {
       console.error('❌ Error during frontend printing:', error);
       toastRef.current.showToast('Transaction saved but printing failed.', 'warning');
+      
+      // Show thank you even on error
+      setTimeout(() => {
+        clientDisplay.showThankYou().catch(err => {
+          console.error('PD-300 display thank you error:', err);
+        });
+      }, 500);
     }
   };
 
@@ -127,14 +154,32 @@ export default function CashierLayout() {
   const total = Math.max(0, baseTotal - discountTotal);
   const changeDue = paidAmount ? Math.max(0, paidAmount - total) : 0;
 
+  // Track display sequence control
+  const [displaySequenceControl, setDisplaySequenceControl] = useState(null);
+
+  // Show total when transaction details change (but don't show change until paidAmount is entered)
   useEffect(() => {
-    if (total === 0 || !promoter?.name || !rateId) return;
-    console.log(total, promoter);
+    // Cancel any existing display sequence
+    if (displaySequenceControl) {
+      displaySequenceControl.cancel();
+      setDisplaySequenceControl(null);
+    }
+
+    if (total === 0 || !promoter?.name || !rateId) {
+      // Clear display if no valid transaction
+      clientDisplay.clearDisplay().catch(err => {
+        console.error('PD-300 display clear error:', err);
+      });
+      return;
+    }
+
+    console.log('📺 Showing total on display:', { total, promoter: promoter.name });
+    
+    // Show total only (change will be shown when paidAmount is entered)
     const timeout = setTimeout(() => {
-      // Use frontend display utilities instead of Laravel backend
-      clientDisplay.showCustomMessage(
-        `Promoter: ${promoter.name}`.substring(0, 20),
-        `Total: P${total.toFixed(2)}`.substring(0, 20)
+      clientDisplay.showTotal(
+        `Promoter: ${promoter.name}`,
+        total
       ).catch(err => {
         console.error('PD-300 display error:', err);
       });
@@ -142,6 +187,44 @@ export default function CashierLayout() {
   
     return () => clearTimeout(timeout);
   }, [total, promoter, rateId]);
+
+  // Show change sequence when paidAmount is entered and change is calculated
+  useEffect(() => {
+    // Only show change if paidAmount is entered and change is positive
+    if (!paidAmount || changeDue <= 0 || total === 0) {
+      return;
+    }
+
+    console.log('💰 Showing change sequence:', { total, changeDue, promoter: promoter?.name });
+    
+    // Cancel any existing display sequence
+    let currentControl = displaySequenceControl;
+    if (currentControl && currentControl.cancel) {
+      currentControl.cancel();
+    }
+    
+    // Start the sequence: Total → Change (Thank You will be shown after printing completes)
+    const sequencePromise = clientDisplay.showTransactionSequence(
+      `Promoter: ${promoter?.name || ''}`,
+      total,
+      changeDue,
+      {
+        totalDuration: 2000,    // Show total for 2 seconds
+        changeDuration: 10000,  // Show change for 10 seconds (until printing completes)
+        thankYouDuration: 0     // Don't auto-show thank you (will be triggered after printing)
+      }
+    );
+
+    setDisplaySequenceControl(sequencePromise);
+
+    return () => {
+      // Cleanup on unmount or when dependencies change
+      if (sequencePromise && sequencePromise.cancel) {
+        sequencePromise.cancel();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paidAmount, changeDue, total, promoter?.name]);
 
   // Open Cash Handlers
   // Integrate handleOpenCash with backend
@@ -225,6 +308,12 @@ export default function CashierLayout() {
       .then(({ data }) => {
         console.log('📄 Transaction response:', data);
         
+        // Cancel any ongoing display sequence before resetting
+        if (displaySequenceControl) {
+          displaySequenceControl.cancel();
+          setDisplaySequenceControl(null);
+        }
+        
         // Reset all form fields
         setPaidAmount('');
         setQuantity(1);
@@ -239,6 +328,13 @@ export default function CashierLayout() {
         } else {
           console.log('❌ No print data received');
           toastRef.current.showToast('Transaction saved but no print data received!', 'warning');
+          
+          // Still show thank you even without print data
+          setTimeout(() => {
+            clientDisplay.showThankYou().catch(err => {
+              console.error('PD-300 display thank you error:', err);
+            });
+          }, 500);
         }
       })
       .catch(() => {

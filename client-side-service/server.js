@@ -293,17 +293,22 @@ app.post('/display', async (req, res) => {
     try {
         const { content, type = 'ticket' } = req.body;
         
-        if (!content) {
+        // Allow empty content for clearing display
+        // Check if content is undefined/null (not provided) vs empty string (intentional clear)
+        if (content === undefined || content === null) {
             return res.status(400).json({ 
                 success: false, 
                 error: 'Content is required' 
             });
         }
 
-        console.log(`📺 Displaying ${type}:`, content);
+        // Handle empty string or whitespace-only content for clearing display
+        const trimmedContent = typeof content === 'string' ? content.trim() : '';
+        console.log(`📺 Displaying ${type}:`, trimmedContent || '[Clear Display]');
         
         // Parse content for display (expecting line1\nline2 format)
-        const lines = content.split('\n');
+        // If content is empty/whitespace, use empty strings to clear display
+        const lines = trimmedContent ? trimmedContent.split('\n') : ['', ''];
         const line1 = lines[0] || '';
         const line2 = lines[1] || '';
         

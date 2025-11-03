@@ -27,6 +27,9 @@ class RoleService extends BaseService
 
       $query = Role::query();
       
+      // Exclude Developer Account role from the list
+      $query->where('name', '!=', 'Developer Account');
+      
       // Apply onlyTrashed() first if we're in trash view
       if ($trash) {
         $query->onlyTrashed();
@@ -63,6 +66,12 @@ class RoleService extends BaseService
 
   public function getRoles() 
   {
-    return Role::query()->select('id', 'name', 'name as  label')->where('active', 1)->orderBy('id', 'asc')->get()->makeHidden(['permissions']);
+    return Role::query()
+      ->select('id', 'name', 'name as  label')
+      ->where('active', 1)
+      ->where('name', '!=', 'Developer Account') // Exclude Developer Account from dropdown
+      ->orderBy('id', 'asc')
+      ->get()
+      ->makeHidden(['permissions']);
   }
 }

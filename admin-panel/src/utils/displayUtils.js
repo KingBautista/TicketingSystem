@@ -88,8 +88,10 @@ export class ClientDisplay {
 
     /**
      * Clear PD-300 display
+     * Sends empty content to clear the display (server now accepts empty strings)
      */
     async clearDisplay() {
+        // Send empty strings - server will handle it and send-display.js will send clear command
         return await this.sendToDisplay('', '');
     }
 
@@ -150,6 +152,90 @@ export class ClientDisplay {
         const truncatedLine1 = (line1 || '').substring(0, 20);
         const truncatedLine2 = (line2 || '').substring(0, 20);
         return await this.sendToDisplay(truncatedLine1, truncatedLine2);
+    }
+
+    /**
+     * Show transaction display sequence: Total → Change → Thank You
+     * @param {string} promoterName - Promoter name (max 20 chars)
+     * @param {number} total - Total amount
+     * @param {number} change - Change amount
+     * @param {Object} options - Options for timing
+     * @param {number} options.totalDuration - Time to show total in ms (default: 3000)
+     * @param {number} options.changeDuration - Time to show change in ms (default: 3000)
+     * @param {number} options.thankYouDuration - Time to show thank you in ms (default: 2000)
+     * @returns {Promise<Object>} Control object with cancel method
+     */
+    async showTransactionSequence(promoterName, total, change, options = {}) {
+        const {
+            totalDuration = 3000,      // Show total for 3 seconds
+            changeDuration = 3000,      // Show change for 3 seconds
+            thankYouDuration = 2000     // Show thank you for 2 seconds
+        } = options;
+
+        let timeouts = [];
+
+        const cancel = () => {
+            timeouts.forEach(timeout => clearTimeout(timeout));
+            timeouts = [];
+        };
+
+        try {
+            // Step 1: Show Total
+            const totalLine1 = (promoterName || 'Total').substring(0, 20);
+            const totalLine2 = `Total: P${total.toFixed(2)}`.substring(0, 20);
+            await this.showCustomMessage(totalLine1, totalLine2);
+
+            // Step 2: After totalDuration, show Change
+            const changeTimeout = setTimeout(async () => {
+                const changeLine1 = 'Change:';
+                const changeLine2 = `P${change.toFixed(2)}`.substring(0, 20);
+                await this.showCustomMessage(changeLine1, changeLine2);
+            }, totalDuration);
+            timeouts.push(changeTimeout);
+
+            // Step 3: After totalDuration + changeDuration, show Thank You (only if thankYouDuration > 0)
+            if (thankYouDuration > 0) {
+                const thankYouTimeout = setTimeout(async () => {
+                    await this.showThankYou();
+                }, totalDuration + changeDuration);
+                timeouts.push(thankYouTimeout);
+            }
+
+            // Return control object
+            const totalSequenceDuration = totalDuration + changeDuration + (thankYouDuration > 0 ? thankYouDuration : 0);
+            return {
+                cancel,
+                promise: new Promise((resolve) => {
+                    const finalTimeout = setTimeout(() => {
+                        resolve({ success: true });
+                    }, totalSequenceDuration);
+                    timeouts.push(finalTimeout);
+                })
+            };
+
+        } catch (error) {
+            console.error('❌ Transaction sequence error:', error);
+            cancel();
+            return { cancel, promise: Promise.resolve({ success: false, error }) };
+        }
+    }
+
+    /**
+     * Show total only (for when change is not available yet)
+     */
+    async showTotal(promoterName, total) {
+        const line1 = (promoterName || 'Total').substring(0, 20);
+        const line2 = `Total: P${total.toFixed(2)}`.substring(0, 20);
+        return await this.showCustomMessage(line1, line2);
+    }
+
+    /**
+     * Show change amount
+     */
+    async showChange(change) {
+        const line1 = 'Change:';
+        const line2 = `P${change.toFixed(2)}`.substring(0, 20);
+        return await this.showCustomMessage(line1, line2);
     }
 }
 
