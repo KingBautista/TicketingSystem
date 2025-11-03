@@ -84,7 +84,7 @@ export default function CashierSidebar() {
         {/* Debug Section */}
         <div className="sidebar-footer" style={{ marginTop: 'auto', padding: '1rem' }}>
           <ul className="sidebar-nav">
-            <li className="nav-item">
+            {/* <li className="nav-item">
               <button 
                 onClick={handleDebugPrinter}
                 className="nav-link"
@@ -105,7 +105,7 @@ export default function CashierSidebar() {
                 </div>
                 <span className="nav-text">Debug Printer</span>
               </button>
-            </li>
+            </li> */}
             <li className="nav-item">
               <button 
                 onClick={handleLogout}
