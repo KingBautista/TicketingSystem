@@ -50,8 +50,12 @@ export default function CashierLayout() {
       console.log('📦 Using imported clientPrinter utility');
       
       // Cancel any ongoing display sequence
-      if (displaySequenceControl) {
-        displaySequenceControl.cancel();
+      if (displaySequenceControl && typeof displaySequenceControl.cancel === 'function') {
+        try {
+          displaySequenceControl.cancel();
+        } catch (cancelError) {
+          console.warn('Error canceling display sequence:', cancelError);
+        }
         setDisplaySequenceControl(null);
       }
       
@@ -160,8 +164,12 @@ export default function CashierLayout() {
   // Show total when transaction details change (but don't show change until paidAmount is entered)
   useEffect(() => {
     // Cancel any existing display sequence
-    if (displaySequenceControl) {
-      displaySequenceControl.cancel();
+    if (displaySequenceControl && typeof displaySequenceControl.cancel === 'function') {
+      try {
+        displaySequenceControl.cancel();
+      } catch (cancelError) {
+        console.warn('Error canceling display sequence:', cancelError);
+      }
       setDisplaySequenceControl(null);
     }
 
@@ -309,8 +317,12 @@ export default function CashierLayout() {
         console.log('📄 Transaction response:', data);
         
         // Cancel any ongoing display sequence before resetting
-        if (displaySequenceControl) {
-          displaySequenceControl.cancel();
+        if (displaySequenceControl && typeof displaySequenceControl.cancel === 'function') {
+          try {
+            displaySequenceControl.cancel();
+          } catch (cancelError) {
+            console.warn('Error canceling display sequence:', cancelError);
+          }
           setDisplaySequenceControl(null);
         }
         
