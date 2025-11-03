@@ -305,7 +305,7 @@ export default function CashierLayout() {
       })),
     };
     axiosClient.post('/cashier/transactions', payload)
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         console.log('📄 Transaction response:', data);
         
         // Cancel any ongoing display sequence before resetting
@@ -320,25 +320,55 @@ export default function CashierLayout() {
         setAppliedDiscounts([]);
         setRateId(''); // Reset to empty to show "Select Rate"
 
-        // Handle frontend printing if printData is available
-        if (data.printData) {
-          console.log('🖨️ Print data received:', data.printData);
-          handleFrontendPrinting(data.printData);
-          toastRef.current.showToast('Transaction saved and printed!', 'success');
+        // Check if transaction was saved successfully
+        if (data.success && data.transaction) {
+          // Handle frontend printing if printData is available
+          if (data.printData) {
+            console.log('🖨️ Print data received:', data.printData);
+            try {
+              await handleFrontendPrinting(data.printData);
+              toastRef.current.showToast('Transaction saved and printed!', 'success');
+            } catch (printError) {
+              console.error('❌ Printing error (transaction was saved):', printError);
+              toastRef.current.showToast('Transaction saved but printing failed.', 'warning');
+              // Still show thank you even if printing failed
+              setTimeout(() => {
+                clientDisplay.showThankYou().catch(err => {
+                  console.error('PD-300 display thank you error:', err);
+                });
+              }, 500);
+            }
+          } else {
+            console.log('❌ No print data received');
+            toastRef.current.showToast('Transaction saved but no print data received!', 'warning');
+            
+            // Still show thank you even without print data
+            setTimeout(() => {
+              clientDisplay.showThankYou().catch(err => {
+                console.error('PD-300 display thank you error:', err);
+              });
+            }, 500);
+          }
         } else {
-          console.log('❌ No print data received');
-          toastRef.current.showToast('Transaction saved but no print data received!', 'warning');
-          
-          // Still show thank you even without print data
-          setTimeout(() => {
-            clientDisplay.showThankYou().catch(err => {
-              console.error('PD-300 display thank you error:', err);
-            });
-          }, 500);
+          // Transaction might not have been saved properly
+          console.error('❌ Unexpected response structure:', data);
+          toastRef.current.showToast('Transaction may not have been saved correctly.', 'warning');
         }
       })
-      .catch(() => {
-        toastRef.current.showToast('Failed to save transaction.', 'danger');
+      .catch((error) => {
+        console.error('❌ Transaction save error:', error);
+        // Only show error if it's actually a save error (not a network error after success)
+        if (error.response) {
+          // Server responded with error status
+          const errorMessage = error.response?.data?.message || 'Failed to save transaction.';
+          toastRef.current.showToast(errorMessage, 'danger');
+        } else if (error.request) {
+          // Request was made but no response received
+          toastRef.current.showToast('Network error. Please check your connection.', 'danger');
+        } else {
+          // Something else happened
+          toastRef.current.showToast('Failed to save transaction.', 'danger');
+        }
       });
   };
 
