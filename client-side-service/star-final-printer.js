@@ -681,7 +681,7 @@ export class StarBSC10Printer {
     return result;
   }
 
-  async printCloseCashReceipt(cashierName, sessionId, openingCash, closingCash, dailyTransactions = [], dailyTotal = 0) {
+  async printCloseCashReceipt(cashierName, sessionId, openingCash, closingCash, dailyTransactions = [], dailyTotal = 0, summary = null) {
     console.log('🖨️ ===== PRINT CLOSE CASH RECEIPT CALLED =====');
     console.log(`🖨️ Cashier: ${cashierName}`);
     console.log(`🖨️ Session: #${sessionId}`);
@@ -689,10 +689,76 @@ export class StarBSC10Printer {
     console.log(`🖨️ Closing Cash: ${closingCash}`);
     console.log(`🖨️ Daily Transactions: ${dailyTransactions.length}`);
     console.log(`🖨️ Daily Total: ${dailyTotal}`);
+    console.log(`🖨️ Summary:`, summary);
     console.log(`🖨️ Printer Name: ${this.printerName}`);
     console.log('🖨️ ===========================================');
     
     try {
+      // Helper function to format currency
+      const formatCurrency = (amount) => `P${parseFloat(amount).toFixed(2)}`;
+      
+      // Helper function to format rate line with right-aligned numbers
+      // Format: "Rate Name:              (qty)amount" (without currency prefix)
+      // Numbers are right-aligned to prevent line wrapping (max 42 chars for 80mm paper with margins)
+      const formatRateLine = (rateName, quantity, total) => {
+        const ratePart = `${rateName}:`;
+        const quantityPart = `(${quantity})`;
+        const totalPart = parseFloat(total).toFixed(2); // No currency prefix in summary
+        const numberPart = `${quantityPart}${totalPart}`;
+        // Target width: 42 characters max (for 80mm thermal paper, accounting for margins)
+        // This prevents line wrapping that causes decimals to appear on next line
+        const maxWidth = 42;
+        const padding = Math.max(1, maxWidth - ratePart.length - numberPart.length);
+        // Ensure line doesn't exceed max width by truncating rate name if needed
+        const finalRatePart = ratePart.length + numberPart.length + padding > maxWidth 
+          ? ratePart.substring(0, maxWidth - numberPart.length - padding - 1) + ':' 
+          : ratePart;
+        return `${finalRatePart}${' '.repeat(padding)}${numberPart}\n`;
+      };
+      
+      let summarySection = [];
+      
+      // Use new summary format if provided
+      if (summary && summary.rate_summary && summary.rate_summary.length > 0) {
+        // Transaction range
+        if (summary.transaction_range) {
+          summarySection.push(
+            Buffer.from([0x1B, 0x61, 0x00]),   // left align
+            Buffer.from(`Transaction No. : ${summary.transaction_range.first} - ${summary.transaction_range.last}\n`, 'ascii'),
+            Buffer.from('\n', 'ascii')
+          );
+        }
+        
+        // Rate summary - use left align and manual padding to ensure numbers stay on same line
+        summary.rate_summary.forEach((rate) => {
+          summarySection.push(
+            Buffer.from([0x1B, 0x61, 0x00]),   // left align
+            Buffer.from(formatRateLine(rate.rate_name, rate.quantity, rate.total), 'ascii')
+          );
+        });
+        
+        // Total line with right-aligned numbers (without currency prefix on amount)
+        // Use same max width to prevent line wrapping, ensure left alignment
+        const totalLabel = 'Total :';
+        const totalNumber = `(${summary.total_quantity})${parseFloat(summary.total_amount).toFixed(2)}`;
+        const maxWidth = 42;
+        const totalPadding = Math.max(1, maxWidth - totalLabel.length - totalNumber.length);
+        summarySection.push(
+          Buffer.from('\n', 'ascii'),
+          Buffer.from([0x1B, 0x61, 0x00]),   // left align
+          Buffer.from(`${totalLabel}${' '.repeat(totalPadding)}${totalNumber}\n`, 'ascii')
+        );
+      } else {
+        // Fallback to old format if summary not provided
+        summarySection = [
+          Buffer.from([0x1B, 0x61, 0x00]),   // left align
+          Buffer.from(`Opening Cash:                 ${formatCurrency(openingCash)}\n`, 'ascii'),
+          Buffer.from(`Total Transactions:            ${dailyTransactions.length}\n`, 'ascii'),
+          Buffer.from(`Total Sales:                  ${formatCurrency(dailyTotal)}\n`, 'ascii'),
+          Buffer.from(`Closing Cash:                 ${formatCurrency(closingCash)}\n`, 'ascii'),
+        ];
+      }
+      
       const buffer = Buffer.concat([
       Buffer.from([0x1B, 0x70, 0x00, 0x19, 0xFA]), // Cash drawer trigger
       Buffer.from([0x1B, 0x40]),         // init
@@ -706,7 +772,7 @@ export class StarBSC10Printer {
       Buffer.from([0x1D, 0x21, 0x00]),   // normal size
       Buffer.from('\n', 'ascii'),
       
-      // Separator line (matching actual print - equal signs)
+      // Separator line
       Buffer.from('==============================\n', 'ascii'),
       
       // Date and time
@@ -714,40 +780,28 @@ export class StarBSC10Printer {
       Buffer.from(`Cashier: ${cashierName}\n`, 'ascii'),
       Buffer.from(`Session: #${sessionId}\n`, 'ascii'),
       Buffer.from('==============================\n', 'ascii'),
-      Buffer.from('------------------------------\n', 'ascii'),
-      
-      // Daily Transactions Section
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      Buffer.from('*** DAILY TRANSACTIONS ***\n', 'ascii'),
-      Buffer.from([0x1B, 0x61, 0x00]),   // left align
       Buffer.from('\n', 'ascii'),
-      
-      // Print each transaction (matching actual print format)
-      ...dailyTransactions.map((transaction, idx) => [
-        Buffer.from(`Transaction #${transaction.id}\n`, 'ascii'),
-        Buffer.from(`Time: ${new Date(transaction.created_at).toLocaleTimeString()}\n`, 'ascii'),
-        Buffer.from(`${transaction.rate?.name || 'N/A'}                    x${transaction.quantity}\n`, 'ascii'),
-        ...(transaction.discounts?.length > 0 
-          ? transaction.discounts.map(discount => 
-              Buffer.from(`- ${discount.discount_name}               ${discount.discount_value_type === 'percentage' ? `${discount.discount_value}%` : `${discount.discount_value}`}\n`, 'ascii')
-            )
-          : []
-        ),
-        Buffer.from(`Total:                        ${parseFloat(transaction.total).toFixed(2)}\n`, 'ascii'),
-        ...(idx < dailyTransactions.length - 1 ? [Buffer.from('--------------------------------\n', 'ascii')] : [])
-      ]).flat(),
       
       // Summary Section
-      Buffer.from([0x1B, 0x61, 0x01]),   // center align
-      Buffer.from('*** SUMMARY ***\n', 'ascii'),
-      Buffer.from([0x1B, 0x61, 0x00]),   // left align
+      ...summarySection,
       Buffer.from('\n', 'ascii'),
       
-      Buffer.from(`Opening Cash:                 ${parseFloat(openingCash).toFixed(2)}\n`, 'ascii'),
-      Buffer.from(`Total Transactions:            ${dailyTransactions.length}\n`, 'ascii'),
-      Buffer.from(`Total Sales:                  ${parseFloat(dailyTotal).toFixed(2)}\n`, 'ascii'),
-      Buffer.from(`Closing Cash:                 ${parseFloat(closingCash).toFixed(2)}\n`, 'ascii'),
-      Buffer.from('--------------------------------\n', 'ascii'),
+      // Cash Summary - right-aligned to match summary format (without peso sign)
+      ...(function() {
+        const openingLabel = 'Opening Cash:';
+        const openingAmount = parseFloat(openingCash).toFixed(2); // No peso sign
+        const openingPadding = Math.max(1, 42 - openingLabel.length - openingAmount.length);
+        const closingLabel = 'Closing Cash:';
+        const closingAmount = parseFloat(closingCash).toFixed(2); // No peso sign
+        const closingPadding = Math.max(1, 42 - closingLabel.length - closingAmount.length);
+        
+        return [
+          Buffer.from([0x1B, 0x61, 0x00]),   // left align
+          Buffer.from(`${openingLabel}${' '.repeat(openingPadding)}${openingAmount}\n`, 'ascii'),
+          Buffer.from(`${closingLabel}${' '.repeat(closingPadding)}${closingAmount}\n`, 'ascii'),
+          Buffer.from('--------------------------------\n', 'ascii')
+        ];
+      })(),
       
       // End of Report
       Buffer.from([0x1B, 0x61, 0x01]),   // center align
@@ -837,8 +891,9 @@ switch (command) {
               payload.sessionId,
               payload.openingCash,
               payload.closingCash,
-              payload.dailyTransactions,
-              payload.dailyTotal
+              payload.dailyTransactions || [],
+              payload.dailyTotal || 0,
+              payload.summary || null
             );
           } catch (err) {
             console.error('❌ Error parsing close cash data:', err.message || err);

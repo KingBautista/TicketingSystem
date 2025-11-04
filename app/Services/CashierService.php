@@ -109,4 +109,68 @@ class CashierService
     {
         return CashierSession::findOrFail($id);
     }
+
+    /**
+     * Generate rate summary for close cash report
+     * Groups transactions by rate and calculates totals
+     * 
+     * @param int $sessionId
+     * @return array
+     */
+    public function getCloseCashSummary($sessionId)
+    {
+        $transactions = CashierTransaction::with(['rate:id,name'])
+            ->where('session_id', $sessionId)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        if ($transactions->isEmpty()) {
+            return [
+                'transaction_range' => null,
+                'rate_summary' => [],
+                'total_quantity' => 0,
+                'total_amount' => 0
+            ];
+        }
+
+        // Get transaction range
+        $firstTransactionId = $transactions->first()->id;
+        $lastTransactionId = $transactions->last()->id;
+
+        // Group by rate and calculate totals
+        $rateSummary = [];
+        $totalQuantity = 0;
+        $totalAmount = 0;
+
+        foreach ($transactions as $transaction) {
+            $rateName = $transaction->rate->name ?? 'N/A';
+            $rateId = $transaction->rate_id ?? 0;
+
+            if (!isset($rateSummary[$rateId])) {
+                $rateSummary[$rateId] = [
+                    'rate_name' => $rateName,
+                    'quantity' => 0,
+                    'total' => 0
+                ];
+            }
+
+            $rateSummary[$rateId]['quantity'] += $transaction->quantity;
+            $rateSummary[$rateId]['total'] += $transaction->total;
+            $totalQuantity += $transaction->quantity;
+            $totalAmount += $transaction->total;
+        }
+
+        // Convert to indexed array
+        $rateSummaryArray = array_values($rateSummary);
+
+        return [
+            'transaction_range' => [
+                'first' => $firstTransactionId,
+                'last' => $lastTransactionId
+            ],
+            'rate_summary' => $rateSummaryArray,
+            'total_quantity' => $totalQuantity,
+            'total_amount' => $totalAmount
+        ];
+    }
 }

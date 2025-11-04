@@ -103,7 +103,17 @@ class CashierController extends Controller
         
         $this->logUpdate("Closed cashier session with closing cash: P{$data['closing_cash']}", null, $session->toArray());
         
-        return new CashierSessionResource($session);
+        // Generate rate summary for close cash report
+        $summary = $this->service->getCloseCashSummary($data['session_id']);
+        
+        // Return session with summary data
+        $sessionResource = new CashierSessionResource($session);
+        $sessionData = $sessionResource->toArray($request);
+        $sessionData['summary'] = $summary;
+        
+        return response()->json([
+            'data' => $sessionData
+        ]);
     }
 
     /**

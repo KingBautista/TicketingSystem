@@ -391,6 +391,7 @@ export default function CashierLayout() {
   const [dailyTransactions, setDailyTransactions] = useState([]);
   const [dailyTotal, setDailyTotal] = useState(0);
   const [closingCash, setClosingCash] = useState('');
+  const [closeCashSummary, setCloseCashSummary] = useState(null);
 
   const handleCloseCash = async (e) => {
     e && e.preventDefault();
@@ -419,6 +420,7 @@ export default function CashierLayout() {
       setDailyTotal(transactionsData.total || 0);
       setCashOnHand(sessionData.cash_on_hand);
       setClosingCash(sessionData.closing_cash);
+      setCloseCashSummary(sessionData.summary || null);
 
       setSessionClosed(true);
       setShowPrintClose(true);
@@ -651,6 +653,7 @@ export default function CashierLayout() {
             closingCash={closingCash}
             dailyTransactions={dailyTransactions}
             dailyTotal={dailyTotal}
+            summary={closeCashSummary}
             handleCloseAndLogout={handleLogout}
             promoterName={promoter?.name || 'N/A'}
             headerStyle={headerStyle}

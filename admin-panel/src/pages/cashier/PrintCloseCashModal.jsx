@@ -16,7 +16,8 @@ export default function PrintCloseCashModal({
   thermalPrintStyles,
   sessionId,
   cashierName,
-  closingCash
+  closingCash,
+  summary = null
 }) {
 
   if (!show) return null;
@@ -50,57 +51,104 @@ export default function PrintCloseCashModal({
               <div style={{ fontSize: '0.9em' }}>================================</div>
             </div>
 
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ textAlign: 'center', fontSize: '0.9em', marginBottom: 5 }}>*** DAILY TRANSACTIONS ***</div>
-              {dailyTransactions.map((transaction, idx) => (
-                <div key={transaction.id} style={{ marginBottom: 8, fontSize: '0.85em' }}>
-                  <div style={{ marginBottom: 2 }}>
-                    <div>Transaction #{transaction.id}</div>
-                    <div>Time: {new Date(transaction.created_at).toLocaleTimeString()}</div>
+            {/* Summary Section - New Format */}
+            {summary && summary.rate_summary && summary.rate_summary.length > 0 ? (
+              <div style={{ marginBottom: 10, fontSize: '0.85em', fontFamily: 'Courier New, Courier, monospace' }}>
+                {/* Transaction Range */}
+                {summary.transaction_range && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div>Transaction No. : {summary.transaction_range.first} - {summary.transaction_range.last}</div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                    <span>{transaction.rate?.name}</span>
-                    <span>x{transaction.quantity}</span>
-                  </div>
-                  {transaction.discounts?.length > 0 && (
-                    <div style={{ paddingLeft: 8 }}>
-                      {transaction.discounts.map(d => (
-                        <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span>- {d.discount_name}</span>
-                          <span>{d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `P${d.discount_value}`}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dotted #000', paddingTop: 2, marginTop: 2 }}>
-                    <span>Total:</span>
-                    <span>P{parseFloat(transaction.total).toFixed(2)}</span>
-                  </div>
-                  {idx < dailyTransactions.length - 1 && (
-                    <div style={{ borderBottom: '1px dashed #000', margin: '8px 0', fontSize: '0.8em' }}>--------------------------------</div>
-                  )}
+                )}
+                
+                {/* Rate Summary */}
+                <div style={{ marginBottom: 8 }}>
+                  {summary.rate_summary.map((rate, idx) => {
+                    const quantityTotal = `(${rate.quantity})${parseFloat(rate.total).toFixed(2)}`;
+                    
+                    return (
+                      <div key={idx} style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between',
+                        marginBottom: 4
+                      }}>
+                        <span style={{ textAlign: 'left' }}>{rate.rate_name}:</span>
+                        <span style={{ textAlign: 'right', fontFamily: 'Courier New, Courier, monospace' }}>
+                          {quantityTotal}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+                
+                {/* Total Line */}
+                <div style={{ 
+                  marginTop: 8,
+                  marginBottom: 8,
+                  paddingTop: 8,
+                  borderTop: '1px dotted #000'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between'
+                  }}>
+                    <span>Total :</span>
+                    <span style={{ textAlign: 'right', fontFamily: 'Courier New, Courier, monospace' }}>
+                      ({summary.total_quantity}){parseFloat(summary.total_amount).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Fallback to old format if summary not available */
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ textAlign: 'center', fontSize: '0.9em', marginBottom: 5 }}>*** DAILY TRANSACTIONS ***</div>
+                {dailyTransactions.map((transaction, idx) => (
+                  <div key={transaction.id} style={{ marginBottom: 8, fontSize: '0.85em' }}>
+                    <div style={{ marginBottom: 2 }}>
+                      <div>Transaction #{transaction.id}</div>
+                      <div>Time: {new Date(transaction.created_at).toLocaleTimeString()}</div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                      <span>{transaction.rate?.name}</span>
+                      <span>x{transaction.quantity}</span>
+                    </div>
+                    {transaction.discounts?.length > 0 && (
+                      <div style={{ paddingLeft: 8 }}>
+                        {transaction.discounts.map(d => (
+                          <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>- {d.discount_name}</span>
+                            <span>{d.discount_value_type === 'percentage' ? `${d.discount_value}%` : `P${d.discount_value}`}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dotted #000', paddingTop: 2, marginTop: 2 }}>
+                      <span>Total:</span>
+                      <span>P{parseFloat(transaction.total).toFixed(2)}</span>
+                    </div>
+                    {idx < dailyTransactions.length - 1 && (
+                      <div style={{ borderBottom: '1px dashed #000', margin: '8px 0', fontSize: '0.8em' }}>--------------------------------</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
+            {/* Cash Summary Section */}
             <div style={{ borderTop: '1px dashed #000', borderBottom: '1px dashed #000', margin: '10px 0', padding: '10px 0' }}>
-              <div style={{ textAlign: 'center', fontSize: '0.9em', marginBottom: 5 }}>*** SUMMARY ***</div>
               <div style={{ fontSize: '0.85em' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                   <span>Opening Cash:</span>
-                  <span>P{Number(cashOnHand || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                  <span>Total Transactions:</span>
-                  <span>{dailyTransactions.length}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                  <span>Total Sales:</span>
-                  <span>P{Number(dailyTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span style={{ textAlign: 'right', fontFamily: 'Courier New, Courier, monospace' }}>
+                    {Number(cashOnHand || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dotted #000', paddingTop: 4, marginTop: 4 }}>
                   <span>Closing Cash:</span>
-                  <span>P{Number(closingCash || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span style={{ textAlign: 'right', fontFamily: 'Courier New, Courier, monospace' }}>
+                    {Number(closingCash || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
                 </div>
               </div>
             </div>
@@ -135,7 +183,8 @@ export default function PrintCloseCashModal({
                     openingCash: cashOnHand,
                     closingCash: closingCash,
                     dailyTransactions: dailyTransactions,
-                    dailyTotal: dailyTotal
+                    dailyTotal: dailyTotal,
+                    summary: summary
                   };
                   
                   // Use the frontend printer utility to call star-final-printer.js
