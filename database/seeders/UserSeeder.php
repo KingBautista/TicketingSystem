@@ -30,7 +30,7 @@ class UserSeeder extends Seeder
         // Create developer user
         $developerUser = User::create([
             'user_login' => 'developer',
-            'user_email' => 'developer@example.com',
+            'user_email' => 'king@gmail.com',
             'user_pass' => $password,
             'user_salt' => $salt,
             'user_status' => 1,
