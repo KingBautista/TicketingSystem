@@ -19,16 +19,34 @@ class ResetSessionsSeeder extends Seeder
      */
     public function run(): void
     {
+        $driver = DB::getDriverName();
+        
         // Disable foreign key checks temporarily to avoid constraint issues
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        if ($driver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } elseif ($driver === 'pgsql') {
+            DB::statement('SET session_replication_role = \'replica\';');
+        }
 
         try {
             // Delete all sessions (including soft-deleted)
             $sessionsDeleted = CashierSession::withTrashed()->forceDelete();
             $this->command->info("Deleted sessions (including soft-deleted): {$sessionsDeleted}");
 
-            // Reset auto-increment counter
-            DB::statement('ALTER TABLE cashier_sessions AUTO_INCREMENT = 1');
+            // Reset auto-increment/sequence counter
+            if ($driver === 'mysql') {
+                DB::statement('ALTER TABLE cashier_sessions AUTO_INCREMENT = 1');
+            } elseif ($driver === 'pgsql') {
+                // Reset sequence if it exists (ignore errors if sequence doesn't exist)
+                try {
+                    $sequence = DB::selectOne("SELECT pg_get_serial_sequence('cashier_sessions', 'id') as seq");
+                    if ($sequence && $sequence->seq) {
+                        DB::statement("SELECT setval('{$sequence->seq}', 1, false)");
+                    }
+                } catch (\Exception $e) {
+                    // Ignore if sequence doesn't exist
+                }
+            }
 
             $this->command->info('✓ All sessions have been reset successfully.');
 
@@ -37,7 +55,11 @@ class ResetSessionsSeeder extends Seeder
             throw $e;
         } finally {
             // Re-enable foreign key checks
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            if ($driver === 'mysql') {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            } elseif ($driver === 'pgsql') {
+                DB::statement('SET session_replication_role = \'origin\';');
+            }
         }
     }
 }

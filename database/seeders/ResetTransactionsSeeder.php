@@ -18,8 +18,14 @@ class ResetTransactionsSeeder extends Seeder
      */
     public function run(): void
     {
+        $driver = DB::getDriverName();
+        
         // Disable foreign key checks temporarily to avoid constraint issues
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        if ($driver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } elseif ($driver === 'pgsql') {
+            DB::statement('SET session_replication_role = \'replica\';');
+        }
 
         try {
             // Delete in order: child tables first, then parent table
@@ -36,10 +42,40 @@ class ResetTransactionsSeeder extends Seeder
             $transactionsDeleted = CashierTransaction::withTrashed()->forceDelete();
             $this->command->info("Deleted transactions (including soft-deleted): {$transactionsDeleted}");
 
-            // Reset auto-increment counters
-            DB::statement('ALTER TABLE cashier_tickets AUTO_INCREMENT = 1');
-            DB::statement('ALTER TABLE cashier_transaction_discount AUTO_INCREMENT = 1');
-            DB::statement('ALTER TABLE cashier_transactions AUTO_INCREMENT = 1');
+            // Reset auto-increment/sequence counters
+            if ($driver === 'mysql') {
+                DB::statement('ALTER TABLE cashier_tickets AUTO_INCREMENT = 1');
+                DB::statement('ALTER TABLE cashier_transaction_discount AUTO_INCREMENT = 1');
+                DB::statement('ALTER TABLE cashier_transactions AUTO_INCREMENT = 1');
+            } elseif ($driver === 'pgsql') {
+                // Reset sequences if they exist (ignore errors if sequence doesn't exist)
+                try {
+                    $sequence = DB::selectOne("SELECT pg_get_serial_sequence('cashier_tickets', 'id') as seq");
+                    if ($sequence && $sequence->seq) {
+                        DB::statement("SELECT setval('{$sequence->seq}', 1, false)");
+                    }
+                } catch (\Exception $e) {
+                    // Ignore if sequence doesn't exist
+                }
+                
+                try {
+                    $sequence = DB::selectOne("SELECT pg_get_serial_sequence('cashier_transaction_discount', 'id') as seq");
+                    if ($sequence && $sequence->seq) {
+                        DB::statement("SELECT setval('{$sequence->seq}', 1, false)");
+                    }
+                } catch (\Exception $e) {
+                    // Ignore if sequence doesn't exist
+                }
+                
+                try {
+                    $sequence = DB::selectOne("SELECT pg_get_serial_sequence('cashier_transactions', 'id') as seq");
+                    if ($sequence && $sequence->seq) {
+                        DB::statement("SELECT setval('{$sequence->seq}', 1, false)");
+                    }
+                } catch (\Exception $e) {
+                    // Ignore if sequence doesn't exist
+                }
+            }
 
             $this->command->info('✓ All transactions and related data have been reset successfully.');
 
@@ -48,7 +84,11 @@ class ResetTransactionsSeeder extends Seeder
             throw $e;
         } finally {
             // Re-enable foreign key checks
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            if ($driver === 'mysql') {
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            } elseif ($driver === 'pgsql') {
+                DB::statement('SET session_replication_role = \'origin\';');
+            }
         }
     }
 }
