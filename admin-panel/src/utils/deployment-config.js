@@ -130,7 +130,28 @@ export class DeploymentServiceChecker {
                 }
             } catch (error) {
                 lastError = error;
-                console.log(`❌ Attempt ${attempt} failed: ${error.message}`);
+                const errorMessage = error.message || error.toString();
+                console.log(`❌ Attempt ${attempt} failed: ${errorMessage}`);
+                
+                // Detect ERR_BLOCKED_BY_CLIENT and provide helpful guidance
+                if (errorMessage.includes('ERR_BLOCKED_BY_CLIENT') || 
+                    errorMessage.includes('Failed to fetch') && errorMessage.includes('blocked')) {
+                    console.warn(`⚠️ Browser Extension Blocking Detected!`);
+                    console.warn(`   This error usually means a browser extension is blocking the request.`);
+                    console.warn(`   Solutions:`);
+                    console.warn(`   1. Disable ad blockers/privacy extensions (uBlock Origin, AdBlock, Privacy Badger, etc.)`);
+                    console.warn(`   2. Try a different browser (Chrome, Firefox, Edge)`);
+                    console.warn(`   3. Check if the service is running: ${this.serviceUrl}/health`);
+                    console.warn(`   4. Add ${this.serviceUrl} to your extension's whitelist`);
+                    console.warn(`   5. Try incognito/private mode to test without extensions`);
+                } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+                    console.warn(`⚠️ Network Error Detected!`);
+                    console.warn(`   This could mean:`);
+                    console.warn(`   1. The service is not running on ${this.serviceUrl}`);
+                    console.warn(`   2. Firewall is blocking the connection`);
+                    console.warn(`   3. The service URL is incorrect`);
+                    console.warn(`   Check if service is running: ${this.serviceUrl}/health`);
+                }
                 
                 if (attempt < this.config.maxRetries) {
                     console.log(`⏳ Waiting ${this.config.retryDelay}ms before retry...`);
@@ -140,7 +161,25 @@ export class DeploymentServiceChecker {
         }
         
         console.log(`❌ All attempts failed for ${endpoint}`);
-        return { success: false, error: lastError.message };
+        
+        // Provide final helpful error message
+        const finalError = lastError?.message || (lastError ? String(lastError) : 'Unknown error');
+        if (finalError.includes('ERR_BLOCKED_BY_CLIENT')) {
+            console.error(`\n🚫 REQUEST BLOCKED BY BROWSER EXTENSION`);
+            console.error(`   The browser is blocking requests to ${this.serviceUrl}`);
+            console.error(`   Please disable ad blockers or privacy extensions and try again.`);
+            console.error(`   Or verify the service is running: ${this.serviceUrl}/health\n`);
+        } else if (finalError.includes('Failed to fetch')) {
+            console.error(`\n🌐 NETWORK CONNECTION FAILED`);
+            console.error(`   Cannot connect to ${this.serviceUrl}`);
+            console.error(`   Please verify:`);
+            console.error(`   1. The service is running (check the terminal where you started it)`);
+            console.error(`   2. The service URL is correct: ${this.serviceUrl}`);
+            console.error(`   3. No firewall is blocking port 3001`);
+            console.error(`   Test the service: Open ${this.serviceUrl}/health in your browser\n`);
+        }
+        
+        return { success: false, error: finalError };
     }
 }
 
